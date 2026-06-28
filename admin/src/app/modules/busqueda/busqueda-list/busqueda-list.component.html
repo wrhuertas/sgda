@@ -1,0 +1,266 @@
+<div class="busqueda-page">
+  <div class="busqueda-card">
+    <h2 class="titulo">Buscador</h2>
+    <div class="search-box">
+      <i class="fas fa-search search-icon"></i>
+      <input 
+        type="text" 
+        class="search-input" 
+        placeholder="Buscar documentos." 
+        [(ngModel)]="texto" 
+        (keyup.enter)="buscar(1)" />
+
+      <button class="search-btn" (click)="buscar(1)">Buscar</button>
+      <button class="advanced-btn" (click)="buscarAvanzado()">Búsqueda avanzada</button>
+    </div>
+    <p class="texto-ayuda">Busca tus documentos por palabra clave.</p>
+  </div>
+
+  <div class="view-controls" *ngIf="busquedaRealizada">
+    <button [class.active]="viewActual === 'tabla'" (click)="cambiarVista('tabla')">
+      <i class="fas fa-table"></i> LISTADO TABLA
+    </button>
+    <button [class.active]="viewActual === 'grafo_sin'" (click)="cambiarVista('grafo_sin')">
+      <i class="fas fa-project-diagram"></i> VISTA SIMPLE (GRAFO)
+    </button>
+    <button [class.active]="viewActual === 'grafo_con'" (click)="cambiarVista('grafo_con')">
+      <i class="fas fa-hubspot"></i> VISTA RIC (GRAFO)
+    </button>
+  </div>
+
+  <div class="resultados-header" *ngIf="busquedaRealizada">
+    <p class="conteo-texto">
+      Se han encontrado <strong>{{ total }}</strong> documentos 
+      para la búsqueda: <em>"{{ criterioBusqueda }}"</em>
+    </p>
+  </div>
+
+  <div class="tabla-container-claro" *ngIf="viewActual === 'tabla' && busquedaRealizada">
+    <div class="card-blanca">
+      <table class="tabla-bootstrap" style="table-layout: fixed; width: 100%;"> <thead>
+          <tr>
+            <th style="width: 60px;">Código</th>
+            <th style="width: 55%;">Documento / Vista Previa</th>
+            <th style="width: 25%;">Entidad / Proyecto</th>
+            <th class="text-right" style="width: 15%;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of resultados; let i = index">
+            <td class="col-code">{{ ((paginaActual - 1) * porPagina) + i + 1 }}</td>
+  
+            <td style="overflow: hidden;"> <div class="doc-container-vertical" style="display: flex; flex-direction: column; gap: 12px; padding: 5px 0; width: 100%;">
+                
+              <div class="info-inline-row" style="display: flex; align-items: baseline; gap: 10px; width: 100%;">
+                <div class="label-concept" style="flex: 0 0 110px; display: flex; align-items: center; gap: 6px;">
+                  <i class="fas fa-file-pdf text-danger" style="font-size: 11px;"></i>
+                  <span style="font-size: 10px; font-weight: bold; color: #888; text-transform: uppercase;">Archivo:</span>
+                </div>
+                <div class="content-value" style="flex: 1; min-width: 0; display: flex; gap: 5px; align-items: baseline;">
+                  
+                  <span *ngIf="r.total_paginas" style="font-size: 12.5px; color: #2c3e50; white-space: nowrap;">
+                    <b style="font-weight: 800;">Pag. ({{ r.total_paginas }})</b>
+                  </span>
+              
+                  <span style="font-weight: 600; color: #2c3e50; font-size: 12.5px; word-break: break-all; display: block;" 
+                        [innerHTML]="r.nombre_archivo | highlight: texto"></span>
+                </div>
+              </div>
+  
+                <div class="info-inline-row" *ngIf="r.encontrado_en?.length > 0" style="display: flex; align-items: baseline; gap: 10px; width: 100%;">
+                  <div class="label-concept" style="flex: 0 0 110px; display: flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-search-location" style="color: #999; font-size: 10px;"></i>
+                    <span style="font-size: 10px; font-weight: bold; color: #888; text-transform: uppercase;">Aparece en:</span>
+                  </div>
+                  <div class="content-value" style="flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 4px;">
+                    <ng-container *ngFor="let campo of r.encontrado_en">
+                      <span class="badge-lugar-relacionado" style="font-size: 9px; padding: 1px 5px; background: #f1f3f5; border: 1px solid #ddd; border-radius: 3px; white-space: nowrap;">
+                        {{ nombresAmigables[campo] || campo.replace('_', ' ') }}
+                      </span>
+                    </ng-container>
+                  </div>
+                </div>
+  
+                <div class="info-inline-row" style="display: flex; align-items: flex-start; gap: 10px; width: 100%;">
+                  <div class="label-concept" style="flex: 0 0 110px; display: flex; align-items: center; gap: 6px; padding-top: 4px;">
+                    <i class="fas fa-align-left" style="color: #3498db; font-size: 10px;"></i>
+                    <span style="font-size: 10px; font-weight: bold; color: #888; text-transform: uppercase;">Contenido:</span>
+                  </div>
+                  <div class="content-value" style="flex: 1; min-width: 0;">
+                    <div class="snippet-box" *ngIf="r.fragmento" 
+                         style="background: #fdfdfd; padding: 8px; border: 1px solid #eee; border-left: 3px solid #3498db; border-radius: 4px; width: 100%; box-sizing: border-box;">
+                      <small style="color: #444; line-height: 1.4; display: block; font-size: 11px; word-break: break-word;">
+                        <span [innerHTML]="r.fragmento | highlight: texto"></span>
+                      </small>
+                    </div>
+                    <div *ngIf="!r.fragmento && texto">
+                      <small style="color: #bbb; font-style: italic; font-size: 10px;">Sin vista previa disponible</small>
+                    </div>
+                  </div>
+                </div>
+  
+              </div>
+            </td>
+  
+            <td>
+              <div class="proyecto-stack" style="display: flex; flex-direction: column; gap: 4px; overflow: hidden;">
+                <span class="badge-entidad" style="font-size: 10.5px; background: #e8f4fd; color: #2b5a83; padding: 2px 8px; border-radius: 4px; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
+                  <i class="fas fa-university"></i> {{ r.serie?.proyecto?.parent?.nombre || 'VALENCIA GAD' }}
+                </span>
+                <span class="badge-proyecto" style="font-size: 10.5px; background: #f0f0f0; color: #666; padding: 2px 8px; border-radius: 4px; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
+                  <i class="fas fa-folder-open"></i> {{ r.serie?.proyecto?.nombre || 'CONTABILIDAD' }}
+                </span>
+              </div>
+            </td>
+  
+            <td class="text-right">
+              <div style="display: flex; gap: 5px; justify-content: flex-end;">
+                <button class="btn btn-sm" 
+                        (click)="verInfo(r)" 
+                        title="Ver Detalles" 
+                        style="background-color: #e3f2fd; /* Azul muy clarito de fondo */
+                              color: #1976d2;           /* Azul fuerte para el texto */
+                              border: none;
+                              display: inline-flex;
+                              align-items: center;
+                              gap: 6px;
+                              padding: 4px 12px;
+                              border-radius: 6px;       /* Bordes suaves */
+                              font-weight: 700;
+                              text-transform: uppercase;
+                              font-size: 11px;
+                              cursor: pointer;">
+                  
+                  <i class="fas fa-eye" style="font-size: 13px; color: #1976d2;"></i>
+                  
+                  <span>Detalles</span>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" 
+                        (click)="verDocumento(r)" 
+                        title="Ver PDF" 
+                        style="width: 35px; height: 45px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+                  <img src="assets/icons/pdf.png" 
+                      alt="PDF" 
+                      style="width: 15px; height: auto;">
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+  
+      <div class="pagination-container" *ngIf="total > 0">
+        <div class="pagination-info">
+          Pág. <b>{{ paginaActual }}</b> de {{ Math.ceil(total / porPagina) }}
+        </div>
+      
+        <div class="pagination-controls">
+          <button class="page-btn-box" [disabled]="paginaActual === 1" (click)="buscar(paginaActual - 1)">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+      
+          <ng-container *ngFor="let p of paginasAmostrar">
+            <button *ngIf="p !== '...'" 
+                    class="page-btn-box" 
+                    [class.active]="p === paginaActual"
+                    (click)="buscar(p)">
+              {{ p }}
+            </button>
+      
+            <span *ngIf="p === '...'" class="page-dots">...</span>
+          </ng-container>
+      
+          <button class="page-btn-box" [disabled]="(paginaActual * porPagina) >= total" (click)="buscar(paginaActual + 1)">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="dashboard-container" *ngIf="viewActual !== 'tabla' && busquedaRealizada">
+    <section class="panel-izquierdo">
+      <div class="panel-header">
+        <span class="dot" [ngClass]="viewActual === 'grafo_sin' ? 'red' : 'green'"></span>
+        <div class="header-titles">
+          <h2>{{ viewActual === 'grafo_sin' ? 'BÚSQUEDA SIMPLE' : 'BÚSQUEDA CONTEXTUAL' }}</h2>
+          <span class="sub-text">
+            {{ viewActual === 'grafo_sin' ? 'lista plana • sin contexto' : 'lista dinámica • con fragmentos' }}
+          </span>
+        </div>
+      </div>
+    
+      <div class="scroll-area">
+        <div class="card-resultado" *ngFor="let r of resultados">
+          <div class="card-header-row">
+            <div class="titulo-wrapper">
+              <img src="assets/icons/file-icon.png" class="file-icon">
+              <h4 class="document-title" 
+                  [ngbTooltip]="r.nombre_archivo" 
+                  [innerHTML]="r.nombre_archivo | highlight: texto">
+              </h4>
+            </div>
+            <div class="card-acciones">
+              <button class="btn-circle" (click)="verInfo(r)"><i class="fas fa-eye"></i></button>
+              <button class="btn-circle pdf" (click)="verDocumento(r)"><img src="assets/icons/pdf.png"></button>
+            </div>
+          </div>
+          
+          <div class="tags-row">
+            <span class="tag">{{ r.serie?.proyecto?.parent?.nombre || 'VALENCIA GAD' }}</span>
+            <span class="tag">{{ r.serie?.proyecto?.nombre || 'CONTABILIDAD' }}</span>
+          </div>
+    
+          <div class="preview-text">
+            <ng-container *ngIf="viewActual === 'grafo_sin'">
+              <span>Documento disponible para visualización</span>
+            </ng-container>
+            <ng-container *ngIf="viewActual === 'grafo_con'">
+              <div class="snippet-limpio" [innerHTML]="obtenerContenidoLimpio(r) | highlight: texto"></div>
+            </ng-container>
+          </div>
+        </div>
+      </div>
+
+      <div class="mini-pagination-footer">
+        <div class="mini-info">
+          Pág. <strong>{{ paginaActual }}</strong> de {{ Math.ceil(total / porPagina) }}
+        </div>
+        
+        <div class="mini-controls">
+          <button class="btn-nav" [disabled]="paginaActual === 1" (click)="buscar(paginaActual - 1)">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          
+          <div class="current-indicator">{{ paginaActual }}</div>
+          
+          <button class="btn-nav" [disabled]="(paginaActual * porPagina) >= total" (click)="buscar(paginaActual + 1)">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"><span>VS</span></div>
+
+    <section class="panel-derecho">
+      <div class="panel-header">
+        <span class="dot green"></span>
+        <div class="header-titles">
+          <h2>GRAFO DE CONOCIMIENTO</h2>
+          <span class="sub-text">RiC • nodos y relaciones</span>
+        </div>
+      </div>
+      
+      <div [hidden]="viewActual !== 'grafo_sin'" #grafoContainer class="grafo-canvas"></div>
+      <div [hidden]="viewActual !== 'grafo_con'" #grafoContextoContainer class="grafo-canvas"></div>
+
+      <div class="grafo-leyenda">
+        <span class="item"><span class="dot yellow"></span> RECORD</span>
+        <span class="item"><span class="dot teal"></span> AGENTE</span>
+        <span class="item"><span class="dot purple"></span> FUNCIÓN</span>
+      </div>
+    </section>
+  </div>
+</div>

@@ -1,0 +1,129 @@
+
+
+<button class="btn btn-light-primary mb-3" (click)="goBack()">
+  <i class="fa fa-arrow-left me-2"></i>
+  Regresar
+</button>
+
+
+<div class="ruta-escalera">
+  <div class="nivel-escalera" *ngFor="let item of jerarquia; let i = index"
+       [style.marginLeft.px]="i * 25">
+
+    <i class="fa fa-folder text-warning me-2"></i>
+    <span>{{ item.nombre }}</span>
+
+  </div>
+</div>
+
+
+
+
+
+
+<!-- Botón para abrir el modal -->
+
+
+
+<!-- Tabla de subsecciones -->
+<div class="card">
+  <div class="card-header border-0 pt-6">
+    <div class="card-title">
+      <div class="d-flex align-items-center position-relative my-1">
+        <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-5"></i>
+        <input
+          type="text"
+          [(ngModel)]="search"
+          (keyup.enter)="loadSubsecciones()"
+          name="search"
+          class="form-control form-control-solid w-250px ps-12"
+          placeholder="Buscar Serie"
+        />
+      </div>
+    </div>
+
+    <span class="spinner-border spinner-border-sm align-middle ms-2" *ngIf="isLoading$ | async"></span>
+
+
+      <div class="card-toolbar">
+      <div class="d-flex justify-content-end">
+         
+        <button *ngIf="puedeCrearSerie" type="button" class="btn btn-primary" (click)="createSerie(idSubseccion)">+ Agregar Serie Documental</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-body pt-0">
+    <div class="table-responsive" *ngIf="SUBSECCIONES && SUBSECCIONES.length > 0; else noDataTemplate">
+        <table class="table align-middle table-row-dashed fs-6 gy-5">
+            <thead>
+                <tr class="text-start text-gray-500 fw-bold fs-7 text-uppercase gs-0">
+                    <th class="min-w-50px">#</th> 
+                    <th class="min-w-150px">Serie</th>
+                    <th class="min-w-125px">Estado</th>
+                    <th class="min-w-150px">Estado Información</th>
+                    <th class="min-w-150px">Estado Documentación</th>
+                    <th class="min-w-150px">Fecha de Registro</th>
+                    <th class="text-end min-w-100px">Acciones</th>
+                </tr>
+            </thead>
+          
+            <tbody class="fw-semibold text-gray-600">
+                <tr *ngFor="let sub of SUBSECCIONES; let j = index">
+                    <td>{{ getIndex(j) }}</td> 
+                    <td>{{ sub.nombre }}</td>
+                    <td>
+                        <span class="badge badge-light-success" *ngIf="sub.estado == 1">Activo</span>
+                        <span class="badge badge-light-danger" *ngIf="sub.estado == 0">Inactivo</span>
+                    </td>
+                    <td>
+                        <span class="badge badge-light-success" *ngIf="sub.estado_informacion === 'Completa'">Completa</span>
+                        <span class="badge badge-light-warning" *ngIf="sub.estado_informacion === 'Incompleta'">Incompleta</span>
+                        <span class="badge badge-light-danger" *ngIf="sub.estado_informacion === 'No tiene información' || !sub.estado_informacion">Sin registro</span>
+                    </td>
+                    <td>
+                        <span class="badge badge-light-success" *ngIf="sub.estado_documentacion === 'Tiene documentación'">Cargada</span>
+                        <span class="badge badge-light-danger" *ngIf="sub.estado_documentacion === 'No tiene documentación'">No cargada</span>
+                        <span class="badge badge-light-secondary" *ngIf="!sub.estado_documentacion">Sin registro</span>
+                    </td>
+                    <td>{{ sub.created_at | date:'dd/MM/yyyy' }}</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-light-info me-1" (click)="verDocumentacion(sub)">
+                            <i class="ki-duotone ki-folder fs-5"><span class="path1"></span><span class="path2"></span></i>
+                            Subir Doc.
+                        </button>
+                        <button class="btn btn-sm btn-light-warning" (click)="crearSubSerie(sub)">
+                            <i class="ki-duotone ki-stack fs-5"></i> Sub Serie ->
+                        </button>
+                        <a *ngIf="puedeEditarSerie" (click)="editarSerie(sub)" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1">
+                            <i class="ki-duotone ki-pencil fs-2"><span class="path1"></span><span class="path2"></span></i>
+                        </a>
+                        <a *ngIf="puedeEliminarSerie" (click)="deleteSerie(sub)" class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm">
+                            <i class="ki-duotone ki-trash fs-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i>
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <ngb-pagination
+            [collectionSize]="totalPages"
+            [(page)]="currentPage"
+            [pageSize]="25"
+            [rotate]="true"
+            [boundaryLinks]="true"
+            (pageChange)="loadSubsecciones($event)"
+        ></ngb-pagination>
+    </div>
+
+    <ng-template #noDataTemplate>
+        <div class="alert alert-dismissible bg-light-warning d-flex flex-column flex-sm-row p-5 mb-10 mt-10">
+            <i class="ki-duotone ki-information-5 fs-2hx text-warning me-4 mb-5 mb-sm-0"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
+            <div class="d-flex flex-column pe-0 pe-sm-10">
+                <h4 class="fw-semibold">Sin registros disponibles</h4>
+                <span>No se encontraron series en esta sección o no tienes los permisos necesarios para visualizarlas.</span>
+            </div>
+        </div>
+    </ng-template>
+</div>
+</div>

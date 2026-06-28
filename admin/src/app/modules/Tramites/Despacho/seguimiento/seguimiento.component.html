@@ -1,0 +1,54 @@
+<div class="modal-header py-3">
+  <div class="d-flex flex-column w-100">
+    <h3 class="modal-title fw-bold mb-2">{{ getTituloTramite() }}</h3>
+    
+    <!-- Primera fila de información -->
+    <div class="d-flex flex-wrap gap-4 fs-8 text-gray-600 mb-2">
+      <div><span class="fw-semibold text-gray-800">Nº Trámite:</span> {{ getNroTramite() }}</div>
+      <div><span class="fw-semibold text-gray-800">Nº Documento:</span> {{ getNroDocumento() }}</div>
+      <div><span class="fw-semibold text-gray-800">Fecha Ingreso:</span> {{ getFechaIngreso() }}</div>
+    </div>
+    
+    <!-- Segunda fila de información -->
+    <div class="d-flex flex-wrap gap-4 fs-8 text-gray-600">
+      <div><span class="fw-semibold text-gray-800">Ciudadano:</span> {{ getClienteLabel() }}</div>
+      <div><span class="fw-semibold text-gray-800">RUC/CI:</span> {{ getCedulaRucLabel() }}</div>
+      <div class="text-truncate"><span class="fw-semibold text-gray-800">Asunto:</span> {{ getAsuntoLabel() }}</div>
+    </div>
+  </div>
+  <button type="button" class="btn btn-sm btn-icon btn-active-light-primary" (click)="cerrarModal()">
+    <i class="ki-duotone ki-cross fs-2">
+      <span class="path1"></span><span class="path2"></span>
+    </i>
+  </button>
+</div>
+
+<div class="modal-body">
+  <div class="table-responsive">
+    <table class="table table-row-dashed align-middle fs-8">
+      <thead>
+        <tr class="text-start text-gray-500 fw-bold text-uppercase bg-light">
+          <th class="min-w-200px">Asunto</th>
+          <th class="min-w-150px">Fecha Ingreso</th>
+          <th class="min-w-150px">Número Documento</th>
+          <th class="min-w-150px">Tipo Documento</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let s of seguimientos">
+          <td>{{ s.asunto }}</td>
+          <td>{{ s.fecha_ingreso }}</td>
+          <td>{{ s.num_documento }}</td>
+          <td>{{ s.tipo_documento }}</td>
+        </tr>
+        <tr *ngIf="!seguimientos?.length">
+          <td colspan="4" class="text-center text-muted py-6">Sin registros de movimientos</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal-footer py-3">
+  <button type="button" class="btn btn-light" (click)="cerrarModal()">Cerrar</button>
+</div>

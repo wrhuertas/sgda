@@ -1,0 +1,1591 @@
+/* Contenedor principal */
+.busqueda-page {
+  width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem 1rem;
+}
+
+/* Card del Buscador */
+.busqueda-card {
+  width: 100%;
+  max-width: 750px;
+  background: #fff;
+  padding: 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.titulo {
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 9999px;
+  padding: 0.5rem 1.2rem;
+  gap: 10px;
+  transition: box-shadow 0.2s ease;
+}
+
+.search-box:focus-within {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+  border-color: #2563eb;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 1.1rem;
+  color: #1e293b;
+}
+
+.search-btn {
+  background-color: #2563eb;
+  border: none;
+  color: white;
+  padding: 0.6rem 1.5rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.advanced-btn {
+  padding: 8px 14px;
+  background-color: #6c63ff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* Card de Resultados */
+.resultados-card {
+  width: 100%;
+  max-width: 1400px;
+  background: #fff;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  animation: fadeIn 0.3s ease-in-out;
+}
+/* --- TABLA ESTILO EXCEL REFINADA --- */
+.tabla-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #d1d5db;
+  border-radius: 4px; /* Bordes menos redondeados para look de sistema */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.tabla-excel {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  min-width: 800px; /* Evita que se colapse en pantallas chicas */
+}
+
+.tabla-excel th {
+  background: #eef2f7;
+  padding: 10px 15px;
+  text-align: left;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #475569;
+  border: 1px solid #d1d5db;
+}
+
+.tabla-excel td {
+  padding: 8px 15px;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
+  font-size: 0.85rem;
+  vertical-align: middle;
+  /* Si el texto es muy largo, lo corta con puntos suspensivos */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Ajuste de anchos proporcionales */
+.tabla-excel th:nth-child(1) { width: 22%; } /* Sección */
+.tabla-excel th:nth-child(2) { width: 18%; } /* Subsección */
+.tabla-excel th:nth-child(3) { width: 20%; } /* Serie */
+.tabla-excel th:nth-child(4) { width: 15%; } /* Subserie */
+.tabla-excel th:nth-child(5) { width: 150px; } /* Acciones fija */
+
+.acciones {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: none !important; /* Quita el borde interno del flex */
+}
+
+.btn-info {
+  background: #3498db;
+  color: white;
+  padding: 5px 12px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.btn-info:hover {
+  background: #2980b9;
+}
+
+.tabla-excel tbody tr:hover {
+  background: #f1f5f9;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+
+
+
+
+/* ==========================================================
+   CONTENEDOR PRINCIPAL (SPLIT SCREEN)
+   ========================================================== */
+   .dashboard-container {
+    display: flex;
+    background-color: #0b0e14; /* Fondo ultra oscuro */
+    height: 100vh;
+    width: 100%;
+    color: white;
+    overflow: hidden;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+  
+  /* ==========================================================
+     PANELES (IZQUIERDO Y DERECHO)
+     ========================================================== */
+  .panel-izquierdo, 
+  .panel-derecho {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  .panel-izquierdo {
+    border-right: 1px solid #1a202c;
+    background-color: #0f1218;
+  }
+  
+  /* Área con Scroll para las tarjetas */
+  .scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    scrollbar-width: thin;
+    scrollbar-color: #2d3748 #0f1218;
+  }
+  
+  /* Cabeceras de los paneles */
+  .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 20px;
+    border-bottom: 1px solid #1a202c;
+    background: #0b0e14;
+  }
+  
+  .panel-header h2 {
+    font-size: 0.75rem;
+    letter-spacing: 1.5px;
+    margin: 0;
+    color: #cbd5e0;
+    text-transform: uppercase;
+  }
+  
+  .sub-text {
+    color: #4a5568;
+    font-size: 0.65rem;
+    margin-left: auto;
+  }
+  
+  /* ==========================================================
+     TARJETAS DE RESULTADOS (DISEÑO COMPACTO)
+     ========================================================== */
+  .card-resultado {
+    background-color: #1a202c;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: all 0.2s ease;
+    width: calc(100% - 10px); /* Evita chocar con el scroll */
+  }
+  
+  .card-resultado:hover {
+    border-color: #4a5568;
+    background-color: #232a37;
+    transform: translateY(-2px);
+  }
+  
+  /* Fila Superior: Título e Iconos */
+  .card-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  
+  .titulo-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0; /* Necesario para que el truncado de texto funcione */
+  }
+  
+  .file-icon {
+    width: 20px;
+    height: auto;
+    flex-shrink: 0;
+  }
+  
+  .document-title {
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Botones de Acción Circulares */
+  .card-acciones {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  
+  /* Botones de Acción Circulares - Tamaño aumentado */
+.btn-circle {
+  width: 40px;  /* Antes 32px */
+  height: 40px; /* Antes 32px */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid #4a5568;
+  color: #a0aec0;
+  transition: all 0.2s ease;
+  padding: 0;
+  cursor: pointer;
+}
+
+.btn-circle:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-color: #fff;
+}
+
+/* Ajuste del icono PDF interno */
+.btn-circle.pdf img {
+  width: 20px; /* Antes 14px - para que se vea bien en el botón de 40px */
+  height: auto;
+}
+
+/* Ajuste de los SVG internos (ojo) */
+.btn-circle svg {
+  display: block;
+  width: 20px;  /* Antes 16px */
+  height: 20px; /* Antes 16px */
+}
+  
+  /* Fila de Etiquetas (Tags) */
+  .tags-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  
+  .tag {
+    background-color: #2d3748;
+    color: #a0aec0;
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  
+  /* Texto de Previsualización */
+  .preview-text {
+    color: #4a5568;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    margin-top: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  /* ==========================================================
+     DIVISOR CENTRAL Y GRAFO
+     ========================================================== */
+  .divider {
+    width: 1px;
+    background-color: #1a202c;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .divider span {
+    background: #1a202c;
+    color: #4a5568;
+    font-size: 0.6rem;
+    padding: 4px;
+    border-radius: 3px;
+    z-index: 5;
+  }
+  
+  .grafo-canvas {
+    flex: 1;
+    background-color: #0b0e14;
+    background-image: radial-gradient(#1a202c 1px, transparent 1px);
+    background-size: 25px 25px; /* Puntos de fondo */
+    position: relative;
+  }
+  
+  .grafo-leyenda {
+    padding: 15px 20px;
+    display: flex;
+    gap: 20px;
+    background: #0f1218;
+    border-top: 1px solid #1a202c;
+  }
+  
+  .leyenda-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.65rem;
+    color: #718096;
+    text-transform: uppercase;
+    font-weight: bold;
+  }
+  
+  /* Puntos de colores */
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .red { background: #f56565; }
+  .green { background: #48bb78; }
+  .yellow { background: #ecc94b; }
+  .teal { background: #38b2ac; }
+  .purple { background: #9f7aea; }
+
+
+  .grafo-canvas {
+    flex: 1;
+    width: 100%;
+    height: 100%; /* Muy importante para que se renderice */
+    background-color: #0b0e14;
+    background-image: radial-gradient(#1a202c 1px, transparent 1px);
+    background-size: 25px 25px;
+  }
+  
+  /* Opcional: Para que el texto del nodo se vea bien sobre el fondo oscuro */
+  canvas {
+    outline: none;
+  }
+
+
+  /* En tu archivo .css o .scss */
+  #grafoContainer {
+    width: 100%;
+    min-height: 600px; /* Dale un alto fijo para probar */
+    height: 100%;
+    display: block !important;
+}
+
+/* Fuerza a los elementos internos de cytoscape a ocupar todo */
+#grafoContainer > div {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+
+
+
+.btn-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid #4a5568;
+  color: #a0aec0; /* Color gris suave */
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.btn-circle:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff; /* Se pone blanco al pasar el mouse */
+  border-color: #fff;
+}
+
+.btn-circle svg {
+  display: block;
+}
+
+
+
+
+
+  /* ==========================================================
+     TARJETAS DE RESULTADOS (DISEÑO COMPACTO)
+     ========================================================== */
+     .card-resultado {
+      background-color: #1a202c;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border: 1px solid transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.2s ease;
+      width: calc(100% - 10px); /* Evita chocar con el scroll */
+    }
+    
+    .card-resultado:hover {
+      border-color: #4a5568;
+      background-color: #232a37;
+      transform: translateY(-2px);
+    }
+    
+    /* Fila Superior: Título e Iconos */
+    .card-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    
+    .titulo-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 0; /* Necesario para que el truncado de texto funcione */
+    }
+    
+    .file-icon {
+      width: 20px;
+      height: auto;
+      flex-shrink: 0;
+    }
+    
+    .document-title {
+      color: #ffffff;
+      font-size: 0.95rem;
+      font-weight: 500;
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    /* Botones de Acción Circulares */
+    .card-acciones {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    
+    /* Botones de Acción Circulares - Tamaño aumentado */
+  .btn-circle {
+    width: 40px;  /* Antes 32px */
+    height: 40px; /* Antes 32px */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid #4a5568;
+    color: #a0aec0;
+    transition: all 0.2s ease;
+    padding: 0;
+    cursor: pointer;
+  }
+  
+  .btn-circle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-color: #fff;
+  }
+  
+  /* Ajuste del icono PDF interno */
+  .btn-circle.pdf img {
+    width: 20px; /* Antes 14px - para que se vea bien en el botón de 40px */
+    height: auto;
+  }
+  
+  /* Ajuste de los SVG internos (ojo) */
+  .btn-circle svg {
+    display: block;
+    width: 20px;  /* Antes 16px */
+    height: 20px; /* Antes 16px */
+  }
+    
+    /* Fila de Etiquetas (Tags) */
+    .tags-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    
+    .tag {
+      background-color: #2d3748;
+      color: #a0aec0;
+      font-size: 0.65rem;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    
+    /* Texto de Previsualización */
+    .preview-text {
+      color: #4a5568;
+      font-size: 0.8rem;
+      line-height: 1.4;
+      margin-top: 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    
+    /* ==========================================================
+       DIVISOR CENTRAL Y GRAFO
+       ========================================================== */
+    .divider {
+      width: 1px;
+      background-color: #1a202c;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .divider span {
+      background: #1a202c;
+      color: #4a5568;
+      font-size: 0.6rem;
+      padding: 4px;
+      border-radius: 3px;
+      z-index: 5;
+    }
+    
+    .grafo-canvas {
+      flex: 1;
+      background-color: #0b0e14;
+      background-image: radial-gradient(#1a202c 1px, transparent 1px);
+      background-size: 25px 25px; /* Puntos de fondo */
+      position: relative;
+    }
+    
+    .grafo-leyenda {
+      padding: 15px 20px;
+      display: flex;
+      gap: 20px;
+      background: #0f1218;
+      border-top: 1px solid #1a202c;
+    }
+    
+    .leyenda-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.65rem;
+      color: #718096;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+    
+    /* Puntos de colores */
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .red { background: #f56565; }
+    .green { background: #48bb78; }
+    .yellow { background: #ecc94b; }
+    .teal { background: #38b2ac; }
+    .purple { background: #9f7aea; }
+  
+  
+    .grafo-canvas {
+      flex: 1;
+      width: 100%;
+      height: 100%; /* Muy importante para que se renderice */
+      background-color: #0b0e14;
+      background-image: radial-gradient(#1a202c 1px, transparent 1px);
+      background-size: 25px 25px;
+    }
+    
+    /* Opcional: Para que el texto del nodo se vea bien sobre el fondo oscuro */
+    canvas {
+      outline: none;
+    }
+  
+  
+    /* En tu archivo .css o .scss */
+    #grafoContainer {
+      width: 100%;
+      min-height: 600px; /* Dale un alto fijo para probar */
+      height: 100%;
+      display: block !important;
+  }
+  
+  /* Fuerza a los elementos internos de cytoscape a ocupar todo */
+  #grafoContainer > div {
+    width: 100% !important;
+    height: 100% !important;
+  }
+  
+  
+  
+  
+  .btn-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid #4a5568;
+    color: #a0aec0; /* Color gris suave */
+    transition: all 0.2s ease;
+    padding: 0;
+  }
+  
+  .btn-circle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff; /* Se pone blanco al pasar el mouse */
+    border-color: #fff;
+  }
+  
+  .btn-circle svg {
+    display: block;
+  }
+
+
+  /* ==========================================================
+   DISEÑO DE TABLA CLARA (ESTILO HABITACIONES)
+   ========================================================== */
+.tabla-container-claro {
+  padding: 20px;
+  background-color: #f8f9fa; /* Fondo gris muy claro para resaltar la tabla blanca */
+  border-radius: 8px;
+  margin-top: 10px;
+
+  .card-blanca {
+    background: white;
+    border-radius: 4px;
+    box-shadow: 0 1px 15px rgba(0,0,0,0.05);
+    border: 1px solid #e3e6f0;
+    overflow: hidden;
+  }
+
+  .tabla-bootstrap {
+    width: 100%;
+    border-collapse: collapse;
+    
+    thead th {
+      background-color: #fff;
+      color: #333;
+      font-weight: 700;
+      padding: 15px;
+      text-align: left;
+      border-bottom: 2px solid #e3e6f0;
+      font-size: 0.85rem;
+    }
+
+    tbody td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #f2f2f2;
+      color: #4e73df; /* Azul estilo link para los datos */
+      font-size: 0.9rem;
+      vertical-align: middle;
+    }
+
+    .doc-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #5a5c69;
+    }
+
+    .mini-icon { width: 18px; height: auto; }
+
+    /* Botones estilo Imagen 2 */
+    .btn-reserva-azul {
+      background-color: #4e73df;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-left: 5px;
+      &:hover { background-color: #2e59d9; }
+    }
+
+    .btn-reserva-rojo {
+      background-color: #e74a3b;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-left: 5px;
+      &:hover { background-color: #be2617; }
+    }
+
+    /* Tags en la tabla */
+    .badge-tag {
+      background: #eaecf4;
+      color: #333;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      margin-right: 4px;
+      text-transform: uppercase;
+      &.secondary { background: #f8f9fc; border: 1px solid #ddd; }
+    }
+  }
+
+  .text-right { text-align: right; }
+}
+
+
+
+
+
+/* ==========================================================
+   BOTONES DE NAVEGACIÓN (TABS MODERNAS)
+   ========================================================== */
+   .view-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0; /* Sin espacio para que parezcan una sola barra */
+    margin: 25px 0;
+    background: #f1f3f5;
+    padding: 5px;
+    border-radius: 10px;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    border: 1px solid #e9ecef;
+  
+    button {
+      border: none;
+      background: transparent;
+      padding: 10px 25px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #6c757d;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+  
+      i {
+        font-size: 1rem;
+      }
+  
+      /* Estado Activo: El botón resalta */
+      &.active {
+        background: #ffffff;
+        color: #4e73df; /* Azul de tu tabla */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+  
+      &:hover:not(.active) {
+        color: #333;
+        background: rgba(255, 255, 255, 0.5);
+      }
+    }
+  }
+
+
+  .snippet-contexto {
+    background: #fdfdfd;
+    border-left: 3px solid #2e59d9;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+  
+    small {
+      display: block;
+      line-height: 1.5; // Espacio entre líneas de hallazgos
+      color: #333;
+    }
+  
+    .badge-source {
+      color: #2e59d9;
+      font-weight: bold;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      margin-right: 4px;
+    }
+  }
+
+
+
+
+  .preview-text {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6); // Color suave para no competir con el título
+    line-height: 1.4;
+    
+    .snippet-limpio {
+      // Estilo específico para los fragmentos en el panel oscuro
+      font-style: italic;
+      display: -webkit-box;
+      -webkit-line-clamp: 2; // Máximo 2 líneas para no deformar la card
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  }
+  
+  // Resaltado para fondo oscuro
+  ::ng-deep .preview-text mark {
+    background-color: rgba(255, 235, 59, 0.3) !important; // Amarillo sutil
+    color: #fff !important;
+    font-weight: bold;
+  }
+
+
+
+  .pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background: #ffffff;
+    border-top: 1px solid #edf2f7;
+    border-radius: 0 0 12px 12px;
+  
+    .pagination-info {
+      font-size: 0.9rem;
+      color: #718096;
+  
+      .current, .total {
+        font-weight: 700;
+        color: #2d3748;
+      }
+    }
+  
+    .pagination-controls {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+  
+      .pag-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border: 1px solid #e2e8f0;
+        background: white;
+        color: #4a5568;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        cursor: pointer;
+  
+        i {
+          font-size: 0.75rem;
+        }
+  
+        &:hover:not(:disabled) {
+          border-color: #3182ce;
+          color: #3182ce;
+          background: #ebf8ff;
+          transform: translateY(-1px);
+        }
+  
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+          background: #f7fafc;
+        }
+      }
+  
+      .page-indicator {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          border-radius: 6px;
+          font-size: 0.85rem;
+          font-weight: 600;
+          
+          &.active {
+              background: #3182ce;
+              color: white;
+              box-shadow: 0 4px 6px rgba(49, 130, 206, 0.2);
+          }
+      }
+    }
+  }
+  
+  // Adaptación para móviles
+  @media (max-width: 600px) {
+    .pagination-container {
+      flex-direction: column;
+      gap: 1rem;
+      text-align: center;
+    }
+  }
+
+
+
+  .pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background: #ffffff;
+    border-top: 1px solid #edf2f7;
+    border-radius: 0 0 12px 12px;
+  
+    .pagination-info {
+      font-size: 0.9rem;
+      color: #718096;
+      .current, .total { font-weight: 700; color: #2d3748; }
+    }
+  
+    .pagination-controls {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+  
+      .pag-pages {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+  
+      .pag-elipsis {
+        color: #cbd5e0;
+        font-weight: bold;
+        padding: 0 4px;
+      }
+  
+      .pag-btn, .page-indicator {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #e2e8f0;
+        background: white;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        cursor: pointer;
+      }
+  
+      .pag-btn {
+        padding: 0.5rem 1rem;
+        color: #4a5568;
+        font-size: 0.85rem;
+        font-weight: 500;
+        &:hover:not(:disabled) {
+          border-color: #3182ce;
+          color: #3182ce;
+          background: #ebf8ff;
+        }
+      }
+  
+      .page-indicator {
+        width: 32px;
+        height: 32px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #4a5568;
+  
+        &:hover:not(.active) {
+          background: #f7fafc;
+          border-color: #cbd5e0;
+        }
+  
+        &.active {
+          background: #3182ce;
+          color: white;
+          border-color: #3182ce;
+          box-shadow: 0 4px 6px rgba(49, 130, 206, 0.2);
+        }
+      }
+  
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background: #f7fafc;
+      }
+    }
+  }
+
+
+
+
+  /////////////// BOTONES DE LA TABAL DETALLES Y PDF//////////////////////
+  .acciones-container {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  
+  .btn-accion {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    background: transparent;
+  
+    i {
+      font-size: 0.9rem;
+    }
+  
+    // Estilo específico para "Detalles" (Azul elegante)
+    &.info {
+      color: #3182ce;
+      background: #ebf8ff;
+      border-color: #bee3f8;
+  
+      &:hover {
+        background: #3182ce;
+        color: white;
+        border-color: #3182ce;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(49, 130, 206, 0.2);
+      }
+    }
+  
+    // Estilo específico para "PDF" (Rojo elegante)
+    &.pdf {
+      color: #e53e3e;
+      background: #fff5f5;
+      border-color: #fed7d7;
+  
+      &:hover {
+        background: #e53e3e;
+        color: white;
+        border-color: #e53e3e;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(229, 62, 62, 0.2);
+      }
+    }
+  
+    &:active {
+      transform: translateY(0);
+    }
+  }
+  
+  // Opcional: Si quieres que en pantallas pequeñas solo se vea el icono
+  @media (max-width: 1200px) {
+    .btn-accion span {
+      display: none;
+    }
+    .btn-accion {
+      padding: 8px;
+      border-radius: 50%; // Los hace circulares si no hay texto
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+  .proyecto-stack {
+    display: flex;
+    flex-direction: column; // Apila uno arriba del otro
+    gap: 4px; // Espacio pequeño entre los dos
+    align-items: flex-start; // Alinea a la izquierda
+  
+    .badge-entidad {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #4a5568;
+      background: #edf2f7; // Gris muy suave para la entidad
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      
+      i {
+        margin-right: 4px;
+        color: #718096;
+      }
+    }
+  
+    .badge-proyecto {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #2b6cb0; // Azul para resaltar el proyecto
+      background: #ebf8ff;
+      border: 1px solid #bee3f8;
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+  
+      i {
+        margin-right: 4px;
+      }
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  .mini-pagination-footer {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    background: #f8fafc; // Un gris muy sutil para diferenciarlo del área de scroll
+    border-top: 1px solid #e2e8f0;
+    border-bottom-left-radius: 12px; // Si tu panel tiene bordes redondeados
+  
+    .mini-info {
+      font-size: 0.85rem;
+      color: #64748b;
+      strong { color: #1e293b; }
+    }
+  
+    .mini-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+  
+      .btn-nav {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        background: white;
+        color: #475569;
+        transition: all 0.2s ease;
+        cursor: pointer;
+  
+        &:hover:not(:disabled) {
+          background: #3b82f6; // Azul vibrante al pasar el mouse
+          color: white;
+          border-color: #3b82f6;
+          transform: translateY(-1px);
+        }
+  
+        &:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+          background: #f1f5f9;
+        }
+  
+        i { font-size: 0.75rem; }
+      }
+  
+      .current-indicator {
+        min-width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #eff6ff; // Fondo azul claro
+        color: #2563eb;     // Texto azul fuerte
+        font-weight: 700;
+        font-size: 0.9rem;
+        border-radius: 8px;
+        border: 1px solid #dbeafe;
+      }
+    }
+  }
+
+
+
+  .doc-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .nombre-principal {
+    font-weight: 500;
+    color: #2c3e50;
+    display: block;
+  }
+  
+  .lugares-relacionados {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    margin-top: 2px;
+  }
+  
+  .text-muted-mini {
+    font-size: 0.75rem;
+    color: #7f8c8d;
+    font-style: italic;
+  }
+  
+  .badge-campo {
+    background-color: #ebf5fb; /* Un azul muy suave */
+    color: #2980b9;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid #d6eaf8;
+    text-transform: capitalize;
+  }
+
+  /* Contenedor principal */
+.lugares-relacionados {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column; /* Cambia a 'row' si prefieres todo en una sola línea */
+  gap: 4px;
+}
+
+.etiqueta-titulo {
+  font-size: 11px;
+  color: #7f8c8d;
+  font-style: italic;
+}
+
+/* Contenedor de las bolitas/etiquetas */
+.badges-container {
+  display: flex;
+  flex-wrap: wrap; /* Esto evita que se amontonen */
+  gap: 6px;       /* Espacio entre etiquetas */
+}
+
+/* Estilo individual de cada coincidencia */
+.badge-lugar {
+  background-color: #ebf5fb; 
+  color: #2980b9;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 10px;
+  border-radius: 50px; /* Forma de píldora */
+  border: 1px solid #d6eaf8;
+  text-transform: uppercase;
+  white-space: nowrap; /* Evita que una etiqueta se parta en dos líneas */
+}
+
+
+.snippet-contexto span ::ng-deep .highlight {
+  background-color: #fff3cd; /* Color amarillito para el resaltado */
+  padding: 0 2px;
+  border-radius: 2px;
+  font-weight: bold;
+}
+
+
+
+/* Contenedor vertical */
+.doc-main-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+/* Fila del título */
+.doc-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.nombre-archivo {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 0.95rem;
+}
+
+/* Caja del fragmento */
+.doc-snippet-box {
+  background-color: #fcfcfc;
+  border-left: 3px solid #3498db; /* Azul para resaltar el contenido */
+  padding: 6px 10px;
+  margin-left: 22px;
+  border-radius: 0 4px 4px 0;
+}
+.doc-snippet-box p {
+  margin: 0;
+  font-size: 11.5px;
+  color: #555;
+  line-height: 1.4;
+}
+
+/* Etiquetas de ubicación */
+.doc-locations {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 22px;
+}
+.loc-label {
+  font-size: 10px;
+  font-weight: bold;
+  color: #95a5a6;
+  text-transform: uppercase;
+}
+.loc-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+
+.badge-lugar-relacionado {
+  background: #f1f3f5;
+  color: #495057;
+  border: 1px solid #dee2e6;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+
+.advanced-btn {
+  background-color: #424242; /* Gris oscuro */
+  color: #ffffff;            /* Texto blanco para contraste */
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.advanced-btn:hover {
+  background-color: #333333; /* Un tono más oscuro al pasar el mouse */
+}
+
+
+
+
+
+.pagination-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+  user-select: none;
+}
+
+/* La "píldora" gris de fondo */
+.numbers-pill {
+  background-color: #f1f3f5; /* Gris claro de fondo */
+  border-radius: 50px;       /* Forma ovalada */
+  padding: 4px 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Botones de números */
+.num-btn {
+  border: none;
+  background: transparent;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 600;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Estado Activo (Naranja) */
+.num-btn.active {
+  background-color: #f69231; /* Naranja de la foto */
+  color: white !important;
+  box-shadow: 0 3px 8px rgba(246, 146, 49, 0.4);
+}
+
+.num-btn:hover:not(.active) {
+  background-color: #e9ecef;
+}
+
+/* Estilo de los puntos suspensivos */
+.dots {
+  color: #adb5bd;
+  font-weight: bold;
+  padding: 0 4px;
+  font-size: 14px;
+}
+
+/* Botones de flechas (Anterior/Siguiente) */
+.nav-btn {
+  border: none;
+  background: #ffffff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #495057;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  transition: transform 0.2s;
+}
+
+.nav-btn:hover:not(:disabled) {
+  transform: scale(1.1);
+  color: #f69231;
+}
+
+.nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+
+.pagination-container {
+  display: flex;
+  justify-content: space-between; /* Separa el texto de los botones */
+  align-items: center;
+  padding: 10px 15px;
+  background-color: #fff;
+}
+
+.pagination-info {
+  font-size: 14px;
+  color: #555;
+}
+
+.pagination-info b {
+  color: #000;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Espacio entre cuadritos */
+}
+
+/* Botones cuadrados */
+.page-btn-box {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dee2e6;
+  background-color: #fff;
+  border-radius: 8px; /* Bordes ligeramente redondeados como en la imagen */
+  color: #007bff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+/* Botón Activo (Azul clarito con número azul fuerte) */
+.page-btn-box.active {
+  background-color: #ebf5ff; 
+  border-color: #007bff;
+  color: #007bff;
+}
+
+.page-btn-box:hover:not(:disabled):not(.active) {
+  background-color: #f8f9fa;
+  border-color: #ced4da;
+}
+
+.page-btn-box:disabled {
+  color: #adb5bd;
+  cursor: not-allowed;
+  background-color: #fff;
+}
+
+.page-dots {
+  color: #6c757d;
+  padding: 0 5px;
+  font-weight: bold;
+}
+
+/* Iconos de flecha más pequeños */
+.page-btn-box i {
+  font-size: 12px;
+}
+

@@ -1,0 +1,123 @@
+<div class="modal-header">
+  <h5 class="modal-title">Vista del Expediente</h5>
+  <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
+</div>
+
+<div class="modal-body pretty-body">
+  <div class="toolbar shadow-sm">
+    <div class="left">
+      <div class="btn-group btn-group-sm" role="group" aria-label="Controles de zoom">
+        <button type="button" class="btn btn-outline-secondary" (click)="zoomMenos()" [disabled]="!paginaMostrada" title="Alejar">
+          <i class="fa fa-search-minus"></i>
+        </button>
+        <button type="button" class="btn btn-outline-secondary" (click)="resetZoom()" [disabled]="!paginaMostrada" title="Restablecer 100%">
+          100%
+        </button>
+        <button type="button" class="btn btn-outline-secondary" (click)="zoomMas()" [disabled]="!paginaMostrada" title="Acercar">
+          <i class="fa fa-search-plus"></i>
+        </button>
+      </div>
+    </div>
+    <div class="right">
+      <div class="btn-group btn-group-sm" role="group" aria-label="Limpieza por recorte">
+        <button type="button" class="btn" [ngClass]="recorteActivo ? 'btn-danger' : 'btn-outline-danger'"
+                (click)="toggleRecorte()" [disabled]="!paginaMostrada" title="Limpieza por selección">
+          <i class="fa fa-eraser"></i>
+          <span class="d-none d-sm-inline">{{ recorteActivo ? 'Cancelar' : 'Limpiar' }}</span>
+        </button>
+        <button type="button" class="btn btn-outline-secondary" (click)="retroceder()" [disabled]="!canUndo" title="Deshacer">
+          <i class="fa fa-rotate-left"></i>
+        </button>
+      </div>
+      <button class="btn btn-warning btn-sm" (click)="ingresarSeparadores()" [disabled]="!totalPaginas" title="Ingresar separadores">
+        <i class="fa fa-bookmark"></i>
+        <span class="d-none d-sm-inline">Separadores</span>
+      </button>
+      <button class="btn btn-primary btn-sm" (click)="imprimirPaginaActual()" [disabled]="!paginaMostrada" title="Imprimir página actual">
+        <i class="fa fa-print"></i>
+        <span class="d-none d-sm-inline">Imprimir</span>
+      </button>
+      <button class="btn btn-success btn-sm" (click)="guardarCambios()" [disabled]="!paginaMostrada" title="Guardar cambios">
+        <i class="fa fa-floppy-disk"></i>
+        <span class="d-none d-sm-inline">Guardar</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Barra de separadores debajo del toolbar -->
+  <div class="separators-bar" *ngIf="separadores.length">
+    <div class="sep-item clickable"
+         *ngFor="let s of separadores; let i = index"
+         (click)="irASeparador(i)"
+         [ngClass]="{ active: (paginaActual + 1) >= s.from && (paginaActual + 1) <= s.to }"
+         [ngStyle]="{ backgroundColor: ((paginaActual + 1) >= s.from && (paginaActual + 1) <= s.to) ? s.color : '#f1f3f5', color: ((paginaActual + 1) >= s.from && (paginaActual + 1) <= s.to) ? '#fff' : '#495057' }"
+         [title]="s.name + ' · Pág. ' + s.from + ' a ' + s.to">
+      <span class="sep-name">{{ s.name }}</span>
+      <span class="sep-range">{{ s.from }}–{{ s.to }}</span>
+      <span class="sep-actions ms-2">
+        <button type="button" class="btn btn-light btn-xs" title="Editar" (click)="$event.stopPropagation(); editarSeparador(i)">
+          <i class="fa fa-pen"></i>
+        </button>
+        <button type="button" class="btn btn-light btn-xs text-danger" title="Eliminar" (click)="$event.stopPropagation(); eliminarSeparador(i)">
+          <i class="fa fa-trash"></i>
+        </button>
+      </span>
+    </div>
+  </div>
+
+  <div class="viewer-card shadow-sm">
+    <div class="viewer-inner">
+      <div class="pagination-panel top">
+        <button class="btn btn-outline-secondary btn-sm" (click)="paginaAnterior()" [disabled]="paginaActual === 0">
+          <i class="fa fa-chevron-left"></i> Anterior
+        </button>
+        <div *ngIf="totalPaginas > 2" class="input-group input-group-sm goto">
+          <span class="input-group-text">Ir a</span>
+          <input type="number" class="form-control" min="1" [max]="totalPaginas" [(ngModel)]="jumpPage" (keyup.enter)="irAPagina()" placeholder="1-{{ totalPaginas }}" />
+        </div>
+        <button class="btn btn-outline-secondary btn-sm" (click)="siguientePagina()" [disabled]="paginaActual >= totalPaginas - 1">
+          Siguiente <i class="fa fa-chevron-right"></i>
+        </button>
+      </div>
+      <div class="text-muted mb-3 text-center" *ngIf="!paginaMostrada">
+        No hay vista previa
+      </div>
+
+      <div *ngIf="paginaMostrada" class="w-100 text-center">
+        <div class="visor-contenedor"
+             #visorCont
+             (mousedown)="onPanStart($event, visorCont)"
+             (mousemove)="onPanMove($event, visorCont)"
+             (mouseup)="onPanEnd()"
+             (mouseleave)="onPanEnd()"
+             [class.pannable]="zoomScale > 1 && !recorteActivo"
+             [class.dragging]="isPanning">
+          <div class="visor-escenario" #escenario
+               (mousedown)="onRecorteStart($event)"
+               (mousemove)="onRecorteMove($event)"
+               (mouseup)="onRecorteEnd()"
+               (mouseleave)="onRecorteEnd()">
+            <img #imgDoc [src]="paginaMostrada" alt="Vista previa PDF"
+                 class="visor-imagen border rounded-3 shadow-sm"
+                 (load)="onImgLoad($event)"
+                 [style.width.px]="displayImgWidth || null" />
+            <div class="patches"></div>
+            <div class="selection-rect" *ngIf="recorteActivo"></div>
+          </div>
+        </div>
+        <p class="mt-2 small text-muted mb-0">
+          Página <strong>{{ paginaActual + 1 }}</strong> de <strong>{{ totalPaginas }}</strong>
+          <ng-container *ngIf="separadorDePagina(paginaActual) as m">
+            <span class="badge ms-2" [ngStyle]="{ backgroundColor: m.sep.color }" title="Separador">
+              {{ m.isFirst ? (m.sep.name || 'Separador') : 'Separador' }}
+            </span>
+          </ng-container>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-light" (click)="activeModal.dismiss()">Cerrar</button>
+</div>

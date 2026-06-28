@@ -1,0 +1,97 @@
+<div class="modal-header">
+    <h3 class="modal-title">Detalle del Trámite: <span class="text-primary">{{ tramiteDatos?.num_documento_interno }}</span></h3>
+    <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" (click)="activeModal.dismiss()">
+        <i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span class="path2"></span></i>
+    </div>
+</div>
+
+<div class="modal-body">
+    <ul class="nav nav-stretch nav-line-tabs nav-line-tabs-2x border-transparent fs-5 fw-bold mb-8">
+        <li class="nav-item">
+            <a class="nav-link text-active-primary py-5 me-10" 
+               [class.active]="tab_active === 1" 
+               (click)="tab_active = 1" 
+               href="javascript:;">
+                Información del Trámite
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-active-primary py-5" 
+               [class.active]="tab_active === 2" 
+               (click)="tab_active = 2" 
+               href="javascript:;">
+                Historial del Trámite
+            </a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        
+        <div *ngIf="tab_active === 1">
+            <div class="row g-9 mb-8">
+                <div class="col-md-6">
+                    <label class="fw-bold text-muted fs-7 d-block">Asunto</label>
+                    <span class="fw-bolder fs-6 text-gray-800">{{ tramiteDatos?.asunto_tramite }}</span>
+                </div>
+                <div class="col-md-6">
+                    <label class="fw-bold text-muted fs-7 d-block">Ciudadano / Razón Social</label>
+                    <span class="fw-bolder fs-6 text-gray-800">{{ tramiteDatos?.cliente_nombre }}</span>
+                </div>
+            </div>
+
+            <h4 class="fw-bold mb-3 mt-10">Documentos Adjuntos</h4>
+            <div class="table-responsive border rounded">
+                <table class="table table-hover align-middle gy-3 gs-3">
+                    <thead class="bg-light">
+                        <tr class="fw-bold fs-7 text-gray-800">
+                            <th>Nombre del Archivo</th>
+                            <th>Tipo</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let doc of documentos">
+                            <td class="fs-7">{{ doc.nombre_archivo }}</td>
+                            <td><span class="badge badge-light-info">{{ doc.extension }}</span></td>
+                            <td class="text-end">
+                                <button class="btn btn-light-primary btn-sm me-1" (click)="verDocumento(doc)">
+                                    <i class="ki-duotone ki-eye fs-3">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                    </i>
+                                    Ver
+                                </button>
+                            </td>
+                        </tr>
+                        <tr *ngIf="documentos.length === 0">
+                            <td colspan="3" class="text-center text-muted py-10">No hay documentos cargados.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div *ngIf="tab_active === 2">
+            <div class="timeline-label">
+                <div class="timeline-item">
+                    <div class="timeline-label fw-bold text-gray-800 fs-6">08:42</div>
+                    <div class="timeline-badge">
+                        <i class="fa fa-genderless text-warning fs-1"></i>
+                    </div>
+                    <div class="fw-mormal timeline-content text-muted ps-3">
+                        Trámite creado por {{ tramiteDatos?.cliente_nombre }}
+                    </div>
+                </div>
+                <div class="text-center py-10">
+                    <i class="ki-duotone ki-timer fs-3x text-gray-300"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
+                    <p class="text-gray-400 mt-3">No hay registros de historial para este trámite.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="modal-footer">
+    <button type="button" class="btn btn-light" (click)="activeModal.close()">Cerrar</button>
+</div>

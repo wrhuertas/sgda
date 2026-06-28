@@ -1,0 +1,335 @@
+<div class="modal-content">
+
+  <!-- HEADER -->
+  <div class="modal-header">
+    <h5 class="modal-title">Información complemetaria para el inventario</h5>
+
+    <div class="btn btn-sm btn-icon btn-active-color-primary"
+         (click)="close()" style="cursor:pointer">
+      <i class="fas fa-times"></i>
+    </div>
+  </div>
+
+  <!-- BODY con scroll fijo -->
+  <div class="modal-body modal-scroll">
+
+    <!-- TABS -->
+    <ul ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="nav nav-tabs">
+
+                            <li [ngbNavItem]="1">
+                                <!-- Se actualiza el nombre de la pestaña para reflejar el contenido de control/tabla -->
+                                <a ngbNavLink>Información de Control</a>
+                                <ng-template ngbNavContent>
+                                    <div class="card card-xxl-stretch mb-5">
+                                        <div class="card-header">
+                                            <!-- Se actualiza el título del bloque -->
+                                            <h3 class="card-title">Datos de Control del Documento (Según Tabla)</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row g-5">
+
+                                                <!-- GRUPO 1: FECHAS EXTREMAS (Apertura y Cierre) -->
+                                                <div class="col-md-6">
+                                                    <div class="fv-row mb-5">
+                                                        <label class="form-label required">Fecha de Apertura (dd/mm/aa)</label>
+                                                        <input type="date" class="form-control" [(ngModel)]="fechaApertura" name="fechaApertura" required/>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="col-md-6">
+                                                    <div class="fv-row mb-5">
+                                                        <label class="form-label required">Fecha de Cierre (dd/mm/aa)</label>
+                                                        <input type="date" class="form-control" [(ngModel)]="fechaCierre" name="fechaCierre" required/>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12"><hr class="my-0 mb-5"/></div>
+
+                                                <!-- GRUPO 2: FOJAS Y DESTINO FINAL -->
+                                                
+                                                <!-- N° DE FOJAS (1/3 de la fila) -->
+                                                <div class="col-md-4">
+                                                    <div class="fv-row mb-5">
+                                                        <label class="form-label required">N° de Fojas</label>
+                                                        <input type="number" class="form-control" [(ngModel)]="nroFolios" name="nroFolios" placeholder="Ej: 6" required/>
+                                                    </div>
+                                                </div>
+
+                                                <!-- N° PÁGINAS DIGITALES (1/3 de la fila) -->
+                                                <div class="col-md-4">
+                                                    <div class="fv-row mb-5">
+                                                        <label class="form-label required">N° DE PAGINAS DIGITALES (carillas)</label>
+                                                        <input type="number" class="form-control" [(ngModel)]="nroPaginasDigitales" name="nroPaginasDigitales" placeholder="Ej: 6" required/>
+                                                    </div>
+                                                </div>
+
+                                                <!-- DESTINO FINAL (1/3 de la fila) -->
+                                                <div class="col-md-4">
+                                                    <div class="fv-row mb-5">
+                                                        <label class="form-label required">Destino Final</label>
+                                                        <select class="form-select" [(ngModel)]="destinoFinal" name="destinoFinal" required>
+                                                            <option value="" disabled selected>Seleccione</option>
+                                                            <option value="CONSERVACION">CONSERVACIÓN</option>
+                                                            <option value="ELIMINACION">ELIMINACIÓN</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="col-12"><hr class="my-0 mb-5"/></div>
+
+                                                <!-- GRUPO 3: N° DE FOJAS SECUENCIAL (inicio y fin) -->
+                                                
+                                                <!-- N° DE FOJAS SECUENCIAL inicio (1/2 de la fila) -->
+                                                <div class="col-md-6">
+                                                    <div class="fv-row mb-5">
+                                                        <label class="form-label required">Fojas Secuencial Inicio</label>
+                                                        <input type="number" class="form-control" [(ngModel)]="folioSecuencialInicio" name="folioSecuencialInicio" placeholder="Ej: 1" required/>
+                                                    </div>
+                                                </div>
+
+                                                <!-- N° DE FOJAS SECUENCIAL fin (1/2 de la fila) -->
+                                                <div class="col-md-6">
+                                                    <div class="fv-row mb-5">
+                                                        <label class="form-label required">Fojas Secuencial Fin</label>
+                                                        <input type="number" class="form-control" [(ngModel)]="folioSecuencialFin" name="folioSecuencialFin" placeholder="Ej: 6" required/>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ng-template>
+                            </li>
+                            
+                            <li [ngbNavItem]="2">
+                                <a ngbNavLink>Ubicación Topográfica</a>
+                                <ng-template ngbNavContent>
+                                    <div class="card card-xxl-stretch mb-5">
+                                        <div class="card-header">
+                                            <h3 class="card-title">Ubicación Topográfica</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row g-5">
+                                                
+                                                <!-- 1. N° DE LA CAJA (Columna pequeña) -->
+                                                <div class="col-md-2">
+                                                    <div class="fv-row mb-5">
+                                                        <label class="form-label required">N° de la Caja</label>
+                                                        <input type="number" class="form-control" [(ngModel)]="nroCaja" name="nroCaja" placeholder="Ej: 1" required/>
+                                                    </div>
+                                                </div>
+
+                                                <!-- 2. Nro. CARPETA FÍSICA (Un poco más ancha por el texto) -->
+                                                <div class="col-md-3">
+                                                    <div class="fv-row mb-5">
+                                                        <label class="form-label required">Nro. Carpeta Física</label>
+                                                        <input type="number" class="form-control" [(ngModel)]="nroCarpetaFisica" name="nroCarpetaFisica" placeholder="Ej: 10" required/>
+                                                    </div>
+                                                </div>
+
+                                                <!-- 3. Nro. TOMO (Columna pequeña) -->
+                                                <div class="col-md-2">
+                                                    <div class="fv-row mb-5">
+                                                        <label class="form-label required">Nro. Tomo</label>
+                                                        <input 
+                                                            type="text" 
+                                                            class="form-control" 
+                                                            [(ngModel)]="nroTomo" 
+                                                            name="nroTomo" 
+                                                            placeholder="Ej: 1/1" 
+                                                            required/>
+                                                    </div>
+                                                </div>
+
+                                                <!-- 4. No. ESTANTERÍA (Alfanumérico) -->
+                                                <div class="col-md-2">
+                                                    <div class="fv-row mb-5">
+                                                        <label class="form-label required">No. Estantería</label>
+                                                       <input type="text" class="form-control" [(ngModel)]="nroEstanteria" name="nroEstanteria" placeholder="Ej: A-1" required/>
+                                                    </div>
+                                                </div>
+
+                                                <!-- 5. Nro. DE BANDEJA (Alfanumérico) -->
+                                                <div class="col-md-3">
+                                                    <div class="fv-row mb-5">
+                                                        <label class="form-label required">Nro. de Bandeja</label>
+                                                        <input type="text" class="form-control" [(ngModel)]="nroBandeja" name="nroBandeja" placeholder="Ej: B-3" required/>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ng-template>
+                            </li>
+
+                            <li [ngbNavItem]="3">
+                                <a ngbNavLink>Clasificación y Control Final</a>
+                                <ng-template ngbNavContent>
+                                    <div class="card card-xxl-stretch mb-5">
+                                        <div class="card-header">
+                                            <h3 class="card-title">Clasificación, Acceso y Estado de Conservación</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row g-5">
+
+                                                <!-- SECCIÓN 1: TIPO DE SOPORTE -->
+                                                <div class="col-md-6 col-lg-4">
+                                                    <div class="fv-row mb-5">
+                                                        <label class="form-label required">1. Tipo de Soporte</label>
+                                                        <select class="form-select" [(ngModel)]="tipoSoporte" name="tipoSoporte" required>
+                                                            <option value="PAPEL">PAPEL</option>
+                                                            <option value="DIGITAL">DIGITAL</option>
+                                                            <option value="FISICO-PAPEL">FISICO-PAPEL</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- SECCIÓN 2: REVISADO Y DIGITADO POR (Persona) -->
+                                                <div class="col-md-6 col-lg-8">
+                                                    <div class="fv-row mb-5">
+                                                        <label class="form-label required">5. Revisado y Digitado Por</label>
+                                                        <input type="text" class="form-control" [(ngModel)]="revisadoDigitadoPor" name="revisadoDigitadoPor" placeholder="Ej: MILENA" required/>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Separador Visual -->
+                                                <div class="col-12"><hr class="my-0 mb-5"/></div>
+
+                                                <!-- SECCIÓN 3: TIPO DE ACCESO DE LA INFORMACIÓN (Radio Group) -->
+                                                <div class="col-lg-6">
+                                                    <h5 class="mb-4">2. Tipo de Acceso de la Información</h5>
+                                                    <div class="d-flex flex-wrap gap-5">
+                                                        <!-- PÚBLICA -->
+                                                        <div class="form-check form-check-custom form-check-solid">
+                                                            <input class="form-check-input" type="radio" value="PUBLICA" [(ngModel)]="tipoAcceso" name="tipoAcceso" id="accesoPublica" required/>
+                                                            <label class="form-check-label" for="accesoPublica">PÚBLICA</label>
+                                                        </div>
+                                                        <!-- CONFIDENCIAL -->
+                                                        <div class="form-check form-check-custom form-check-solid">
+                                                            <input class="form-check-input" type="radio" value="CONFIDENCIAL" [(ngModel)]="tipoAcceso" name="tipoAcceso" id="accesoConfidencial" required/>
+                                                            <label class="form-check-label" for="accesoConfidencial">CONFIDENCIAL</label>
+                                                        </div>
+                                                        <!-- RESERVADA -->
+                                                        <div class="form-check form-check-custom form-check-solid">
+                                                            <input class="form-check-input" type="radio" value="RESERVADA" [(ngModel)]="tipoAcceso" name="tipoAcceso" id="accesoReservada" required/>
+                                                            <label class="form-check-label" for="accesoReservada">RESERVADA</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- SECCIÓN 4: ESTADO DE CONSERVACIÓN (Radio Group) -->
+                                                <div class="col-lg-6">
+                                                    <h5 class="mb-4">3. Estado de Conservación</h5>
+                                                    <div class="d-flex flex-wrap gap-5">
+                                                        <!-- BUENO -->
+                                                        <div class="form-check form-check-custom form-check-solid">
+                                                            <input class="form-check-input" type="radio" value="BUENO" [(ngModel)]="estadoConservacion" name="estadoConservacion" id="estadoBueno" required/>
+                                                            <label class="form-check-label" for="estadoBueno">BUENO</label>
+                                                        </div>
+                                                        <!-- REGULAR -->
+                                                        <div class="form-check form-check-custom form-check-solid">
+                                                            <input class="form-check-input" type="radio" value="REGULAR" [(ngModel)]="estadoConservacion" name="estadoConservacion" id="estadoRegular" required/>
+                                                            <label class="form-check-label" for="estadoRegular">REGULAR</label>
+                                                        </div>
+                                                        <!-- MALO -->
+                                                        <div class="form-check form-check-custom form-check-solid">
+                                                            <input class="form-check-input" type="radio" value="MALO" [(ngModel)]="estadoConservacion" name="estadoConservacion" id="estadoMalo" required/>
+                                                            <label class="form-check-label" for="estadoMalo">MALO</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Separador Visual -->
+                                                <div class="col-12"><hr class="my-0 mb-5"/></div>
+                                                
+                                                <!-- SECCIÓN 5: OBSERVACIONES (Textarea) -->
+                                                <div class="col-12">
+                                                    <div class="fv-row mb-5">
+                                                        <label class="form-label">4. Observaciones (Respuesta)</label>
+                                                        <textarea class="form-control" [(ngModel)]="observacionesRespuesta" name="observacionesRespuesta" rows="4" placeholder="Ingrese cualquier observación o detalle sobre la respuesta/contenido del documento."></textarea>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ng-template>
+                            </li>
+
+                            <!-- NUEVA PESTAÑA: QR del Documento -->
+                            <li [ngbNavItem]="4">
+                                <a ngbNavLink>QR del Documento</a>
+                                <ng-template ngbNavContent>
+                                    <div class="card card-xxl-stretch mb-5">
+                                        <div class="card-header">
+                                            <h3 class="card-title">Generación y Descarga de QR</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
+                                                <div>
+                                                    <div class="fw-semibold">Generar QR del Documento</div>
+                                                    <div class="text-muted small">El QR contendrá los datos básicos de control, ubicación y clasificación.</div>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <button class="btn btn-primary" type="button" (click)="generarQR()">
+                                                        <i class="fas fa-qrcode me-2"></i> Generar QR
+                                                    </button>
+                                                    <button class="btn btn-outline-primary" type="button" (click)="imprimirQR()" *ngIf="showQr">
+                                                        <i class="fas fa-print me-2"></i> Imprimir QR
+                                                    </button>
+                                                  </div>
+                                            </div>
+                                            <div class="d-flex align-items-center justify-content-center py-4" *ngIf="showQr">
+                                                <img [src]="qrGeneratedUrl" alt="QR" width="240" height="240"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ng-template>
+                            </li>
+
+                            <!-- NUEVA PESTAÑA: Código de Barras -->
+                            <li [ngbNavItem]="5">
+                                <a ngbNavLink>Código de Barras</a>
+                                <ng-template ngbNavContent>
+                                    <div class="card card-xxl-stretch mb-5">
+                                        <div class="card-header">
+                                            <h3 class="card-title">Generación y Descarga de Código de Barras</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
+                                                <div>
+                                                    <div class="fw-semibold">Generar Código de Barras (Code128)</div>
+                                                    <div class="text-muted small">Se generará con los identificadores esenciales del documento.</div>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <button class="btn btn-primary" type="button" (click)="generarCodigoBarras()">
+                                                        <i class="fas fa-barcode me-2"></i> Generar Código de Barras
+                                                    </button>
+                                                    <button class="btn btn-outline-primary" type="button" (click)="imprimirCodigoBarras()" *ngIf="showBarcode">
+                                                        <i class="fas fa-print me-2"></i> Imprimir Código de Barras
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex align-items-center justify-content-center py-4" *ngIf="showBarcode">
+                                                <img [src]="barcodeUrl" alt="BARCODE"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ng-template>
+                            </li>
+
+    </ul>
+
+    <!-- CONTENIDO TABS -->
+    <div [ngbNavOutlet]="nav" class="mt-4 border p-3 rounded"></div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="modal-footer">
+    <button class="btn btn-secondary" (click)="close()">Cancelar</button>
+    <button class="btn btn-primary" (click)="guardar()">Guardar</button>
+  </div>
+
+</div>

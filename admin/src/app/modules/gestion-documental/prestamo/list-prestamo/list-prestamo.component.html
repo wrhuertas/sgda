@@ -1,0 +1,174 @@
+<div class="card">
+    <!--begin::Card header-->
+    <div class="card-header border-0 pt-6">
+        <div class="card-title">
+            <div class="d-flex align-items-center position-relative my-1">
+                <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-5">
+                    <span class="path1"></span><span class="path2"></span>
+                </i> 
+                <input type="text" [(ngModel)]="search" (keyup.enter)="listPrestamos()" 
+                    name="search" class="form-control form-control-solid w-250px ps-12" 
+                    placeholder="Buscar Préstamo o Acta">
+            </div>
+        </div>
+
+        <span class="spinner-border spinner-border-sm align-middle ms-2" *ngIf="isLoading$ | async"></span>
+
+        <div class="card-toolbar">
+            <div class="d-flex justify-content-end">
+                <button type="button" class="btn btn-primary" (click)="createPrestamo()">
+                    + Registrar Préstamo
+                </button>
+            </div>
+        </div>
+    </div>
+    <!--end::Card header-->
+
+    <!--begin::Card body-->
+    <div class="card-body pt-0">
+        <div id="kt_customers_table_wrapper" class="dt-container dt-bootstrap5 dt-empty-footer">
+            <div class="table-responsive">
+                <table class="table align-middle table-row-dashed fs-6 gy-5 dataTable" id="kt_prestamos_table">
+                    <thead>
+                        <tr class="text-start text-gray-500 fw-bold fs-7 text-uppercase gs-0">
+                            <th class="min-w-100px">N° Acta</th>
+                            <th class="min-w-150px">Documento(s)</th>
+                            <th class="min-w-150px">Nombre Solicitante</th>
+                            <th class="min-w-125px">Estado del Acta</th>
+                            <th class="min-w-125px">Fecha Solicitud</th>
+                            <th class="text-end min-w-70px">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="fw-semibold text-gray-600">
+                        <!-- MENSAJE DE "NO HAY DATOS" -->
+                        <tr *ngIf="PRESTAMOS.length == 0 && !(isLoading$ | async)">
+                            <td colspan="6" class="text-center vertical-middle">
+                                <div class="d-flex flex-column flex-center p-10">
+                                    <i class="ki-duotone ki-information-5 fs-3x text-gray-400 mb-5"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
+                                    <span class="fw-bold text-gray-400">No se encontraron préstamos registrados.</span>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- LISTADO DE DATOS -->
+                        <ng-container *ngFor="let PRESTAMO of PRESTAMOS">
+                            <tr>
+                                <td>
+                                    <span class="text-gray-900 fw-bold">{{ PRESTAMO.numero_acta }}</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <!-- Iteramos solo los primeros 5 documentos usando $any para evitar el error de tipado -->
+                                        <ng-container *ngFor="let doc of PRESTAMO.documentos_detalles | slice:0:5">
+                                            <span class="text-gray-900 fw-bold mb-1 fs-8">
+                                                <i class="ki-duotone ki-file text-primary fs-9">
+                                                    <span class="path1"></span><span class="path2"></span>
+                                                </i>
+                                                {{ $any(doc).nombre_archivo }}
+                                            </span>
+                                        </ng-container>
+
+                                        <!-- Si hay más de 5, mostramos un indicador -->
+                                        <span *ngIf="PRESTAMO.documentos_detalles?.length > 5" class="badge badge-light-dark fw-bold fs-9 mt-1">
+                                            + {{ PRESTAMO.documentos_detalles.length - 5 }} documentos adicionales
+                                        </span>
+
+                                        
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="text-gray-900 fw-bold">{{ PRESTAMO.solicitante_name }}</span>
+                                        <span class="text-muted fs-7">Encargado: {{ PRESTAMO.encargado_name }}</span>
+                                    </div>
+                                </td>
+                               <td>
+                                    <span class="badge" 
+                                        [ngClass]="{
+                                            'badge-light-warning': PRESTAMO.modo == 0 || PRESTAMO.estado_acta == 0,
+                                            'badge-light-success': PRESTAMO.estado_acta == 1 && PRESTAMO.modo != 0,
+                                            'badge-light-danger': PRESTAMO.estado_acta == 2,
+                                            'badge-light-primary': PRESTAMO.estado_acta == 3
+                                        }">
+                                        
+                                        <span *ngIf="PRESTAMO.modo == 0 || PRESTAMO.estado_acta == 0">
+                                            BORRADOR
+                                        </span>
+
+                                        <span *ngIf="PRESTAMO.modo != 0 && PRESTAMO.estado_acta != 0">
+                                            <span *ngIf="PRESTAMO.estado_acta == 1">ENTREGADO</span>
+                                            <span *ngIf="PRESTAMO.estado_acta == 2">EXPIRADO</span>
+                                            <span *ngIf="PRESTAMO.estado_acta == 3">DEVUELTO</span>
+                                        </span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="text-gray-800 fw-bold">
+                                            {{ PRESTAMO.fecha_solicitud | date:'dd/MM/yyyy' }}
+                                        </span>
+                                        <span class="text-muted fs-7">
+                                            {{ PRESTAMO.fecha_solicitud | date:'hh:mm a' }}
+                                        </span>
+                                    </div>
+                                </td>
+                                        <td class="text-end">
+                                        <a href="#" (click)="viewPrestamo(PRESTAMO); $event.preventDefault()" 
+                                        class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1"
+                                        title="Ver Detalles">
+                                            <i class="ki-duotone ki-eye fs-2">
+                                                <span class="path1"></span><span class="path2"></span><span class="path3"></span>
+                                            </i>
+                                        </a>
+                                        <a *ngIf="PRESTAMO.modo == 1" 
+                                        href="#" (click)="imprimirActaFirmada(PRESTAMO); $event.preventDefault()" 
+                                        class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm me-1"
+                                        title="Imprimir/Ver Acta Firmada">
+                                            <i class="ki-duotone ki-document fs-2">
+                                                <span class="path1"></span><span class="path2"></span>
+                                            </i>
+                                        </a>
+
+                                        <a *ngIf="PRESTAMO.modo != 0 && (PRESTAMO.estado_acta == 1 || PRESTAMO.estado_acta == 0)" 
+                                        href="#" (click)="EntregarPrestamo(PRESTAMO); $event.preventDefault()" 
+                                        class="btn btn-icon btn-bg-light btn-active-color-success btn-sm me-1"
+                                        title="Registrar Entrega">
+                                            <i class="ki-duotone ki-delivery-3 fs-2">
+                                                <span class="path1"></span><span class="path2"></span><span class="path3"></span>
+                                            </i>
+                                        </a>
+
+                                        <a *ngIf="PRESTAMO.modo == 0 || isPermission('edit_prestamo')" 
+                                    href="#" (click)="editarPrestamo(PRESTAMO); $event.preventDefault()" 
+                                    class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1"
+                                    title="Editar Borrador">
+                                        <i class="ki-duotone ki-pencil fs-2">
+                                            <span class="path1"></span><span class="path2"></span>
+                                        </i>
+                                    </a>
+
+                                    <a *ngIf="isPermission('delete_prestamo')" href="#" (click)="deletePrestamo(PRESTAMO); $event.preventDefault()" 
+                                    class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm"
+                                    title="Eliminar">
+                                        <i class="ki-duotone ki-trash fs-2">
+                                            <span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span>
+                                        </i>
+                                    </a>
+                                </td>
+                            </tr>
+                        </ng-container>
+                    </tbody>
+                </table>
+            </div>
+
+            <ngb-pagination
+                [collectionSize]="totalPages"
+                [(page)]="currentPage"
+                [pageSize]="25"
+                [rotate]="true"
+                [boundaryLinks]="true"
+                (pageChange)="loadPage($event)">
+            </ngb-pagination>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,104 @@
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Sección Detalle</h3>
+  </div>
+
+  <div class="card-body pt-0">
+
+    <!-- Botón para agregar documento -->
+    <button class="btn btn-sm btn-success" type="button" (click)="agregarDocumento()">
+      <i class="fas fa-plus me-2"></i> Agregar Documento
+    </button>
+
+    <hr>
+
+    <!-- Card del formulario de búsqueda -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Formulario de Búsqueda</h3>
+      </div>
+
+      <div class="card-body">
+        <form [formGroup]="formularioBusqueda" (ngSubmit)="buscar()">
+          <div class="row mb-3">
+            <div class="col-md-3">
+              <label for="tipologia">Tipología</label>
+              <input type="text" class="form-control" id="tipologia" formControlName="tipologia" placeholder="Ingrese tipología">
+            </div>
+            <div class="col-md-3">
+              <label for="tema">Tema</label>
+              <input type="text" class="form-control" id="tema" formControlName="tema" placeholder="Ingrese tema">
+            </div>
+            <div class="col-md-3">
+              <label for="estanteria">Estantería</label>
+              <input type="text" class="form-control" id="estanteria" formControlName="estanteria" placeholder="Ingrese estantería">
+            </div>
+            <div class="col-md-3">
+              <label for="caja">Caja</label>
+              <input type="text" class="form-control" id="caja" formControlName="caja" placeholder="Ingrese caja">
+            </div>
+          </div>
+
+          <div class="text-center">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-search"></i> Obtener Reporte
+            </button>
+          </div>
+        </form>
+
+        <hr>
+
+        <!-- Resultados en tabla -->
+       <div *ngIf="busquedaEjecutada && documentosPaginados && documentosPaginados.data.length > 0" class="table-responsive mt-3">
+  <table class="table table-bordered table-striped">
+    <thead class="table-dark">
+      <tr>
+        <th>Tipología</th>
+        <th>Tema</th>
+        <th>Estantería</th>
+        <th>Caja</th>
+        <th>Acciones</th>  <!-- Nueva columna -->
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let doc of documentosPaginados.data">
+        <td>{{ doc.tipologia }}</td>
+        <td>{{ doc.tema }}</td>
+        <td>{{ doc.id_estanteria }}</td>
+        <td>{{ doc.id_caja }}</td>
+        <td>
+          <button class="btn btn-sm btn-primary" (click)="verDocumento(doc)" title="Ver documento">
+            <i class="fas fa-eye"></i>
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Paginación -->
+  <nav class="mt-3">
+    <ul class="pagination justify-content-center">
+      <li class="page-item" [class.disabled]="currentPage === 1">
+        <a class="page-link" (click)="cambiarPagina(currentPage - 1)">Anterior</a>
+      </li>
+      <li class="page-item disabled">
+        <span class="page-link">Página {{ currentPage }} de {{ totalPages }}</span>
+      </li>
+      <li class="page-item" [class.disabled]="currentPage === totalPages">
+        <a class="page-link" (click)="cambiarPagina(currentPage + 1)">Siguiente</a>
+      </li>
+    </ul>
+  </nav>
+</div>
+
+
+        <!-- Sin resultados -->
+        <div *ngIf="busquedaEjecutada && documentosPaginados && documentosPaginados.data.length === 0 && currentPage === 1" class="alert alert-warning mt-3">
+  No se encontraron documentos.
+</div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

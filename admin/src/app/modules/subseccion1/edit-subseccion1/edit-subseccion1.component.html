@@ -1,0 +1,48 @@
+<div class="modal-content">
+    <div class="modal-header">
+      <h2 class="fw-bolder">Editar Sub-Sub Sección</h2>
+      <button type="button" class="btn-close" aria-label="Close" (click)="cancelar()"></button>
+    </div>
+  
+    <div class="modal-body">
+      <form>
+        <div class="fv-row mb-4">
+          <label class="required fw-bold fs-6 mb-2">Nombre:</label>
+          <input type="text" class="form-control" [(ngModel)]="nombre" name="nombre" />
+        </div>
+
+        <div class="fv-row mb-4">
+          <label class="fw-bold fs-6 mb-2">Sigla</label>
+          <input
+            type="text"
+            name="siglasSubSeccion"
+            class="form-control form-control-solid"
+            placeholder="Ej. DOCINT"
+            [(ngModel)]="sigla"
+            (input)="sigla = (sigla || '').toUpperCase()"
+          />
+        </div>
+     <!-- ESTADO -->
+     <div class="row g-9 mb-8">
+      <div class="col-md-6 fv-row">
+        <label class="required fw-bold fs-6 mb-2">Estado:</label>
+        <select [(ngModel)]="estado" [ngModelOptions]="{standalone: true}" class="form-select form-select-solid">
+          <option [value]="1">Activo</option>
+          <option [value]="0">Inactivo</option>
+        </select>
+      </div>
+    </div>
+      </form>
+    </div>
+
+    
+  
+    <div class="modal-footer">
+      <button class="btn btn-light" (click)="cancelar()">Cancelar</button>
+      <button class="btn btn-primary" [disabled]="isLoading" (click)="update()">
+        <span *ngIf="!isLoading">Actualizar</span>
+        <span *ngIf="isLoading" class="spinner-border spinner-border-sm"></span>
+      </button>
+    </div>
+  </div>
+  

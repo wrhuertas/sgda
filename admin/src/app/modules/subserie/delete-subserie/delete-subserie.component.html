@@ -1,0 +1,29 @@
+<!-- delete-serie.component.html -->
+
+<div class="modal-header">
+    <h5 class="modal-title text-danger">Eliminar Serie</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="cancelar()"></button>
+  </div>
+  
+  <div class="modal-body">
+    <p>¿Estás seguro de que deseas eliminar la serie:</p>
+    <h6 class="fw-bold">{{ SERIE_SELECTED?.nombre }}</h6>
+    <p class="text-muted">Esta acción no se puede deshacer.</p>
+  
+    <!-- Spinner de carga -->
+    <div *ngIf="isLoading" class="d-flex justify-content-center mt-3">
+      <div class="spinner-border text-danger" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" [disabled]="isLoading" (click)="cancelar()">
+      Cancelar
+    </button>
+    <button type="button" class="btn btn-danger" [disabled]="isLoading" (click)="confirmarEliminar()">
+      Eliminar
+    </button>
+  </div>
+  

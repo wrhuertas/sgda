@@ -1,0 +1,141 @@
+<div class="modal-content">
+  
+  <div class="modal-header" >
+    <div class="row g-4">
+    <div class="col-md-5 border-end pe-4" style="max-height: 80vh; overflow-y: auto;">
+      <h5 class="mb-4 text-gray-800 fw-bold">
+        <i class="ki-duotone ki-category text-primary me-2"></i>Permisos Documental
+      </h5>
+      <div class="tree-container">
+        <ng-container *ngTemplateOutlet="proyectoTemplate; context: { $implicit: secciones }"></ng-container>
+      </div>
+    </div>
+
+    <div class="col-md-7">
+    <div *ngIf="itemSeleccionado; else mensajeVacio" class="card shadow-sm border-0">
+      <div class="card-header bg-white border-bottom-0 pb-0 pt-4">
+        <div class="d-flex justify-content-between align-items-center w-100">
+          <div class="d-flex flex-column flex-grow-1 me-3">
+            <small class="text-uppercase text-muted fw-bold mb-1">{{ getTituloTipo(itemSeleccionado) }}</small>
+            <h5 class="text-primary fw-bold mb-0 text-truncate">{{ itemSeleccionado.nombre }}</h5>
+          </div>
+          <label class="form-check form-switch form-check-custom form-check-solid">
+            <input class="form-check-input h-20px w-40px" type="checkbox" [(ngModel)]="itemSeleccionado.permisos.checkGeneral" (change)="toggleTodo(itemSeleccionado)">
+            <span class="form-check-label fw-bold text-gray-600 ms-2">Marcar todo</span>
+          </label>
+        </div>
+      </div>
+
+        <div class="card-body">
+          <div class="row">
+            <div class="col-6 border-end">
+              <h6 class="text-gray-400 text-uppercase fs-8 fw-bold mb-4 tracking-wider">Permisos Básicos</h6>
+              <div class="d-flex flex-column gap-3">
+                <label class="d-flex align-items-center text-gray-700 cursor-pointer">
+                  <input type="checkbox" class="form-check-input me-3" 
+                        [checked]="itemSeleccionado.permisos.ver" 
+                        (change)="addPermission(itemSeleccionado, 'ver', $event)"> Ver
+                </label>
+                <label class="d-flex align-items-center text-gray-700 cursor-pointer">
+                  <input type="checkbox" class="form-check-input me-3" 
+                        [checked]="itemSeleccionado.permisos.crear" 
+                        (change)="addPermission(itemSeleccionado, 'crear', $event)"> Crear
+                </label>
+                <label class="d-flex align-items-center text-gray-700 cursor-pointer">
+                  <input type="checkbox" class="form-check-input me-3" 
+                        [checked]="itemSeleccionado.permisos.editar" 
+                        (change)="addPermission(itemSeleccionado, 'editar', $event)"> Editar
+                </label>
+                <label class="d-flex align-items-center text-gray-700 cursor-pointer">
+                  <input type="checkbox" class="form-check-input me-3" 
+                        [checked]="itemSeleccionado.permisos.eliminar" 
+                        (change)="addPermission(itemSeleccionado, 'eliminar', $event)"> Eliminar
+                </label>
+              </div>
+            </div>
+
+            <div class="col-6 ps-4">
+              <div *ngIf="itemSeleccionado.isSerie">
+                <h6 class="text-gray-400 text-uppercase fs-8 fw-bold mb-4 tracking-wider">Permisos de Serie</h6>
+                <div class="d-flex flex-column gap-3">
+                  <label class="d-flex align-items-center text-gray-700 cursor-pointer"><input type="checkbox" class="form-check-input me-3" [(ngModel)]="itemSeleccionado.permisos.buscar"> Buscar</label>
+                  <label class="d-flex align-items-center text-gray-700 cursor-pointer"><input type="checkbox" class="form-check-input me-3" [(ngModel)]="itemSeleccionado.permisos.subir_documentos"> Subir documentos</label>
+                  <label class="d-flex align-items-center text-gray-700 cursor-pointer"><input type="checkbox" class="form-check-input me-3" [(ngModel)]="itemSeleccionado.permisos.ver_documento"> Ver documento</label>
+                  <label class="d-flex align-items-center text-gray-700 cursor-pointer"><input type="checkbox" class="form-check-input me-3" [(ngModel)]="itemSeleccionado.permisos.registrar_datos"> Registrar datos</label>
+                  <label class="d-flex align-items-center text-gray-700 cursor-pointer"><input type="checkbox" class="form-check-input me-3" [(ngModel)]="itemSeleccionado.permisos.indexar"> Indexar</label>
+                  <label class="d-flex align-items-center text-gray-700 cursor-pointer"><input type="checkbox" class="form-check-input me-3" [(ngModel)]="itemSeleccionado.permisos.indexar_masivo"> Indexar masivo</label>
+                  <label class="d-flex align-items-center text-gray-700 cursor-pointer"><input type="checkbox" class="form-check-input me-3" [(ngModel)]="itemSeleccionado.permisos.eliminar_documento"> Eliminar documento</label>
+                  <label class="d-flex align-items-center text-gray-700 cursor-pointer"><input type="checkbox" class="form-check-input me-3" [(ngModel)]="itemSeleccionado.permisos.firmar_documento"> Firmar documento</label>
+                  <label class="d-flex align-items-center text-gray-700 cursor-pointer"><input type="checkbox" class="form-check-input me-3" [(ngModel)]="itemSeleccionado.permisos.limpiar_documento"> Limpiar documento</label>
+                </div>
+              </div>
+              
+              <div *ngIf="!itemSeleccionado.isSerie" class="text-gray-400 text-center pt-10">
+                <i class="ki-duotone ki-information-2 fs-2x mb-2"></i>
+                <p class="fs-7">Solo disponible para Series</p>
+              </div>
+            </div>
+          </div>
+          <div class="text-end mt-5">
+            <button class="btn btn-primary" (click)="guardarCambios()" [disabled]="isLoading">
+              <span *ngIf="!isLoading"><i class="fa fa-save me-2"></i>Guardar cambios</span>
+              <span *ngIf="isLoading">Guardando... <span class="spinner-border spinner-border-sm ms-2"></span></span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #mensajeVacio>
+        <div class="text-center mt-5 text-muted bg-gray-100 p-8 rounded border border-dashed border-gray-300">
+          <i class="ki-duotone ki-mouse fs-2x mb-3 text-gray-400"></i>
+          <p>Selecciona una sección o serie para gestionar sus permisos.</p>
+        </div>
+      </ng-template>
+    </div>
+    </div>
+  </div>
+
+<ng-template #proyectoTemplate let-lista>
+  <div *ngFor="let item of lista" class="ms-2 my-1">
+    <div class="d-flex align-items-center p-2 rounded hover-bg transition-base" style="cursor: pointer;" (click)="seleccionarNodo(item)">
+      <button class="btn btn-sm btn-icon btn-active-light-primary me-1" (click)="toggleSeccion(item); $event.stopPropagation()">
+        <i [class]="item.abierto ? 'ki-duotone ki-minus fs-4' : 'ki-duotone ki-plus fs-4'"></i>
+      </button>
+      <i class="ki-duotone ki-folder text-primary me-2 fs-4"></i>
+      <span class="text-gray-700"
+            [ngClass]="itemSeleccionado === item ? 'fw-bold text-dark' : 'fw-medium'">
+        {{ item.nombre }}
+      </span>
+    </div>
+    <div *ngIf="item.abierto" class="ms-3 border-start border-gray-200 ps-2">
+      <ng-container *ngTemplateOutlet="proyectoTemplate; context: { $implicit: item.subsecciones }"></ng-container>
+      <ng-container *ngTemplateOutlet="serieTemplate; context: { $implicit: item.series }"></ng-container>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #serieTemplate let-listaSeries>
+  <div *ngFor="let serie of listaSeries" class="ms-3 my-1">
+    <div class="d-flex align-items-center p-2 rounded hover-bg transition-base" style="cursor: pointer;" (click)="seleccionarNodo(serie)">
+      <button class="btn btn-sm btn-icon btn-active-light-primary me-1" (click)="toggleSerie(serie); $event.stopPropagation()">
+        <i [class]="serie.abierto ? 'ki-duotone ki-minus fs-4' : 'ki-duotone ki-plus fs-4'"></i>
+      </button>
+      <i class="ki-duotone ki-folder text-primary me-2 fs-4"></i>
+      <span class="text-gray-700"
+            [ngClass]="itemSeleccionado === serie ? 'fw-bold text-dark' : 'fw-medium'">
+        {{ serie.nombre }}
+      </span>
+    </div>
+    <div *ngIf="serie.abierto" class="ms-3 border-start border-gray-200 ps-2">
+      <ng-container *ngTemplateOutlet="serieTemplate; context: { $implicit: serie.subseries }"></ng-container>
+    </div>
+  </div>
+</ng-template>
+</div>
+<style>
+  .hover-bg:hover { background-color: #f8f9fa; }
+  .transition-base { transition: all 0.2s ease; }
+  .cursor-pointer { cursor: pointer; }
+  .tracking-wider { letter-spacing: 0.03em; }
+  .form-check-input { border: 1px solid #c5c5c5 !important; }
+</style>

@@ -1,0 +1,94 @@
+
+<div class="card">
+  <!-- HEADER -->
+  <div class="card-header border-0 pt-6">
+    <div class="card-title">
+      <div class="d-flex align-items-center position-relative my-1">
+        <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-5">
+          <span class="path1"></span><span class="path2"></span>
+        </i>
+        <input
+          type="text"
+          [(ngModel)]="search"
+          (input)="onSearchChange()"
+          (keyup.enter)="listClientes()"
+          name="search"
+          class="form-control form-control-solid w-250px ps-12"
+          placeholder="Buscar Cliente"
+        />
+      </div>
+    </div>
+
+    <span
+      class="spinner-border spinner-border-sm align-middle ms-2"
+      *ngIf="isLoading$ | async"
+    ></span>
+
+    <div class="card-toolbar">
+      <button type="button" class="btn btn-primary" (click)="createCliente()">
+        + Agregar Cliente
+      </button>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="card-body pt-0">
+    <div class="table-responsive">
+
+      <table class="table align-middle table-row-dashed fs-6 gy-5">
+  <thead>
+    <tr class="text-start text-gray-500 fw-bold fs-7 text-uppercase gs-0">
+      <th class="min-w-80px">ID</th>
+      <th class="min-w-100px">RUC / Cédula</th> 
+      <th class="min-w-200px">Nombre Cliente</th>
+      <th class="min-w-150px">Fecha Registro</th>
+      <th class="min-w-100px">Estado</th>
+      <th class="text-end min-w-120px">Acciones</th>
+    </tr>
+  </thead>
+
+  <tbody class="fw-semibold text-gray-600">
+  <tr *ngFor="let CLIENTE of Clientes">
+    <td>{{ CLIENTE.id_cliente }}</td>
+    <td><span class="text-gray-800 fw-bold">{{ CLIENTE.cedula_ruc }}</span></td>
+    <td class="fw-bold text-dark">{{ CLIENTE.nombre }}</td>
+    <td>{{ CLIENTE.correo || '-' }}</td> <!-- NUEVO: muestra correo o '-' si está vacío -->
+    <td>{{ CLIENTE.created_at | date:'dd/MM/yyyy' }}</td>
+    <td>
+      <span class="badge" [ngClass]="CLIENTE.estado === 1 ? 'badge-light-success' : 'badge-light-danger'">
+        {{ CLIENTE.estado === 1 ? 'Activo' : 'Inactivo' }}
+      </span>
+    </td>
+    <td class="text-end">
+      <a href="#" onclick="return false;" (click)="editCliente(CLIENTE)" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1">
+        <i class="ki-duotone ki-pencil fs-2"><span class="path1"></span><span class="path2"></span></i>
+      </a>
+      <a href="#" onclick="return false;" (click)="deleteCliente(CLIENTE)" class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm">
+        <i class="ki-duotone ki-trash fs-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i>
+      </a>
+    </td>
+  </tr>
+
+  <tr *ngIf="Clientes && Clientes.length === 0">
+    <td colspan="7" class="text-center text-muted py-6">
+      No existen Clientes Registrados
+    </td>
+  </tr>
+</tbody>
+
+</table>
+
+    </div>
+
+    <!-- PAGINACIÓN -->
+    <ngb-pagination
+      [collectionSize]="totalPages"
+      [(page)]="currentPage"
+      [pageSize]="10"
+      [rotate]="true"
+      [boundaryLinks]="true"
+      (pageChange)="listClientes($event)"
+      class="d-flex justify-content-center mt-4"
+    ></ngb-pagination>
+  </div>
+</div>

@@ -1,0 +1,21 @@
+<div class="modal-content">
+  <div class="modal-header">
+    <h5 class="modal-title">Eliminar Cliente</h5>
+    <button type="button" class="btn-close" (click)="cancelar()"></button>
+  </div>
+
+  <div class="modal-body">
+    <p>¿Está seguro que desea eliminar al cliente <strong>{{Cliente_SELECTED.nombre}}</strong>?</p>
+  </div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn btn-light" (click)="cancelar()">Cancelar</button>
+    <button type="button" class="btn btn-danger" (click)="eliminarCliente()" [disabled]="isLoading">
+      <span *ngIf="!isLoading">Eliminar</span>
+      <span *ngIf="isLoading">
+        Eliminando...
+        <span class="spinner-border spinner-border-sm ms-2"></span>
+      </span>
+    </button>
+  </div>
+</div>

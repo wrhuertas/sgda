@@ -1,0 +1,27 @@
+.quipux-tab {
+    background-color: #BDC6CC; // Color gris de la imagen
+    color: #333;
+    padding: 10px 30px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-right: 2px;
+    font-size: 13px;
+    transition: all 0.2s ease;
+    // Efecto de inclinación diagonal (trapecio)
+    clip-path: polygon(0 0, 85% 0, 100% 100%, 0% 100%);
+    display: inline-block;
+
+    &.active {
+        background-color: #005A8D; // Azul oscuro de la imagen
+        color: white !important;
+    }
+
+    &:hover:not(.active) {
+        background-color: #AAB4BA;
+    }
+}
+
+// Para que el CKEditor no se vea pequeño
+::ng-deep .ck-editor__editable {
+    min-height: 250px;
+}

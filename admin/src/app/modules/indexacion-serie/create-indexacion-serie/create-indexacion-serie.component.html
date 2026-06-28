@@ -1,0 +1,463 @@
+<div class="modal-content">
+    <div class="modal-header" id="kt_modal_add_user_header">
+        <h5 class="modal-title">
+            Agregar Expedientes para la Serie Documental — 
+            <span style="color: blue;">{{ nombreProyecto }}</span>
+        </h5>
+
+        <div class="btn btn-sm btn-icon btn-active-color-primary" (click)="close()" style="cursor:pointer">
+            <i class="fas fa-times"></i>
+        </div>
+    </div>
+    <div class="card mb-5 bg-light border-0">
+  <div class="card-body py-3 d-flex align-items-center flex-wrap gap-1 fs-6 fw-semibold">
+    
+    <span class="text-muted" *ngIf="serieRespuesta?.data?.padre?.proyecto?.parent?.nombre">
+      <i class="ki-duotone ki-folder text-warning fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>
+      {{ serieRespuesta?.data?.padre?.proyecto?.parent?.nombre }}
+    </span>
+
+    <i class="ki-duotone ki-right text-gray-500 fs-7 mx-1" *ngIf="serieRespuesta?.data?.padre?.proyecto?.parent?.nombre"></i>
+
+    <span class="text-muted" *ngIf="serieRespuesta?.data?.padre?.proyecto?.nombre">
+      <i class="ki-duotone ki-folder text-warning fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>
+      {{ serieRespuesta?.data?.padre?.proyecto?.nombre }}
+    </span>
+
+    <i class="ki-duotone ki-right text-gray-500 fs-7 mx-1" *ngIf="serieRespuesta?.data?.padre?.proyecto?.nombre"></i>
+
+    <span class="text-muted" *ngIf="serieRespuesta?.data?.padre?.nombre">
+      <i class="ki-duotone ki-folder text-warning fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>
+      {{ serieRespuesta?.data?.padre?.nombre }}
+    </span>
+
+    <i class="ki-duotone ki-right text-gray-500 fs-7 mx-1" *ngIf="serieRespuesta?.data?.nombre"></i>
+
+    <span class="text-primary fw-bold" *ngIf="serieRespuesta?.data?.nombre">
+      <i class="ki-duotone ki-folder text-danger fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>
+      {{ serieRespuesta?.data?.nombre }}
+    </span>
+
+  </div>
+</div>
+
+  <div class="modal-body py-10 px-lg-17 pt-5">
+        
+        <div class="row">
+            
+              <div class="col-lg-3">
+                <div class="card h-100 border">
+                  <div class="card-header py-3">
+                    <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-diagram-3-fill me-2"></i>Ubicación Topográfica</h6>
+                  </div>
+                  <div class="card-body" style="max-height: 75vh; overflow-y: auto;">
+                    <ng-container *ngIf="serieRespuesta?.data?.length; else byEdificiosTpl">
+                      <ul class="list-unstyled mb-0">
+                        <li *ngFor="let l of serieRespuesta.data; let ei = index">
+                          <button type="button" class="btn btn-link p-0 text-start text-decoration-none" (click)="selectEdificio(l.edificio); toggle('e'+ei)">
+                            <i class="bi" [ngClass]="expandKeys['e'+ei] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
+                            <i class="bi bi-building text-primary me-1"></i> {{ l.edificio?.nombre || 'Edificio' }}
+                          </button>
+                          <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei]">
+                            <li *ngIf="l.sala as s; else sinSala">
+                              <button type="button" class="btn btn-link p-0 text-start text-decoration-none" (click)="selectSala(l.edificio, s); toggle('e'+ei+'s0')">
+                                <i class="bi" [ngClass]="expandKeys['e'+ei+'s0'] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
+                                <i class="bi bi-door-open text-info me-1"></i> {{ s.nombre }}
+                              </button>
+                              <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei+'s0']">
+                                <li *ngFor="let est of s.estanterias; let ti = index">
+                                  <button type="button" class="btn btn-link p-0 text-start text-decoration-none" (click)="selectEstanteria(est); toggle('e'+ei+'s0t'+ti)">
+                                    <i class="bi" [ngClass]="expandKeys['e'+ei+'s0t'+ti] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
+                                    <i class="bi bi-grid-3x3-gap text-secondary me-1"></i> {{ est.nombre || est.codigo }}
+                                  </button>
+                                  <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei+'s0t'+ti]">
+                                    <li *ngFor="let f of est.filas; let fi = index">
+                                      <button type="button" class="btn btn-link p-0 text-start text-decoration-none" (click)="selectFila(f); toggle('e'+ei+'s0t'+ti+'f'+fi)">
+                                        <i class="bi" [ngClass]="expandKeys['e'+ei+'s0t'+ti+'f'+fi] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
+                                        <i class="bi bi-list-ol text-warning me-1"></i> {{ f.nombre || ('Fila ' + (fi + 1)) }}
+                                      </button>
+                                      <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei+'s0t'+ti+'f'+fi]">
+                                        <li *ngFor="let c of f.cajas; let ci = index">
+                                          <button type="button" class="btn btn-link p-0 text-start text-decoration-none" (click)="selectCaja(c); toggle('e'+ei+'s0t'+ti+'f'+fi+'c'+ci)">
+                                            <i class="bi" [ngClass]="expandKeys['e'+ei+'s0t'+ti+'f'+fi+'c'+ci] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
+                                            <i class="bi bi-box-seam text-dark me-1"></i> {{ c.nombre || ('Caja ' + (c.numero_caja || (ci + 1))) }}
+                                          </button>
+                                          <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei+'s0t'+ti+'f'+fi+'c'+ci]">
+                                            <li *ngFor="let k of c.carpetas; let ki = index">
+                                              <button type="button"
+                                                      class="btn btn-link p-0 text-start text-decoration-none"
+                                                      (click)="selectCarpeta(k); toggle('e'+ei+'s0t'+ti+'f'+fi+'c'+ci+'k'+ki)">
+                                                <i class="bi" [ngClass]="expandKeys['e'+ei+'s0t'+ti+'f'+fi+'c'+ci+'k'+ki] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
+                                                <i class="bi bi-folder2-open text-warning me-1"></i>
+                                                <span class="text-muted small">{{ k.nombre }} ({{ k.numero_documentos || 0 }})</span>
+                                              </button>
+                                              <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei+'s0t'+ti+'f'+fi+'c'+ci+'k'+ki]">
+                                                <li *ngIf="k?.documentos?.length; else sinDocsTpl">
+                                                  <div *ngFor="let d of k.documentos" class="ps-3">
+                                                    <i class="bi bi-file-earmark-text me-1"></i>
+                                                    <span class="small">{{ d.nombre || d.titulo || 'Documento' }}</span>
+                                                  </div>
+                                                </li>
+                                                <ng-template #sinDocsTpl>
+                                                  <div class="text-muted small ps-3">Sin documentos.</div>
+                                                </ng-template>
+                                              </ul>
+                                            </li>
+                                          </ul>
+                                          </li>
+                                        </ul>
+                                      </li>
+                                    </ul>
+                                  </li>
+                              </ul>
+                            </li>
+                            <ng-template #sinSala>
+                              <div class="text-muted small ms-3">SIN SALA</div>
+                            </ng-template>
+                          </ul>
+                        </li>
+                      </ul>
+                    </ng-container>
+                    <ng-template #byEdificiosTpl>
+                      <div *ngIf="serieRespuesta?.edificios?.length; else noRuta">
+                        <ul class="list-unstyled mb-0">
+                          <li *ngFor="let e of serieRespuesta.edificios; let ei = index">
+                            <button type="button" class="btn btn-link p-0 text-start text-decoration-none" (click)="selectEdificio(e); toggle('e'+ei)">
+                              <i class="bi" [ngClass]="expandKeys['e'+ei] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
+                              <i class="bi bi-building text-primary me-1"></i> {{ e.nombre }}
+                            </button>
+                            <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei]">
+                              <li *ngFor="let s of e.salas; let si = index">
+                                <button type="button" class="btn btn-link p-0 text-start text-decoration-none" (click)="selectSala(e, s); toggle('e'+ei+'s'+si)">
+                                  <i class="bi" [ngClass]="expandKeys['e'+ei+'s'+si] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
+                                  <i class="bi bi-door-open text-info me-1"></i> {{ s.nombre }}
+                                </button>
+                                <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei+'s'+si]">
+                                  <li *ngFor="let est of s.estanterias; let ti = index">
+                                    <button type="button" class="btn btn-link p-0 text-start text-decoration-none" (click)="selectEstanteria(est); toggle('e'+ei+'s'+si+'t'+ti)">
+                                      <i class="bi" [ngClass]="expandKeys['e'+ei+'s'+si+'t'+ti] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
+                                      <i class="bi bi-grid-3x3-gap text-secondary me-1"></i> {{ est.nombre || est.codigo }}
+                                    </button>
+                                    <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei+'s'+si+'t'+ti]">
+                                      <li *ngFor="let f of est.filas; let fi = index">
+                                        <button type="button" class="btn btn-link p-0 text-start text-decoration-none" (click)="selectFila(f); toggle('e'+ei+'s'+si+'t'+ti+'f'+fi)">
+                                          <i class="bi" [ngClass]="expandKeys['e'+ei+'s'+si+'t'+ti+'f'+fi] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
+                                          <i class="bi bi-list-ol text-warning me-1"></i> {{ f.nombre || ('Fila ' + (fi + 1)) }}
+                                        </button>
+                                        <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei+'s'+si+'t'+ti+'f'+fi]">
+                                          <li *ngFor="let c of f.cajas; let ci = index">
+                                            <button type="button" class="btn btn-link p-0 text-start text-decoration-none" (click)="selectCaja(c); toggle('e'+ei+'s'+si+'t'+ti+'f'+fi+'c'+ci)">
+                                              <i class="bi" [ngClass]="expandKeys['e'+ei+'s'+si+'t'+ti+'f'+fi+'c'+ci] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
+                                              <i class="bi bi-box-seam text-dark me-1"></i> {{ c.nombre || ('Caja ' + (c.numero_caja || (ci + 1))) }}
+                                            </button>
+                                            <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei+'s'+si+'t'+ti+'f'+fi+'c'+ci]">
+                                              <li *ngFor="let k of c.carpetas; let ki = index">
+                                                <button type="button"
+                                                        class="btn btn-link p-0 text-start text-decoration-none"
+                                                        (click)="selectCarpeta(k); toggle('e'+ei+'s'+si+'t'+ti+'f'+fi+'c'+ci+'k'+ki)">
+                                                  <i class="bi" [ngClass]="expandKeys['e'+ei+'s'+si+'t'+ti+'f'+fi+'c'+ci+'k'+ki] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
+                                                  <i class="bi bi-folder2-open text-warning me-1"></i>
+                                                  <span class="text-muted small">{{ k.nombre }} ({{ k.numero_documentos || 0 }})</span>
+                                                </button>
+                                              </li>
+                                            </ul>
+                                            </li>
+                                          </ul>
+                                        </li>
+                                      </ul>
+                                    </li>
+                                </ul>
+                              </li>
+                            </ul>
+                          </li>
+                        </ul>
+                      </div>
+                    </ng-template>
+                    <ng-template #noRuta>
+                      <div class="text-muted small">Sin datos de ruta.</div>
+                    </ng-template>
+                  </div>
+                </div>
+              </div>
+
+            <div class="col-9">
+                <ul ngbNav #nav="ngbNav" [(activeId)]="active" class="nav nav-tabs border-0 mb-0">
+                    <li [ngbNavItem]="1">
+                        <a ngbNavLink class="border border-secondary rounded-top">
+                            📄 Listado de Expedientes
+                        </a>
+
+                          <ng-template ngbNavContent>
+                        <div class="card card-flush p-4 border">
+                            <h5 class="fw-bold mb-1 text-primary">Expedientes de la SubSerie</h5>
+                            <div class="text-muted small mb-3" *ngIf="rutaDisplay">
+                              Ruta seleccionada: {{ rutaDisplay }}
+                            </div>
+                    
+                            <input type="file" #fileInputPdf accept=".pdf" multiple style="display: none;" (change)="handleFileSelection($event, 'simple')" />
+                            <input type="file" #fileInputZip accept=".zip" style="display: none;" (change)="handleFileSelection($event, 'zip')" />
+                            <input 
+                            type="file" 
+                            #folderInput 
+                            webkitdirectory 
+                            directory 
+                            multiple 
+                            style="display: none;" 
+                            (change)="subirCarpetaCompleta($event, 'carpeta')" />
+                    
+                            <div class="mb-4 d-flex gap-3 align-items-center">
+                                <div class="d-flex gap-2" *ngIf="mostrarBotonSubirDocumentos">
+                                    <button class="btn btn-primary btn-sm text-white" (click)="openPickerAndLog(fileInputPdf)">
+                                        <i class="fas fa-file-pdf me-1 text-white"></i> Subir PDF(s)
+                                    </button>
+                                    <button class="btn btn-sm btn-primary text-white" 
+                                            (click)="folderInput.click()" 
+                                            >
+                                    <i class="fas fa-folder-open me-1 text-white"></i> 
+                                    Subir PDFs EN Carpeta
+                                    </button>
+                                      
+                                    <button class="btn btn-primary btn-sm" (click)="fileInputZip.click()">
+                                        <i class="fas fa-file-archive me-1"></i> Subir PDFs en ZIP
+                                    </button>
+                                </div>
+                                
+                                <button type="button" class="btn btn-primary btn-sm text-white" (click)="abrirCargaExcel()">
+                                    <i class="fas fa-file-excel me-1 text-white"></i> Subir Excel Masivo
+                                </button>
+                    
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-primary btn-sm" 
+                                            *ngIf="puedeIndexarMasivoSerie || puedeIndexarMasivoSubSerie" 
+                                            (click)="abrirModalOCR(idSerie)"> 
+                                        <i class="fas fa-tags me-1"></i> Indexación Local
+                                    </button>
+                                    <button class="btn btn-dark btn-sm text-white" 
+                                            *ngIf="puedeIndexarMasivoSerie || puedeIndexarMasivoSubSerie" 
+                                            (click)="abrirModalOCRIA(idSerie)">
+                                        <i class="fas fa-robot me-1 text-white"></i> 
+                                        Indexación IA
+                                    </button>
+                                </div>
+                    
+
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-primary btn-sm text-white" (click)="eliminarPDFSMasivo(idSerie)"> 
+                                        <i class="fas fa-trash me-1 text-white"></i> 
+                                        Eliminar PDFS Masivo
+                                    </button>
+                                </div>
+
+                                 
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-primary btn-sm text-white" (click)="AbrirControlCalidad(idSerie)"> 
+                                        <i class="fas fa-tags me-1 text-white"></i> 
+                                        Control de Calidad
+                                    </button>
+                                </div>
+                            </div>
+                    
+                            <div class="row g-3">
+                              <div class="col-lg-9">
+                                <table class="table table-striped table-hover">
+                              <thead class="text-center fw-bold">
+                                  <tr>
+                                      <th>#</th>
+                                      <th>Páginas</th>
+                                      <th>Nombre del Expediente</th>
+                                      <th>Fecha de Carga</th>
+                                      <th>Formato</th>
+                                      <th>Texto OCR</th>
+                                      <th>Parámetros</th>
+                                      <th>Acciones</th>
+                                  </tr>
+                              </thead>
+                              <tbody>
+                                    <tr *ngFor="let doc of documentos; let i = index"
+                                         [ngClass]="{ 'table-primary text-white': (doc.id || doc.id_documento) === selectedDocId }"
+                                         [attr.aria-selected]="(doc.id || doc.id_documento) === selectedDocId">
+                                        <td class="text-center">{{ (paginaActual - 1) * 25 + (i + 1) }}</td>
+                                        <td class="text-center"
+                                            (mouseenter)="onRowEnter(doc, $event)"
+                                            (mousemove)="onRowMove($event)"
+                                            (mouseleave)="onRowLeave()">
+                                          {{ doc.total_paginas }}
+                                        </td>
+                                        <td>{{ doc.nombre }}</td>
+                                        <td class="text-center">{{ doc.fecha | date:'yyyy-MM-dd HH:mm' }}</td>
+                                        <td class="text-center">{{ doc.tipo_documento || '-' }}</td>
+                                
+                                       
+                                        
+                                        <td class="text-center">
+                                            <button type="button"
+                                                    class="btn btn-sm"
+                                                    [ngClass]="doc.ocr_status === 'INDEXADO' ? 'btn-success' : 'btn-danger'"
+                                                    (click)="verTextoOCR(doc)">
+                                              <i class="fas fa-flag text-white"></i>
+                                            </button>
+                                          </td>
+                                    
+                                          <td class="text-center">
+                                            <button type="button"
+                                                    class="btn btn-sm"
+                                                    [ngClass]="doc.param_status === 'INDEXADO' ? 'btn-success' : 'btn-danger'"
+                                                    (click)="verParametros(doc)">
+                                              <i class="fas fa-flag text-white"></i>
+                                            </button>
+                                          </td>
+                            
+                                        
+                            
+                                        <td class="text-center">
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm text-white dropdown-toggle" 
+                                                        type="button" 
+                                                        data-bs-toggle="dropdown"
+                                                        style="background-color: #0056b3; border-color: #004a9b;">
+                                                    <i class="fas fa-cog me-1 text-white"></i> Acciones
+                                                </button>
+                                                 <ul class="dropdown-menu">
+                                                    <li><a class="dropdown-item" (click)="verDocumento(doc)">👁 Ver Expediente</a></li>
+                                                    <li><a class="dropdown-item" (click)="ingresarInformacion(doc)">📝 Datos de inventario</a></li>
+                                                    <li><a class="dropdown-item" (click)="indexarDocumento(doc)">📌 Indexar Y firmar</a></li>
+                                                    <li>
+                                                        <a class="dropdown-item" (click)="subirAnexos(doc)">
+                                                            <i class="fas fa-file-medical me-2"></i> Anexos
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                      <a class="dropdown-item" (click)="compartirDocumento(doc)">
+                                                        <i class="fas fa-link me-2"></i> Compartir (solo lectura)
+                                                      </a>
+                                                    </li>
+                                                    <li><a class="dropdown-item text-danger" (click)="eliminarDocumento(doc.id)">🗑 Eliminar</a></li>
+                                                 </ul>
+                                            </div>
+                                        </td>
+                                    </tr>
+                               </tbody>
+                                </table>
+                              </div>
+                            
+                            </div>
+                            <!-- Modal simple para ver Texto OCR -->
+                            <ng-template #ocrViewer let-modal>
+                              <div class="modal-header">
+                                <h5 class="modal-title">Texto OCR - {{ selectedDocName || 'Sin nombre' }}</h5>
+                                <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+                              </div>
+                              <div class="modal-body">
+                                <pre class="mb-0 scroll-blue" style="white-space: pre-wrap; max-height: 60vh; overflow: auto;">{{ selectedOcrText || 'Sin texto OCR disponible.' }}</pre>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-light" (click)="modal.close()">Cerrar</button>
+                              </div>
+                            </ng-template>
+
+                            <!-- Modal simple para ver Parámetros indexados -->
+                            <ng-template #paramViewer let-modal>
+                              <div class="modal-header">
+                                <h5 class="modal-title">Parámetros Indexados - {{ selectedDocName || 'Sin nombre' }}</h5>
+                                <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+                              </div>
+                              <div class="modal-body">
+                                <div *ngIf="selectedParams?.length; else noParams">
+                                  <div class="table-responsive scroll-blue" style="max-height: 60vh; overflow: auto;">
+                                    <table class="table table-sm align-middle table-striped zebra-strong">
+                                      <thead>
+                                        <tr>
+                                          <th class="text-muted">Parámetro</th>
+                                          <th class="text-muted">Valor</th>
+                                          <th class="text-muted">Tipo</th>
+                                          <th class="text-muted">Página</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        <tr *ngFor="let p of selectedParams">
+                                          <td class="fw-semibold">{{ p.titulo || p.nombre || p.key }}</td>
+                                          <td>{{ p.valor }}</td>
+                                          <td>
+                                            <ng-container *ngIf="(p.tipo || 'no') === 'si'; else noTipo">
+                                              <span class="text-success fw-semibold">manual</span>
+                                            </ng-container>
+                                            <ng-template #noTipo>no</ng-template>
+                                          </td>
+                                          <td>{{ (p.pagina !== undefined && p.pagina !== null) ? p.pagina : 0 }}</td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                                <ng-template #noParams>
+                                  <div class="text-muted">Sin parámetros indexados.</div>
+                                </ng-template>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-light" (click)="modal.close()">Cerrar</button>
+                              </div>
+                            </ng-template>
+                            
+                            <div class="d-flex justify-content-between align-items-center mt-3 bg-light p-3 rounded">
+                                <div class="text-muted small">
+                                    Página <strong>{{ paginaActual }}</strong> de <strong>{{ ultimaPagina }}</strong> 
+                                    | Total: <strong>{{ totalRegistros }}</strong> registros
+                                </div>
+                            
+                                <nav>
+                                  <ul class="pagination pagination-sm mb-0 align-items-center">
+                                    <li class="page-item" [class.disabled]="paginaActual === 1">
+                                      <button class="page-link" (click)="listarDocumentosPorSerie(paginaActual - 1)">
+                                        Anterior
+                                      </button>
+                                    </li>
+
+                                    <!-- Input para ir a una página específica (solo si hay más de 2 páginas) -->
+                                    <li class="mx-2" *ngIf="ultimaPagina > 2">
+                                      <div class="input-group input-group-sm" style="width: 120px;">
+                                        <span class="input-group-text">Ir a</span>
+                                        <input type="number"
+                                               class="form-control"
+                                               min="1"
+                                               [max]="ultimaPagina"
+                                               [(ngModel)]="jumpPage"
+                                               (keyup.enter)="irAPagina()"
+                                               placeholder="1-{{ ultimaPagina }}" />
+                                      </div>
+                                    </li>
+
+                                    <li class="page-item" [class.disabled]="paginaActual >= ultimaPagina">
+                                      <button class="page-link" (click)="listarDocumentosPorSerie(paginaActual + 1)">
+                                        Siguiente
+                                      </button>
+                                    </li>
+                                  </ul>
+                                </nav>
+                            </div>
+                            
+                            <div *ngIf="documentos.length === 0" class="text-center text-muted mt-4">
+                                No existen Expedientes registrados para esta subserie.
+                            </div>
+                    
+                        </div>
+                    </ng-template>
+                    </li>
+                </ul>
+
+                <div [ngbNavOutlet]="nav" class="border border-secondary rounded-bottom p-5">
+                    <ng-template ngbNavContent>
+                        <div class="p-3">
+                            <h5 class="text-primary">Detalle de los Expedientes</h5>
+                            <p>Esta área ahora es totalmente independiente de la columna izquierda.</p>
+                            </div>
+                    </ng-template>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-end pt-10">
+            <button type="button" class="btn btn-danger me-3" (click)="close()">Cancelar</button>
+        </div>
+    </div>
+
+</div>

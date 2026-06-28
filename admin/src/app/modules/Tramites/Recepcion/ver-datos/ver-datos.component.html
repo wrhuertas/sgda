@@ -1,0 +1,160 @@
+<div style="background-color: #a5a8aa; padding: 40px 20px; min-height: 100vh;" *ngIf="tramite">
+
+  <div class="container" style="max-width: 1300px;">
+    <div class="card mb-5 mb-xl-10">
+
+      <div class="card-header border-0 pt-5 d-flex align-items-center justify-content-between">
+        <a class="btn btn-icon btn-light-primary btn-active-primary w-40px h-40px me-3" (click)="cerrar()" title="Cerrar">
+          <i class="fa fa-home fs-2"></i>
+        </a>
+        <h3 class="card-title align-items-center flex-column m-auto text-center">
+          <span class="card-label fw-bold fs-3 mb-1 text-uppercase">Datos del Trámite</span>
+          <span class="text-muted mt-1 fw-semibold fs-7">Información del trámite</span>
+        </h3>
+        <div class="ms-3">
+          <img src="assets/logo_cotopaxi.png" alt="Logo Cotopaxi" style="height:32px; width:auto;" />
+            </div>
+            
+            
+           </div>
+
+      <div class="px-6 pt-3">
+        <div class="alert alert-light-primary border border-primary d-flex align-items-center py-3">
+          <i class="fa fa-info-circle text-primary fs-3 me-3"></i>
+          <div class="text-primary fw-semibold fs-7">
+            Visualización de datos del trámite seleccionado
+          </div>
+        </div>
+      </div>
+
+  <div class="card-body">
+    <div class="row g-7">
+
+          <div class="col-md-6">
+            <div class="card shadow-sm border border-light">
+              <div class="card-header bg-light-danger min-h-50px">
+                <h3 class="card-title fw-bold text-danger fs-5">Datos del Remitente</h3>
+              </div>
+
+              <div class="card-body p-6">
+                <div class="row g-4">
+                  <div class="col-md-12">
+                    <label class="form-label fw-bold">Cédula / RUC</label>
+                    <input type="text" class="form-control form-control-solid" [value]="tramite.cedula_ruc" readonly />
+                  </div>
+                  <div class="col-md-12">
+                    <label class="form-label fw-bold">Nombre Completo / Razón Social</label>
+                    <input type="text" class="form-control form-control-solid" [value]="tramite.cliente_razon_social || tramite.cliente_nombre" readonly />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold">Celular</label>
+                    <input type="text" class="form-control form-control-solid" [value]="tramite.cliente_telefono" readonly />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold">Email</label>
+                    <input type="email" class="form-control form-control-solid" [value]="tramite.cliente_correo" readonly />
+                  </div>
+
+                  <!-- Anexos -->
+                  <div class="col-12" *ngIf="tramite.anexos?.length">
+                    <div class="card-header bg-light-primary min-h-50px mb-4">
+                      <h3 class="card-title fw-bold text-primary fs-5 w-100 text-center m-0">Anexos ({{ tramite.anexos.length }})</h3>
+                    </div>
+                    <ul class="list-group">
+                      <li *ngFor="let a of tramite.anexos" class="list-group-item py-2 d-flex justify-content-between align-items-center">
+                        <div class="text-truncate" style="max-width: 65%">
+                          <i class="fa fa-paperclip me-2 text-gray-600"></i>
+                          <span class="fw-semibold" title="{{a.nombre_anexo}}">{{ a.nombre_anexo }}</span>
+                          <span class="badge bg-light text-gray-700 ms-2">{{ a.tipo_documento }}</span>
+                          <div class="small text-muted" *ngIf="a.descripcion">{{ a.descripcion }}</div>
+                        </div>
+                        <a class="btn btn-sm btn-light-primary" [href]="construirUrlArchivo(a.ruta)" target="_blank" rel="noopener">
+                          <i class="fa fa-eye"></i> Ver
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+           </div>
+          </div>
+
+          
+
+          <div class="col-md-6">
+            <div class="card shadow-sm border border-light">
+              <div class="card-header bg-light-primary min-h-50px">
+                <h3 class="card-title fw-bold text-primary fs-5">Datos del Documento</h3>
+              </div>
+
+              <div class="card-body p-6">
+                <div class="row g-4">
+                  <!-- Número de Trámite -->
+                  <div class="col-md-12" *ngIf="tramite.numero_tramite">
+                    <div class="d-flex align-items-center justify-content-between p-3 rounded" style="background:#0d47a1; color:#fff;">
+                      <span class="fw-bold text-uppercase">NUMERO TRÁMITE</span>
+                      <span class="fs-3 fw-bolder">{{ tramite.numero_tramite }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Mostrar Tipo de Trámite y Tipo de Documento si existen -->
+                  <ng-container *ngIf="tieneTipoTramiteYDocumento">
+                    <div class="col-md-12">
+                      <label class="form-label fw-bold">Tipo de Trámite</label>
+                      <input class="form-control form-control-solid" [value]="tramite.tipo_tramite_nombre" readonly />
+                    </div>
+                    <div class="col-md-12">
+                      <label class="form-label fw-bold">Tipo de Documento</label>
+                      <input class="form-control form-control-solid" [value]="tramite.tipo_documento_nombre" readonly />
+                    </div>
+                  </ng-container>
+
+                  <!-- Mostrar Ciudad y Fecha si existen (para trámites de ciudadano) -->
+                  <ng-container *ngIf="tieneCiudadYFecha">
+                    <div class="col-md-12">
+                      <label class="form-label fw-bold">Ciudad</label>
+                      <input class="form-control form-control-solid" [value]="tramite.ciudad" readonly />
+                    </div>
+                    <div class="col-md-12">
+                      <label class="form-label fw-bold">Fecha</label>
+                      <input type="date" class="form-control form-control-solid" [value]="tramite.fecha_tramite_oficio" readonly />
+                    </div>
+                  </ng-container>
+                  <div class="col-md-12">
+                    <label class="form-label fw-bold">Nº de Documento</label>
+                    <input class="form-control form-control-solid" [value]="tramite.num_documento_interno" readonly />
+                  </div>
+                  <div class="col-md-12">
+                    <label class="form-label fw-bold">Asunto del Trámite</label>
+                    <textarea class="form-control form-control-solid" rows="3" style="resize:none" readonly>{{ tramite.asunto || tramite.asunto_tramite }}</textarea>
+                  </div>
+
+                  <!-- Documento principal (Acta/Electrónico) -->
+                  <div class="col-md-12" *ngIf="tramite.documento_principal?.nombre">
+                    <label class="form-label fw-bold">Documento Principal</label>
+                    <div class="d-flex align-items-center justify-content-between p-3 border rounded">
+                      <div>
+                        <div class="fw-semibold">{{ tramite.documento_principal.nombre }}</div>
+                        <div class="text-muted fs-8">{{ tramite.documento_principal.tipo_documento | uppercase }} <span *ngIf="tramite.documento_principal.firmado">• Firmado</span></div>
+                      </div>
+                      <a class="btn btn-sm btn-light-primary" [href]="construirUrlArchivo(tramite.documento_principal.ruta)" target="_blank" rel="noopener">
+                         <i class="fa fa-eye"></i> Ver
+                       </a>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+      </div>
+
+      <div class="card-footer d-flex justify-content-center border-0 pt-5 w-100">
+        <button type="button" class="btn btn-danger btn-lg px-10" (click)="cerrar()">
+          <i class="fas fa-times-circle me-2"></i>
+          Cerrar
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>

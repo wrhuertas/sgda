@@ -1,0 +1,177 @@
+<div class="modal-header">
+  <h5 class="modal-title">Indexar Documento</h5>
+  <button
+    type="button"
+    class="btn-close"
+    aria-label="Close"
+    (click)="cancelar()">
+  </button>
+</div>
+
+<div class="modal-body">
+  <div class="row">
+
+    <!-- =================== COLUMNA IZQUIERDA =================== -->
+   <div class="col-md-4">
+  <h6 class="mb-3 fw-bold">Campos del documento</h6>
+
+  <form [formGroup]="form" *ngIf="camposExtraTitulos.length">
+
+    <div class="mb-3" *ngFor="let campo of camposExtraTitulos; let i = index">
+      <label class="form-label fw-bold">{{ campo }}
+        <small class="text-muted ms-2">pág: {{ (paginasPorCampo[i] !== undefined && paginasPorCampo[i] !== null) ? (paginasPorCampo[i] + 1) : 1 }}</small>
+      </label>
+
+      <input
+        type="text"
+        class="form-control"
+        [formControlName]="'campo_' + i"
+        placeholder="Ingrese {{ campo }}" 
+        (focus)="setCampoActivo('campo_' + i)" 
+        (input)="onCampoInput(i)"
+      />
+    </div>
+
+  </form>
+</div>
+
+
+    <!-- =================== COLUMNA DERECHA =================== -->
+    <div class="col-md-8">
+      <div class="card shadow-sm h-100">
+
+        <div class="card-header text-center fw-bold">
+          Vista previa del documento
+        </div>
+
+        <div class="card-body d-flex flex-column align-items-center justify-content-center">
+
+          <!-- BOTÓN RECORTE -->
+          <div class="mb-3 d-flex justify-content-center">
+            <button class="btn btn-success btn-sm" (click)="activarFirma()">
+              Ver Información
+            </button>
+            <button class="btn btn-warning btn-sm" (click)="activarRecorte()">
+              {{ recorteActivo ? 'Desactivar recorte' : 'Activar recorte' }}
+            </button>
+              <!-- Botón Firmar -->
+            <button class="btn btn-success btn-sm" (click)="activarFirma()">
+              ✍️ Firmar Documento
+            </button>
+
+          </div>
+
+          <!-- MENSAJE SI NO HAY IMÁGEN -->
+          <div *ngIf="!imagenesPdf.length" class="text-muted text-center">
+            No hay vista previa
+          </div>
+
+          <!-- IMAGEN + CAPA DE RECORTE -->
+          <div
+            *ngIf="paginaMostrada"
+            class="mb-3 position-relative d-inline-block"
+          >
+
+            <!-- IMAGEN BASE -->
+            <img
+              #imageRef
+              [src]="paginaMostrada"
+              alt="Vista previa PDF"
+              class="img-fluid"
+              [style.cursor]="recorteActivo ? 'crosshair' : 'default'"
+              (load)="ajustarCanvas(imageRef, canvasRef)"
+              style="display:block; max-width:100%;"
+            />
+
+            <!-- CANVAS ENCIMA -->
+            <canvas
+              #canvasRef
+              class="position-absolute top-0 start-0"
+              [style.cursor]="recorteActivo ? 'crosshair' : 'grab'"
+              style="z-index: 10;"
+              (mousedown)="onMouseDown($event, paginaActual)"
+              (mousemove)="onMouseMove($event, paginaActual)"
+              (mouseup)="onMouseUp($event, paginaActual)"
+              (mouseleave)="onMouseUp($event, paginaActual)"
+            ></canvas>
+
+             <!-- MARCO DONDE VA LA FIRMA -->
+                <!-- MARCO DONDE VA LA FIRMA -->
+              <div
+              *ngIf="firmaActiva"
+              class="position-absolute border border-primary"
+              [style.left.px]="firmaX"
+              [style.top.px]="firmaY"
+              [style.width.px]="firmaWidth"
+              [style.height.px]="firmaHeight"
+              style="z-index: 20; background: rgba(0, 255, 0, 0.1); cursor: move;"
+              (mousedown)="startDrag($event)"
+              >
+              <p class="text-center mt-2 fw-bold text-primary">Zona de firma</p>
+              </div>
+              <!-- BOTÓN FIRMAR SOLO SI ACTIVASTE FIRMA -->
+              <div *ngIf="firmaActiva" class="mb-3 d-flex justify-content-center">
+                <button class="btn btn-primary btn-sm" (click)="firmarDocumento()">
+                  🖊 Firmar
+                </button>
+              </div>
+
+            <!-- TEXTO DE PÁGINA -->
+            <p class="mt-2 text-center">
+              Página <strong>{{ paginaActual + 1 }}</strong> de <strong>{{ totalPaginas }}</strong>
+            </p>
+
+            <!-- IMAGEN DEL RECORTE GENERADO -->
+            <div *ngIf="recorte" class="mt-3">
+              <h6>Recorte generado:</h6>
+              <img [src]="recorte" class="img-fluid border" style="max-height:220px;" alt="Recorte generado" />
+            </div>
+
+          </div>
+
+          <!-- BOTONES DE PAGINACIÓN -->
+          <div class="d-flex justify-content-center gap-2">
+            <button (click)="paginaAnterior()" 
+                    [disabled]="paginaActual === 0" 
+                    class="btn btn-secondary btn-sm">
+              <i class="fa fa-chevron-left"></i> Anterior
+            </button>
+          
+            <button (click)="siguientePagina()" 
+                    [disabled]="paginaActual >= totalPaginas - 1" 
+                    class="btn btn-secondary btn-sm">
+              Siguiente <i class="fa fa-chevron-right"></i>
+            </button>
+          </div>
+
+        </div>
+
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- =================== FOOTER =================== -->
+<div class="modal-footer">
+
+  <button
+    class="btn btn-secondary"
+    (click)="cancelar()">
+    Cancelar
+  </button>
+
+  <button
+    class="btn btn-primary"
+    [disabled]="loading"
+    (click)="guardar()"
+  >
+    <span
+      *ngIf="loading"
+      class="spinner-border spinner-border-sm me-2">
+    </span>
+    Guardar
+  </button>
+
+</div>

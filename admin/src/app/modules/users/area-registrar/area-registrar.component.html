@@ -1,0 +1,25 @@
+<div class="modal-header">
+  <h5 class="modal-title">Registrar Área</h5>
+  <button type="button" class="btn-close" (click)="cerrar()"></button>
+</div>
+
+<div class="modal-body">
+  <label class="fw-bold mb-2">Nombre del área</label>
+  <input
+    type="text"
+    class="form-control"
+    [(ngModel)]="nombre"
+    placeholder="Ej. Contabilidad"
+  />
+</div>
+
+<div class="modal-footer">
+  <button class="btn btn-secondary" (click)="cerrar()">Cancelar</button>
+  <button
+    class="btn btn-primary"
+    (click)="guardarArea()"
+    [disabled]="isLoading"
+  >
+    Guardar
+  </button>
+</div>

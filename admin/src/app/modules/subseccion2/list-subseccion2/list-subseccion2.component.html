@@ -1,0 +1,104 @@
+<p><strong>Nombre Sub Sección Documental:</strong> {{ nombreProyecto }}</p>
+
+
+
+
+<!-- Tabla de SubSecciones1 -->
+<div class="card">
+  <div class="card-header border-0 pt-6">
+    <div class="card-title">
+      <div class="d-flex align-items-center position-relative my-1">
+        <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-5"></i>
+        <input
+          type="text"
+          [(ngModel)]="search"
+          (keyup.enter)="loadSubsecciones2()"
+          name="search"
+          class="form-control form-control-solid w-250px ps-12"
+          placeholder="Buscar Subsección 1"
+        />
+      </div>
+    </div>
+    <span class="spinner-border spinner-border-sm align-middle ms-2" *ngIf="isLoading$ | async"></span>
+
+      <button type="button" class="btn btn-primary" (click)="createSubSeccion2()"> + Agregar Sub Sección 2</button>
+  </div>
+
+  <div class="card-body pt-0">
+    <div class="table-responsive">
+      <table class="table align-middle table-row-dashed fs-6 gy-5">
+        <thead>
+          <tr class="text-start text-gray-500 fw-bold fs-7 text-uppercase gs-0">
+            <th class="min-w-150px">Subsección 1</th>
+            <th class="min-w-125px">Estado</th>
+            <th class="min-w-150px">Fecha de Registro</th>
+            <th class="text-end min-w-100px">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="fw-semibold text-gray-600">
+          <ng-container *ngFor="let sub of SUBSECCIONES">
+            <tr>
+              <td [style.paddingLeft.px]="(sub.nivel - 1) * 20">{{ sub.nombre }}</td>
+
+              <td>
+                <span class="badge badge-light-success" *ngIf="sub.estado == 1">Activo</span>
+                <span class="badge badge-light-danger" *ngIf="sub.estado == 2">Inactivo</span>
+              </td>
+              <td>{{ sub.created_at | date:'dd/MM/yyyy' }}</td>
+             <td class="text-end">
+                  <!-- Botón Sub Sección 2 -->
+                <button class="btn btn-sm btn-light-success me-1" (click)="createSunSunseccion3(sub.id_proyecto)">
+                  <i class="ki-duotone ki-folder-plus fs-5"></i> Sub Sección 2
+                </button>
+
+                <!-- Botón Documentación -->
+                <button class="btn btn-sm btn-light-info me-1" (click)="verDocumentacion(sub.id_subseccion)">
+                  <i class="ki-duotone ki-file-text fs-5"></i> Documentación
+                </button>
+
+                <!-- Botón Serie -->
+                <button class="btn btn-sm btn-light-warning" (click)="crearSerie(sub.id_subseccion)">
+                  <i class="ki-duotone ki-stack fs-5"></i> Serie
+                </button>
+                <!-- Editar -->
+                <a
+                  href="#"
+                  onclick="return false;"
+                  (click)="editSubseccion(sub.id_subseccion)"
+                  class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1"
+                >
+                  <i class="ki-duotone ki-pencil fs-2">
+                    <span class="path1"></span><span class="path2"></span>
+                  </i>
+                </a>
+
+                <!-- Eliminar -->
+                <a
+                  href="#"
+                  onclick="return false;"
+                  (click)="deleteSubseccion(sub.id_subseccion)"
+                  class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm me-1"
+                >
+                  <i class="ki-duotone ki-trash fs-2">
+                    <span class="path1"></span><span class="path2"></span>
+                    <span class="path3"></span><span class="path4"></span><span class="path5"></span>
+                  </i>
+                </a>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginación -->
+    <ngb-pagination
+      [collectionSize]="totalPages"
+      [(page)]="currentPage"
+      [pageSize]="25"
+      [rotate]="true"
+      [boundaryLinks]="true"
+      (pageChange)="loadSubsecciones2($event)"
+    ></ngb-pagination>
+  </div>
+</div>

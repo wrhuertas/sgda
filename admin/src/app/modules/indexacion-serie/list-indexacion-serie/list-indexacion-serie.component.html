@@ -1,0 +1,234 @@
+<div class="card mb-5 bg-light border-0">
+  <div class="card-body py-3 d-flex align-items-center flex-wrap gap-1 fs-6 fw-semibold">
+    
+    <span class="text-muted" *ngIf="serieRespuesta?.data?.padre?.proyecto?.parent?.nombre">
+      <i class="ki-duotone ki-folder text-warning fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>
+      {{ serieRespuesta?.data?.padre?.proyecto?.parent?.nombre }}
+    </span>
+
+    <i class="ki-duotone ki-right text-gray-500 fs-7 mx-1" *ngIf="serieRespuesta?.data?.padre?.proyecto?.parent?.nombre"></i>
+
+    <span class="text-muted" *ngIf="serieRespuesta?.data?.padre?.proyecto?.nombre">
+      <i class="ki-duotone ki-folder text-warning fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>
+      {{ serieRespuesta?.data?.padre?.proyecto?.nombre }}
+    </span>
+
+    <i class="ki-duotone ki-right text-gray-500 fs-7 mx-1" *ngIf="serieRespuesta?.data?.padre?.proyecto?.nombre"></i>
+
+    <span class="text-muted" *ngIf="serieRespuesta?.data?.padre?.nombre">
+      <i class="ki-duotone ki-folder text-warning fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>
+      {{ serieRespuesta?.data?.padre?.nombre }}
+    </span>
+
+    <i class="ki-duotone ki-right text-gray-500 fs-7 mx-1" *ngIf="serieRespuesta?.data?.nombre"></i>
+
+    <span class="text-primary fw-bold" *ngIf="serieRespuesta?.data?.nombre">
+      <i class="ki-duotone ki-folder text-danger fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>
+      {{ serieRespuesta?.data?.nombre }}
+    </span>
+
+  </div>
+</div>
+<button class="btn btn-light-primary mb-3" (click)="goBack()">
+  <i class="fa fa-arrow-left me-2"></i>
+  Regresar
+</button>
+<p><strong>Sub Serie Documental:</strong> {{ nombreProyecto }}</p>
+<div class="card shadow-sm border border-primary">
+  <div class="card-header">
+    <h3 class="card-title mb-0">
+      Listado de Ubicaciones Topográficas para expedientes
+    </h3>
+    <div class="text-muted fs-7 mt-1">Administra, visualiza y agrega documentación a la serie seleccionada.</div>
+  </div>
+
+  <div class="card-body pt-2">
+    <div class="d-flex flex-column align-items-center">
+      <!--
+      <div class="d-flex flex-wrap align-items-stretch justify-content-center gap-3 mb-3">
+        <div class="card text-center bg-primary text-white shadow-sm" style="min-width: 220px;">
+          <div class="card-body py-3">
+            <div class="fw-semibold text-uppercase small">Cantidad de documentos</div>
+            <div class="display-6 fw-bold mt-1">{{ totalDocumentos }}</div>
+          </div>
+        </div>
+        <div class="card text-center bg-primary text-white shadow-sm" style="min-width: 220px;">
+          <div class="card-body py-3">
+            <div class="fw-semibold text-uppercase small">Documento OCR</div>
+            <div class="display-6 fw-bold mt-1">{{ totalOCR }}</div>
+          </div>
+        </div>
+        <div class="card text-center bg-primary text-white shadow-sm" style="min-width: 220px;">
+          <div class="card-body py-3">
+            <div class="fw-semibold text-uppercase small">Parámetros</div>
+            <div class="display-6 fw-bold mt-1">{{ totalParametros }}</div>
+          </div>
+        </div>
+      </div>-->
+      <h2 class="fw-bold text-primary text-center mb-3">SERIE: {{ nombreProyecto }}</h2>
+
+      <div class="d-flex align-items-center justify-content-center mb-2" aria-hidden="true">
+        <i class="fas fa-file-alt fs-1 me-4" style="color: tomato;"></i>
+        <i class="fas fa-cloud-upload-alt fs-1 text-primary"></i>
+      </div>
+      <!--
+      <button 
+        class="btn btn-success d-inline-flex align-items-center mb-3"
+        type="button"
+        (click)="crearIndexacion()"
+      >
+        <i class="fas fa-cloud-upload-alt me-2"></i>
+        <span>Ingresar a los documentos de la serie</span>
+      </button>
+      -->
+    </div>
+  
+    <hr class="mt-4" />
+
+
+    <!-- Mostrar botón crear si la tabla está vacía -->
+    <div class="d-flex flex-column align-items-center mb-4" *ngIf="!lugaresRuta || lugaresRuta.length === 0">
+        <div class="text-center mb-3">
+            <h5 class="fw-bold text-danger mb-1">
+              <i class="ki-duotone ki-warning fs-2x"><span class="path1"></span><span class="path2"></span></i>
+            </h5>
+            <h5 class="fw-bold text-dark mb-1">Crear Ubicación Topográfica</h5>
+            <small class="text-muted">Define la ubicación topográfica para el archivo físico</small>
+            <p class="text-muted mt-2">Para subir un expediente debe crear  primero la ubicación topográfica</p>
+        </div>
+        <button (click)="crearLugarDocumento()" type="button" class="btn btn-primary px-4 shadow-sm d-flex align-items-center gap-2">
+            <i class="bi bi-plus-circle"></i> Crear Ubicación Topográfica
+        </button>
+    </div>
+
+    <!-- Mostrar mensaje si tabla está vacía y no hay botón visible -->
+    <div class="alert alert-warning d-flex align-items-center mb-4" *ngIf="!lugaresRuta || lugaresRuta.length === 0" role="alert">
+        <i class="ki-duotone ki-information fs-2hx text-warning me-4"><span class="path1"></span><span class="path2"></span></i>
+        <div class="d-flex flex-column">
+            <h5 class="mb-1 text-dark">No hay Ubicaciones Topográficas</h5>
+            <span class="text-muted">Para subir un expediente debe crear la Ubicación Topográfica primero. Haga clic en el botón de arriba para crear una ubicación topográfica.</span>
+        </div>
+    </div>
+
+    <hr class="text-muted opacity-25 my-4" *ngIf="lugaresRuta && lugaresRuta.length > 0">
+
+    <div class="card" *ngIf="lugaresRuta && lugaresRuta.length > 0">
+      <!--begin::Card header-->
+      <div class="card-header border-0 pt-6">
+        <!--begin::Card title-->
+        <div class="card-title">
+          <!--begin::Search-->
+          <div class="d-flex align-items-center position-relative my-1">
+            <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-5"><span class="path1"></span><span class="path2"></span></i>
+            <input type="text" [(ngModel)]="searchLugar" (keyup.enter)="listLugares()" name="search" data-kt-customer-table-filter="search"
+              class="form-control form-control-solid w-250px ps-12" placeholder="Buscar Ubicación...">
+          </div>
+          <!--end::Search-->
+        </div>
+        <!--end::Card title-->
+        <span class="spinner-border spinner-border-sm align-middle ms-2" *ngIf="isLoadingLugares"></span>
+        <!--begin::Card toolbar-->
+        <div class="card-toolbar">
+          <!--begin::Toolbar-->
+          <div class="d-flex justify-content-end" data-kt-customer-table-toolbar="base">
+            <!--begin::Add lugar-->
+            <button type="button" class="btn btn-primary" (click)="crearLugarDocumento()">
+              <i class="ki-duotone ki-plus fs-2"><span class="path1"></span><span class="path2"></span></i> Crear Ubicación 
+            </button>
+            <!--end::Add lugar-->
+          </div>
+          <!--end::Toolbar-->
+        </div>
+        <!--end::Card toolbar-->
+      </div>
+      <!--end::Card header-->
+
+      <!--begin::Card body-->
+      <div class="card-body pt-6">
+        <div class="table-responsive">
+          <table class="table table-row-dashed table-row-gray-300 align-middle gs-0 gy-4">
+            <thead class="fs-7 fw-bold text-muted">
+              <tr>
+                <th class="min-w-150px">N°</th>
+                <th class="min-w-150px">Sede/Edificio</th>
+                <th class="min-w-150px">Depósito/Archivo/Zona</th>
+                <th class="min-w-150px">Fecha Creación</th>
+                <th class="min-w-100px text-end">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let l of lugaresRuta; let i = index">
+                <td>
+                  <span class="badge badge-light-primary fw-bold">{{ i + 1 }}</span>
+                </td>
+                <td>
+                  <span class="fw-bold">{{ l.edificio }}</span>
+                </td>
+                <td>
+                  <span class="text-muted fw-semibold" *ngIf="l.sala">{{ l.sala }}</span>
+                  <span class="badge badge-light-warning" *ngIf="!l.sala">General /Sin Asignar</span>
+                </td>
+                <td>
+                  <span class="text-muted fw-semibold">{{ l.created_at | date:'yyyy-MM-dd HH:mm' }}</span>
+                </td>
+                <td>
+                  <div class="d-flex justify-content-end flex-shrink-0">
+                    <button class="btn btn-primary btn-sm me-1" 
+                            data-bs-toggle="tooltip" 
+                            data-bs-placement="top" 
+                            title="Subir Documento" 
+                      (click)="crearIndexacion(l.id_lugar, l.id_edificio, l.id_sala)">
+                        
+                        <i class="ki-duotone ki-file-up fs-6 me-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                        
+                        Subir Documento
+                    </button>
+                   <!-- <button class="btn btn-icon btn-bg-light btn-active-light-info btn-sm me-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Ver Ruta" (click)="verRuta(l.id_lugar)">
+                      <i class="ki-duotone ki-eye fs-6"><span class="path1"></span><span class="path2"></span></i>
+                    </button>-->
+                    <button class="btn btn-light-success btn-sm me-1" 
+                            data-bs-toggle="tooltip" 
+                            data-bs-placement="top" 
+                            title="Editar" 
+                            (click)="editarLugar(l.id_lugar)">
+                        
+                        <i class="ki-duotone ki-pencil fs-6 me-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                        
+                        Editar
+                    </button>
+                    <button class="btn btn-light-danger btn-sm" 
+                          data-bs-toggle="tooltip" 
+                          data-bs-placement="top" 
+                          title="Eliminar" 
+                          (click)="eliminarLugar(l); $event.stopPropagation()">
+                      
+                      <i class="ki-duotone ki-trash fs-6 me-2">
+                          <span class="path1"></span>
+                          <span class="path2"></span>
+                      </i>
+                      
+                      Eliminar
+                  </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="!lugaresRuta || lugaresRuta.length === 0">
+                <td colspan="5" class="text-center text-muted py-5">
+                  Sin registros de lugares para esta serie.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!--end::Card body-->
+    </div>
+  </div>
+</div>

@@ -1,0 +1,27 @@
+.upload-zone {
+    border: 3px dashed #dee2e6;
+    border-radius: 15px;
+    background-color: #f8f9fa;
+    transition: all 0.3s ease-in-out;
+    cursor: pointer;
+  
+    &:hover {
+      border-color: #0d6efd;
+      background-color: #f0f7ff;
+    }
+  
+    &.dragging {
+      border-color: #198754;
+      background-color: #e8f5e9;
+      transform: scale(1.01);
+    }
+  }
+  
+  .contenedor-imagenes {
+    animation: fadeIn 0.5s ease-in;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }

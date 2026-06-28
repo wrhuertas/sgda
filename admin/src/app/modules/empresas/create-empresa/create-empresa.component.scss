@@ -1,0 +1,68 @@
+
+// En tu CSS (por ejemplo styles.css o global.scss)
+.swal2-whatsapp-btn {
+  background-color: #25D366 !important; /* verde WhatsApp */
+  color: white !important;
+}
+
+.border-danger {
+  border: 2px solid red;
+}
+
+.border-success {
+  border: 2px solid green;
+}
+
+.text-danger {
+  color: red;
+}
+
+.text-success {
+  color: green;
+}
+
+/* Mejora visual de los cuadros de permisos */
+.permiso-group-card {
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.permiso-item-card {
+  border-radius: 8px;
+}
+
+.permiso-item-card .card-header {
+  background: #f9fafb;
+}
+
+/* Checks con borde celeste y efecto focus */
+.permiso-item-card .form-check-input {
+  border-color: #0d6efd; /* celeste/azul bootstrap */
+  box-shadow: none;
+}
+
+.permiso-item-card .form-check-input:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.15);
+}
+
+.permiso-item-card .form-check-input:checked {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+/* Estilo para switches por grupo en negro (solo el switch con clase group-switch) */
+.group-switch {
+  width: 2.5rem;
+  height: 1.25rem;
+}
+
+.group-switch:checked {
+  background-color: #000 !important;
+  border-color: #000 !important;
+}
+
+.permiso-group-card .form-check-label {
+  color: #111;
+  font-weight: 600;
+}

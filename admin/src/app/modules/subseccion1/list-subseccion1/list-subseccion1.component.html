@@ -1,0 +1,118 @@
+
+<button class="btn btn-light-primary mb-3" (click)="goBack()">
+  <i class="fa fa-arrow-left me-2"></i>
+  Regresar
+</button>
+
+
+
+<div class="escalera-seccion">
+  <div class="nivel-escalera nivel-padre">
+    <i class="fa fa-folder-open text-warning me-2"></i>
+    <span>{{ nombreProyectoPadre }}</span>
+  </div>
+
+  <div class="nivel-escalera nivel-hijo">
+    <i class="fa fa-folder text-warning me-2"></i>
+    <span>{{ nombreSubseccion }}</span>
+  </div>
+</div>
+
+
+
+
+
+<!-- Tabla de SubSecciones1 -->
+<div class="card">
+  <div class="card-header border-0 pt-6">
+    <div class="card-title">
+      <div class="d-flex align-items-center position-relative my-1">
+        <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-5"></i>
+        <input
+          type="text"
+          [(ngModel)]="search"
+          (keyup.enter)="loadSubsecciones1()"
+          name="search"
+          class="form-control form-control-solid w-250px ps-12"
+          placeholder="Buscar Subsección 1"
+        />
+      </div>
+    </div>
+    <span
+      class="spinner-border spinner-border-sm align-middle ms-2"
+      *ngIf="isLoading$ | async"
+    ></span>
+
+    <button *ngIf="puedeCrearSubSubSeccion" type="button" class="btn btn-primary" (click)="createSubSeccion1()">+ Agregar Sub Sección 2</button>
+  </div>
+
+  <div class="card-body pt-0">
+  
+    <ng-container *ngIf="isDataLoaded">
+      
+      <div class="table-responsive" *ngIf="SUBSECCIONES.length > 0">
+        <table class="table align-middle table-row-dashed fs-6 gy-5">
+          <thead>
+            <tr class="text-start text-gray-500 fw-bold fs-7 text-uppercase gs-0">
+              <th class="min-w-80px">ID</th>
+              <th class="min-w-150px">Subsección 1</th>
+              <th class="min-w-100px">Sigla</th>
+              <th class="min-w-125px">Estado</th>
+              <th class="min-w-150px">Fecha de Registro</th>
+              <th class="text-end min-w-100px">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="fw-semibold text-gray-600">
+            <ng-container *ngFor="let sub of SUBSECCIONES">
+              <tr>
+                <td>{{ sub.id_proyecto || sub.id_subseccion }}</td>
+                <td [style.paddingLeft.px]="(sub.nivel - 1) * 20">{{ sub.nombre }}</td>
+                <td>
+                  <span class="badge badge-light-primary fw-bold">
+                    {{ sub.sigla }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge badge-light-success" *ngIf="sub.estado == 1">Activo</span>
+                  <span class="badge badge-light-danger" *ngIf="sub.estado == 0">Inactivo</span>
+                </td>
+                <td>{{ sub.created_at | date : "dd/MM/yyyy" }}</td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-light-warning" (click)="crearSerie(sub)">
+                    <i class="ki-duotone ki-stack fs-5"></i> Serie Documental
+                  </button>
+                  <a *ngIf="puedeEditarSubSubSeccion" href="#" onclick="return false;" (click)="editSubseccion1(sub)" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1">
+                    <i class="ki-duotone ki-pencil fs-2"><span class="path1"></span><span class="path2"></span></i>
+                  </a>
+                  <a *ngIf="puedeEliminarSubSubSeccion" href="#" onclick="return false;" (click)="deleteSubseccion1(sub)" class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm me-1">
+                    <i class="ki-duotone ki-trash fs-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i>
+                  </a>
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
+  
+      <div class="col-12 mt-5" *ngIf="SUBSECCIONES.length === 0">
+        <div class="alert alert-dismissible bg-light-warning d-flex flex-column flex-sm-row p-5 mb-10">
+          <div class="d-flex flex-column pe-0 pe-sm-10">
+            <h4 class="fw-semibold">Sin información</h4>
+            <span>No tienes subsecciones asignadas en este nivel. Por favor, <strong>consulta con el administrador</strong>.</span>
+          </div>
+        </div>
+      </div>
+  
+      <ngb-pagination
+        *ngIf="SUBSECCIONES.length > 0"
+        [collectionSize]="totalPages"
+        [(page)]="currentPage"
+        [pageSize]="25"
+        [rotate]="true"
+        [boundaryLinks]="true"
+        (pageChange)="loadSubsecciones1($event)"
+      ></ngb-pagination>
+  
+    </ng-container>
+  </div>
+</div>

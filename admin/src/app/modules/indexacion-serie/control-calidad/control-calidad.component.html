@@ -1,0 +1,74 @@
+<div class="modal-header">
+  <h4 class="modal-title text-primary">
+    <i class="fas fa-clipboard-check me-1 text-primary me-2"></i> Control de Calidad
+  </h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
+  </div>
+  
+  <div class="modal-body">
+    
+    <div class="d-flex justify-content-center mb-3">
+      <button type="button" class="btn btn-primary" (click)="iniciarControlCalidad()">
+        <i class="fas fa-play me-1"></i> Iniciar Control de Calidad
+      </button>
+    </div>
+  
+    
+  
+    <div class="input-group mb-3 mt-4">
+        <input type="text" 
+               class="form-control" 
+               placeholder="Buscar documento por nombre o código..." 
+               [(ngModel)]="filtro">
+        <button class="btn btn-primary" type="button">
+          <i class="fas fa-search me-1"></i> Buscar
+        </button>
+      </div>
+  
+      <div class="table-responsive shadow-sm" 
+         style="max-height: 500px; overflow-y: auto; border: 1px solid #dee2e6;">
+        
+        <table class="table table-hover table-sm mb-0">
+          <thead class="table-light sticky-top" style="z-index: 1020; top: 0;">
+            <tr>
+              <th style="width: 40px;" class="text-center">
+                <input type="checkbox" class="form-check-input" disabled>
+              </th>
+              <th>Nombre del Archivo</th>
+              <th class="text-center" style="width: 100px;">Texto OCR</th> 
+              <th class="text-center" style="width: 100px;">Parámetros</th> 
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let doc of documentosFiltrados">
+              <td class="text-center">
+                <input type="checkbox" class="form-check-input" 
+                  [checked]="doc.seleccionado" 
+                  [disabled]="true">
+              </td>
+              <td>
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-file-pdf text-danger me-2"></i>
+                  <span class="text-truncate" style="max-width: 400px;" [title]="doc.nombre">
+                    {{ doc.nombre }}
+                  </span>
+                </div>
+              </td>
+              
+              <td class="text-center">
+                <span [class]="doc.ocr_status === 'INDEXADO' ? 'badge bg-success' : 'badge bg-danger'">
+                  <i class="fas fa-flag text-white"></i>
+                </span>
+              </td>
+        
+              <td class="text-center">
+                <span [class]="doc.param_status === 'INDEXADO' ? 'badge bg-success' : 'badge bg-danger'">
+                  <i class="fas fa-flag text-white"></i>
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+  </div>

@@ -1,0 +1,76 @@
+/* Ajusta el valor de 450px según qué tan alto quieras que sea el modal siempre */
+.tab-content {
+    min-height: 450px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Opcional: si quieres que el contenido se distribuya mejor */
+.tab-pane {
+    width: 100%;
+}
+
+/* Esto obliga al editor a tener una altura mínima */
+:ng-deep .ck-editor__editable_inline {
+    min-height: 400px; 
+    background-color: white !important;
+    color: black !important;
+}
+
+/* Opcional: Para que la barra de herramientas se vea mejor con Metronic */
+:ng-deep .ck-toolbar {
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    background-color: #f9f9f9 !important;
+}
+
+
+
+.bg-light-secondary {
+    background-color: #f5f8fa;
+}
+
+.btn-secondary.border {
+    background-color: #ffffff !important;
+    border-color: #e4e6ef !important;
+    color: #3f4254 !important;
+    
+    &:hover {
+        background-color: #f1f1f1 !important;
+    }
+}
+
+.form-control-solid {
+    background-color: #f5f8fa;
+    border: 1px solid #e4e6ef;
+}
+
+
+.quipux-tab {
+    background-color: #BDC6CC; // Color gris de la imagen
+    color: #333;
+    padding: 10px 30px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-right: 2px;
+    font-size: 13px;
+    transition: all 0.2s ease;
+    // Efecto de inclinación diagonal (trapecio)
+    clip-path: polygon(0 0, 85% 0, 100% 100%, 0% 100%);
+    display: inline-block;
+
+    &.active {
+        background-color: #005A8D; // Azul oscuro de la imagen
+        color: white !important;
+    }
+
+    &:hover:not(.active) {
+        background-color: #AAB4BA;
+    }
+}
+
+// Para que el CKEditor no se vea pequeño
+::ng-deep .ck-editor__editable {
+    min-height: 250px;
+}

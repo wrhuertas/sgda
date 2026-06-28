@@ -1,0 +1,148 @@
+<div class="container mt-4">
+  <h2 class="text-xl font-semibold mb-3">📁 Lista de Proyectos</h2>
+
+  <!-- Loader -->
+  <div *ngIf="isLoading" class="text-center py-3">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+    <p>Cargando proyectos...</p>
+  </div>
+
+  <!-- Lista de proyectos -->
+  <ul *ngIf="!isLoading && proyectos.length > 0" class="list-group">
+    <ng-container *ngFor="let proyecto of proyectos">
+      <li class="list-group-item">
+        <div class="d-flex justify-content-between align-items-center">
+          <div (click)="proyecto.expanded = !proyecto.expanded" style="cursor: pointer;">
+            <i class="bi" [ngClass]="proyecto.expanded ? 'bi-folder2-open' : 'bi-folder2'" style="color: #FFC107; margin-right: 8px;"></i>
+            <strong>{{ proyecto.nombre }}</strong>
+            <small class="text-muted d-block">ID: {{ proyecto.id_proyecto }} | Empresa: {{ proyecto.id_empresa }}</small>
+          </div>
+          <button 
+            *ngIf="usuarioActual?.role_name === 'Admin'" 
+            class="btn btn-sm btn-outline-primary" 
+            (click)="abrirPermisos(proyecto)">
+            👥 Permisos
+          </button>
+
+        </div>
+
+        <!-- Subniveles colapsables -->
+        <div *ngIf="proyecto.expanded" class="ms-3 mt-2">
+
+          <!-- PDFs del proyecto -->
+          <ul *ngIf="proyecto.indexaciones?.length > 0" class="list-group mt-2 ms-3">
+            <li *ngFor="let doc of proyecto.indexaciones" class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <a *ngIf="doc.archivo_url" [href]="getArchivoUrl(doc.archivo_url)" target="_blank">
+                  <i class="bi bi-file-earmark-pdf-fill text-danger me-2"></i>
+                  {{ getArchivoNombre(doc.archivo_url) }}
+                </a>
+              </div>
+              <div class="d-flex gap-2">
+                <button *ngIf="doc.estado === 2" class="btn btn-sm btn-warning" (click)="indexarDocumento(doc)">
+                  INDEXAR
+                </button>
+                <button class="btn btn-sm btn-danger" (click)="eliminarDocumento(doc)">
+                  ✖
+                </button>
+              </div>
+            </li>
+          </ul>
+
+          <!-- Subniveles recursivos -->
+          <ng-container *ngTemplateOutlet="subseccionTree; context:{ $implicit: proyecto.subsecciones }"></ng-container>
+          <ng-container *ngTemplateOutlet="serieTree; context:{ $implicit: proyecto.series }"></ng-container>
+        </div>
+      </li>
+    </ng-container>
+  </ul>
+
+  <!-- Si no hay datos -->
+  <div *ngIf="!isLoading && proyectos.length === 0" class="alert alert-info mt-3">
+    No se encontraron proyectos.
+  </div>
+</div>
+
+<!-- Template para series recursivas -->
+<ng-template #serieTree let-series>
+  <ul *ngIf="series?.length > 0" class="list-group mt-2 ms-3">
+    <li *ngFor="let serie of series" class="list-group-item">
+      <div class="d-flex justify-content-between align-items-center">
+        <div (click)="serie.expanded = !serie.expanded" style="cursor: pointer;">
+          <i class="bi" [ngClass]="serie.expanded ? 'bi-folder2-open' : 'bi-folder2'" style="color: #FFC107; margin-right: 8px;"></i>
+          {{ serie.nombre }} <small class="text-muted">(ID Serie: {{ serie.id_serie }})</small>
+        </div>
+        <button class="btn btn-sm btn-outline-primary" (click)="abrirPermisos(serie)">
+          👥 Permisos
+        </button>
+      </div>
+
+      <div *ngIf="serie.expanded" class="ms-3">
+        <ul *ngIf="serie.indexaciones?.length > 0" class="list-group mt-1 ms-3">
+          <li *ngFor="let doc of serie.indexaciones" class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <a *ngIf="doc.archivo_url" [href]="getArchivoUrl(doc.archivo_url)" target="_blank">
+                <i class="bi bi-file-earmark-pdf-fill text-danger me-2"></i>
+                {{ getArchivoNombre(doc.archivo_url) }}
+              </a>
+            </div>
+            <div class="d-flex gap-2">
+              <button *ngIf="doc.estado === 2" class="btn btn-sm btn-warning" (click)="indexarDocumento(doc)">
+                INDEXAR
+              </button>
+              <button class="btn btn-sm btn-danger" (click)="eliminarDocumento(doc)">
+                ✖
+              </button>
+            </div>
+          </li>
+        </ul>
+
+        <ng-container *ngTemplateOutlet="serieTree; context:{ $implicit: serie.hijos_recursivos }"></ng-container>
+      </div>
+    </li>
+  </ul>
+</ng-template>
+
+<!-- Template para subsecciones recursivas -->
+<ng-template #subseccionTree let-subsecciones>
+  <ul *ngIf="subsecciones?.length > 0" class="list-group mt-2 ms-3">
+    <li *ngFor="let sub of subsecciones" class="list-group-item">
+      <div class="d-flex justify-content-between align-items-center">
+        <div (click)="sub.expanded = !sub.expanded" style="cursor: pointer;">
+          <i class="bi" [ngClass]="sub.expanded ? 'bi-folder2-open' : 'bi-folder2'" style="color: #FFC107; margin-right: 8px;"></i>
+          <strong>{{ sub.nombre }}</strong>
+          <small class="text-muted d-block">ID: {{ sub.id_proyecto }}</small>
+        </div>
+        <button class="btn btn-sm btn-outline-primary" (click)="abrirPermisos(sub)">
+          👥 Permisos
+        </button>
+      </div>
+
+      <div *ngIf="sub.expanded" class="ms-3">
+        <ul *ngIf="sub.indexaciones?.length > 0" class="list-group mt-1 ms-3">
+          <li *ngFor="let doc of sub.indexaciones" class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <a *ngIf="doc.archivo_url" [href]="getArchivoUrl(doc.archivo_url)" target="_blank">
+                <i class="bi bi-file-earmark-pdf-fill text-danger me-2"></i>
+                {{ getArchivoNombre(doc.archivo_url) }}
+              </a>
+            </div>
+            <div class="d-flex gap-2">
+              <button *ngIf="doc.estado === 2" class="btn btn-sm btn-warning" (click)="indexarDocumento(doc)">
+                INDEXAR
+              </button>
+              <button class="btn btn-sm btn-danger" (click)="eliminarDocumento(doc)">
+                ✖
+              </button>
+            </div>
+          </li>
+        </ul>
+
+        <ng-container *ngTemplateOutlet="serieTree; context:{ $implicit: sub.series }"></ng-container>
+        <ng-container *ngTemplateOutlet="subseccionTree; context:{ $implicit: sub.subsecciones }"></ng-container>
+      </div>
+    </li>
+  </ul>
+</ng-template>

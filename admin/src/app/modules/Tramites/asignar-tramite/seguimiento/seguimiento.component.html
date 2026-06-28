@@ -1,0 +1,45 @@
+<div class="modal-header py-3">
+  <div class="d-flex flex-column">
+    <h3 class="modal-title fw-bold mb-1">{{ getTituloTramite() }}</h3>
+    <div class="d-flex flex-wrap gap-4 fs-8 text-gray-600">
+      <div><span class="fw-semibold text-gray-800">Cliente:</span> {{ getClienteLabel() }}</div>
+      <div><span class="fw-semibold text-gray-800">Documento:</span> {{ getCedulaRucLabel() }}</div>
+      <div class="text-truncate"><span class="fw-semibold text-gray-800">Asunto:</span> {{ getAsuntoLabel() }}</div>
+    </div>
+  </div>
+  <button type="button" class="btn btn-sm btn-icon btn-active-light-primary" (click)="cerrarModal()">
+    <i class="ki-duotone ki-cross fs-2">
+      <span class="path1"></span><span class="path2"></span>
+    </i>
+  </button>
+</div>
+
+<div class="modal-body">
+  <div class="table-responsive">
+    <table class="table table-row-dashed align-middle fs-8">
+      <thead>
+        <tr class="text-start text-gray-500 fw-bold text-uppercase bg-light">
+          <th class="min-w-150px">Sección</th>
+          <th class="min-w-160px">Fecha/Hora Accedió</th>
+          <th class="min-w-120px">Número Días</th>
+          <th class="min-w-250px">Comentario</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let s of seguimientos">
+          <td>{{ s.seccion }}</td>
+          <td>{{ s.fecha_hora }}</td>
+          <td>{{ s.dias }}</td>
+          <td>{{ s.comentario }}</td>
+        </tr>
+        <tr *ngIf="!seguimientos?.length">
+          <td colspan="4" class="text-center text-muted py-6">Sin registros de seguimiento</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal-footer py-3">
+  <button type="button" class="btn btn-light" (click)="cerrarModal()">Cerrar</button>
+</div>

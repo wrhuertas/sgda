@@ -1,0 +1,58 @@
+<ng-container *ngIf="user$ | async as _user">
+  <div class="menu-item px-3">
+    <div class="menu-content d-flex align-items-center px-3">
+      <div class="symbol symbol-50px me-5">
+         <img src="assets/media/avatars/blank.png" alt="avatar">
+
+      </div>
+
+      <div class="d-flex flex-column">
+        <div class="fw-bolder d-flex align-items-center fs-5">
+          {{ _user.full_name }}
+        </div>
+        <a class="fw-bold text-muted text-hover-primary fs-7 cursor-pointer">
+          {{ _user.email }}
+        </a>
+        <span class="badge badge-light-success fw-bolder fs-8 px-2 py-1 ms-2"
+            >{{ _user.sucursale_name }}</span
+          >
+          <a class="fw-bold text-muted text-hover-primary fs-7 cursor-pointer">
+            {{ _user.role_name }}
+          </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="separator my-2"></div>
+
+  <!-- Fecha de caducidad de firma -->
+  <div class="menu-item px-5">
+    <div class="menu-content px-5">
+      <span class="fw-bold">Vence firma:</span>
+      <ng-container *ngIf="_user?.archivo_firma; else sinFirma">
+        <span class="ms-2 fw-semibold" [style.color]="firmaColor(_user?.fecha_expiracion_firma)">
+          {{ _user?.fecha_expiracion_firma ? formatFecha(_user.fecha_expiracion_firma) : 'No registrada' }}
+        </span>
+      </ng-container>
+      <ng-template #sinFirma>
+        <span class="ms-2 fw-semibold text-danger">No tiene firma subida</span>
+      </ng-template>
+    </div>
+  </div>
+
+  <div class="menu-item px-5">
+    <a (click)="abrirModalFirma()" class="menu-link px-5 cursor-pointer">
+      <span class="menu-title">Subir Firma (.p12)</span>
+    </a>
+  </div>
+
+  <div class="menu-item px-5">
+    <a (click)="abrirModalClaveChatGPT()" class="menu-link px-5 cursor-pointer">
+      <span class="menu-title">Clave ChatGPT</span>
+    </a>
+  </div>
+
+  <div class="menu-item px-5">
+    <a (click)="logout()" class="menu-link px-5 cursor-pointer"> Salir </a>
+  </div>
+</ng-container>

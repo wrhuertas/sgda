@@ -1,0 +1,179 @@
+<div class="modal-header">
+  <h4 class="modal-title text-primary">
+    <i class="fas fa-tags me-1 text-primary me-2"></i> REALIZAR OCR DE DE MANERA LOCAL
+  </h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
+  </div>
+  
+  <div class="modal-body">
+    
+    <div class="row mb-4 border-bottom pb-3">
+      <div class="col-md-4">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="ocrDoc" 
+                 [(ngModel)]="opciones.soloTexto" 
+                 (change)="verificarEstadoAmbos()">
+          <label class="form-check-label fw-bold" for="ocrDoc">OCR DOCUMENTO (Texto Completo)</label>
+        </div>
+      </div>
+    
+      <div class="col-md-4">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="ocrParams" 
+                 [(ngModel)]="opciones.soloParametros" 
+                 (change)="verificarEstadoAmbos()">
+          <label class="form-check-label fw-bold" for="ocrParams">OCR PARÁMETROS (Metadatos)</label>
+        </div>
+      </div>
+    
+      <div class="col-md-4">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="ocrAmbos" 
+                 [(ngModel)]="opciones.ambos" 
+                 (change)="toggleAmbos($event)">
+          <label class="form-check-label fw-bold text-primary" for="ocrAmbos">AMBOS PROCESOS</label>
+        </div>
+      </div>
+    </div>
+  
+    <div class="d-flex align-items-start p-3 mb-4" 
+        style="background-color: #f8f9fa; 
+                border-left: 5px solid #6c757d; /* Aquí está la línea de margen */
+                border-top: 1px solid #dee2e6;
+                border-right: 1px solid #dee2e6;
+                border-bottom: 1px solid #dee2e6;
+                border-radius: 4px; 
+                box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+      
+      <i class="fas fa-info-circle me-3 mt-1" style="color: #6c757d; font-size: 1.2rem;"></i>
+      
+      <div style="color: #343a40;">
+        <h6 class="mb-1 fw-bold" style="color: #212529;">Horario y Restricciones</h6>
+        <p class="mb-0 small" style="line-height: 1.4;">
+          El procesamiento OCR masivo está habilitado a partir de las 
+          <span class="badge" style="background-color: #495057; color: #ffffff; padding: 5px 8px;">6:00 PM</span> 
+          y solo se permiten archivos de hasta 
+          <span class="badge" style="background-color: #495057; color: #ffffff; padding: 5px 8px;">50 MB</span> 
+          para optimizar el rendimiento del servidor.
+        </p>
+      </div>
+    </div>
+  
+    <div class="input-group mb-3 mt-4">
+        <input type="text" 
+               class="form-control" 
+               placeholder="Buscar documento por nombre o código..." 
+               [(ngModel)]="filtro">
+        <button class="btn btn-primary" type="button">
+          <i class="fas fa-search me-1"></i> Buscar
+        </button>
+      </div>
+  
+      <div class="table-responsive shadow-sm" 
+         style="max-height: 500px; overflow-y: auto; border: 1px solid #dee2e6;">
+        
+        <table class="table table-hover table-sm mb-0">
+          <thead class="table-light sticky-top" style="z-index: 1020; top: 0;">
+            <tr>
+              <th style="width: 40px;" class="text-center">
+                <input type="checkbox" class="form-check-input" (change)="seleccionarTodo($event)">
+              </th>
+              <th>Nombre del Archivo</th>
+              <th class="text-center" style="width: 100px;">Texto OCR</th> 
+              <th class="text-center" style="width: 100px;">Parámetros</th> 
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let doc of documentosFiltrados">
+              <td class="text-center">
+                <input type="checkbox" class="form-check-input" 
+                  [checked]="doc.seleccionado" 
+                  (change)="validarSeleccionIndividual(doc, $event)">
+              </td>
+              <td>
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-file-pdf text-danger me-2"></i>
+                  <span class="text-truncate" style="max-width: 400px;" [title]="doc.nombre">
+                    {{ doc.nombre }}
+                  </span>
+                </div>
+              </td>
+              
+              <td class="text-center">
+                <span [class]="doc.ocr_status === 'INDEXADO' ? 'badge bg-success' : 'badge bg-danger'">
+                  <i class="fas fa-flag text-white"></i>
+                </span>
+              </td>
+        
+              <td class="text-center">
+                <span [class]="doc.param_status === 'INDEXADO' ? 'badge bg-success' : 'badge bg-danger'">
+                  <i class="fas fa-flag text-white"></i>
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mt-3 px-2 border-top pt-2">
+        <small class="text-muted">Mostrando {{ documentosFiltrados.length }} documentos</small>
+        <div class="text-end d-flex gap-2">
+          <span class="badge p-2" 
+                [style.background-color]="excedeLimitePeso() ? '' : '#495057'"
+                [style.color]="excedeLimitePeso() ? '' : '#ffffff'"
+                [ngClass]="{'bg-danger': excedeLimitePeso()}">
+            <i class="fas fa-weight-hanging me-1"></i>
+            Peso Total: {{ obtenerPesoTotalSeleccionados() | number:'1.1-2' }} MB
+          </span>
+          
+          <span class="badge bg-primary p-2 text-white">
+            <i class="fas fa-check-double me-1 text-white"></i>
+            Seleccionados: {{ totalSeleccionados() }}
+          </span>
+        </div>
+      </div>
+      
+      
+  </div>
+  
+  <div class="modal-footer d-flex justify-content-between">
+    <div class="d-flex flex-column">
+      <small class="text-muted">Archivos: {{ totalSeleccionados() }}</small>
+      <small [class]="excedeLimitePeso() ? 'text-danger fw-bold' : 'text-muted'">
+        Carga: {{ obtenerPesoTotalSeleccionados() | number:'1.1-2' }} / 50 MB
+      </small>
+    </div>
+    
+    <div>
+  <button type="button" class="btn btn-outline-secondary me-2" (click)="activeModal.dismiss()">
+    Cancelar
+  </button>
+
+  <div class="d-flex flex-column align-items-center">
+    <button
+      type="button"
+      class="btn btn-success"
+      [disabled]="totalSeleccionados() === 0 || !hayOpcionSeleccionada() || excedeLimitePeso()"
+      (click)="procesarOCR()"
+      [title]="getMensajeBoton()"
+    >
+      <i class="fas fa-play me-1"></i>
+      Iniciar Proceso
+    </button>
+
+    <div
+      class="text-danger fs-8 mt-2 fw-semibold"
+      *ngIf="totalSeleccionados() === 0 || !hayOpcionSeleccionada() || excedeLimitePeso()"
+    >
+      <i class="fas fa-info-circle me-1"></i>
+      {{ getMensajeBoton() }}
+    </div>
+  </div>
+
+  <div *ngIf="excedeLimitePeso()" class="text-danger small mt-1 text-end">
+    <i class="fas fa-exclamation-triangle"></i>
+    Límite excedido por
+    {{ (obtenerPesoTotalSeleccionados() - 3072) | number:'1.1-2' }} MB
+  </div>
+</div>
+  </div>

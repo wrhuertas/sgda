@@ -1,0 +1,140 @@
+<div class="modal-content">
+  <!-- HEADER -->
+  <div class="modal-header" id="kt_modal_add_proyecto_header">
+    <h2 class="fw-bolder">Editar Cliente</h2>
+    <div class="btn btn-icon btn-sm btn-active-icon-primary" (click)="activeModal.dismiss()">
+      <span class="svg-icon svg-icon-1">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <rect opacity="0.5" x="6" y="17.3137" width="16" height="2" rx="1"
+            transform="rotate(-45 6 17.3137)" fill="currentColor" />
+          <rect x="7.41422" y="6" width="16" height="2" rx="1"
+            transform="rotate(45 7.41422 6)" fill="currentColor" />
+        </svg>
+      </span>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="modal-body scroll-y mx-5 my-7">
+    <form [formGroup]="formCliente" class="form">
+      <!-- CÉDULA / RUC - NOMBRE -->
+      <div class="row g-9 mb-8">
+        <div class="col-md-6 fv-row">
+          <div class="d-flex justify-content-between align-items-center">
+            <label class="required fw-bold fs-6 mb-2">Cédula / RUC:</label>
+            <button
+              type="button"
+              class="btn btn-sm btn-light-primary"
+              *ngIf="type_document === 'RUC'"
+              (click)="consultarSri()"
+              [disabled]="isConsultandoSri || documentoValido !== true"
+            >
+              <span *ngIf="!isConsultandoSri">Consultar SRI</span>
+              <span *ngIf="isConsultandoSri">
+                Consultando...
+                <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+              </span>
+            </button>
+          </div>
+          <input
+            type="text"
+            formControlName="cedula_ruc"
+            class="form-control form-control-solid"
+            placeholder="Ej: 1723456789"
+          />
+          <div class="text-danger fw-semibold mt-2" *ngIf="formCliente.get('cedula_ruc')?.value && documentoValido === false">
+            {{ type_document === 'RUC' ? 'RUC inválido' : (type_document === 'CEDULA' ? 'Cédula inválida' : 'Documento extranjero inválido') }}
+          </div>
+        </div>
+
+        <div class="col-md-6 fv-row">
+          <label class="required fw-bold fs-6 mb-2">Nombre del Cliente:</label>
+          <input
+            type="text"
+            formControlName="nombre"
+            class="form-control form-control-solid"
+            placeholder="Ingrese nombres completos"
+          />
+        </div>
+      </div>
+
+      <!-- TELÉFONO - CORREO -->
+      <div class="row g-9 mb-8">
+        <div class="col-md-6 fv-row">
+          <label class="fw-bold fs-6 mb-2">Teléfono:</label>
+          <input
+            type="tel"
+            formControlName="telefono"
+            class="form-control form-control-solid"
+            placeholder="Ej: 0987654321"
+            (keydown)="allowOnlyDigits($event)"
+            (paste)="onTelefonoPaste($event)"
+            inputmode="numeric"
+          />
+          <div class="text-danger fw-semibold mt-2" *ngIf="formCliente.get('telefono')?.value && formCliente.get('telefono')?.invalid">
+            El teléfono debe contener solo números
+          </div>
+        </div>
+
+        <div class="col-md-6 fv-row">
+          <label class="fw-bold fs-6 mb-2">Correo electrónico:</label>
+          <input
+            type="email"
+            formControlName="correo"
+            class="form-control form-control-solid"
+            placeholder="cliente@correo.com"
+          />
+          <div class="text-danger fw-semibold mt-2" *ngIf="formCliente.get('correo')?.value && formCliente.get('correo')?.invalid">
+            Correo electrónico inválido
+          </div>
+        </div>
+      </div>
+
+      <!-- ESTADO -->
+      <div class="row g-9 mb-8">
+        <div class="col-md-6 fv-row">
+          <label class="required fw-bold fs-6 mb-2">Estado:</label>
+          <select
+            formControlName="estado"
+            class="form-select form-select-solid">
+            <option value="1">Activo</option>
+            <option value="0">Inactivo</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- DIRECCIÓN -->
+      <div class="fv-row mb-8">
+        <label class="required fw-bold fs-6 mb-2">Dirección:</label>
+        <textarea
+          formControlName="direccion"
+          class="form-control form-control-solid"
+          rows="3"
+          placeholder="Ingrese la dirección domiciliaria"></textarea>
+      </div>
+
+      <!-- BOTONES -->
+      <div class="text-center pt-10">
+        <button type="button" class="btn btn-light me-3" (click)="activeModal.dismiss()">
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="actualizarCliente()"
+          [disabled]="formCliente.invalid || documentoValido !== true || isLoading">
+
+          <span class="indicator-label" *ngIf="!isLoading">
+            Actualizar Cliente
+          </span>
+
+          <span class="indicator-progress" *ngIf="isLoading">
+            Guardando...
+            <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+          </span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

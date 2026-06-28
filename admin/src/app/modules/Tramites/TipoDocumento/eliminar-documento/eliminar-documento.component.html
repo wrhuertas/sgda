@@ -1,0 +1,29 @@
+<div class="modal-content">
+    <div class="modal-header">
+      <h2 class="fw-bolder">Confirmar Eliminación</h2>
+      <div class="btn btn-icon btn-sm btn-active-icon-primary" (click)="modal.dismiss()">
+        <i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span class="path2"></span></i>
+      </div>
+    </div>
+  
+    <div class="modal-body text-center">
+      <div class="py-5">
+        <i class="ki-duotone ki-trash-square fs-5tx text-danger mb-5">
+          <span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span>
+        </i>
+        <div class="text-gray-800 fs-4">
+          ¿Estás seguro que deseas eliminar el tipo de documento: <br>
+          <strong class="text-dark">"{{ TIPODOCUMENTO_SELECTED?.nombre }}"</strong>?
+        </div>
+        <p class="text-muted fs-7 mt-3">Esta acción marcará el registro como inactivo.</p>
+      </div>
+    </div>
+  
+    <div class="modal-footer d-flex justify-content-center">
+      <button type="button" class="btn btn-light" (click)="modal.dismiss()">Cancelar</button>
+      <button type="button" class="btn btn-danger" (click)="eliminar()" [disabled]="isLoading">
+        <span *ngIf="!isLoading">Sí, Eliminar</span>
+        <span *ngIf="isLoading" class="spinner-border spinner-border-sm"></span>
+      </button>
+    </div>
+  </div>

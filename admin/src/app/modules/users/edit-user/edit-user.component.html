@@ -1,0 +1,926 @@
+<!--begin::Modal content CREATE-->
+<div class="modal-content">
+
+    <!--begin::Modal header-->
+    <div class="modal-header" id="kt_modal_add_user_header">
+
+        <h2 class="fw-bolder">Editar Usuario: {{ USER_SELECTED.full_name }}</h2>
+
+        <div class="btn btn-icon btn-sm btn-active-icon-primary" 
+             data-kt-users-modal-action="close" 
+             (click)="modal.dismiss()">
+
+            <span class="svg-icon svg-icon-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" 
+                     viewBox="0 0 24 24" fill="none">
+                    <rect opacity="0.5" x="6" y="17.3137" width="16" height="2" rx="1"
+                          transform="rotate(-45 6 17.3137)" fill="currentColor"/>
+                    <rect x="7.41422" y="6" width="16" height="2" rx="1"
+                          transform="rotate(45 7.41422 6)" fill="currentColor"/>
+                </svg>
+            </span>
+
+        </div>
+    </div>
+    <!--end::Modal header-->
+
+    <!--begin::Modal body-->
+    <div class="modal-body scroll-y mx-5 my-3">
+
+        <!--begin::Form-->
+        <form id="kt_modal_add_user_form" class="form">
+
+            <!--begin::Scroll-->
+            <div class="d-flex flex-column scroll-y me-n7 pe-7"
+                id="kt_modal_add_user_scroll"
+                data-kt-scroll="true"
+                data-kt-scroll-activate="{default: false, lg: true}"
+                data-kt-scroll-max-height="auto"
+                data-kt-scroll-dependencies="#kt_modal_add_user_header"
+                data-kt-scroll-wrappers="#kt_modal_add_user_scroll"
+                data-kt-scroll-offset="300px">
+
+                <!-- ================= DATOS BÁSICOS DEL USUARIO ================= -->
+                <div class="card mb-6" style="border: 2px solid #0dcaf0; border-radius: 14px;">
+
+                    <!-- HEADER -->
+                    <div class="card-header bg-light" style="border-bottom: 1px solid #0dcaf0;">
+                        <h4 class="fw-bold text-primary mb-0">
+                            Datos básicos del usuario
+                        </h4>
+                    </div>
+
+                    <!-- BODY -->
+                    <div class="card-body">
+
+                        <div class="fv-row row my-1">
+                            <div class="col-md-6">
+                                <label class="required fw-bold fs-6 mb-2">Nombre</label>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    class="form-control form-control-solid"
+                                    placeholder="Nombre del Usuario"
+                                    [(ngModel)]="name"
+                                    [ngClass]="{
+                                        'border-danger': nombreInvalid && !name,
+                                        'border-success': name
+                                    }"
+                                />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="required fw-bold fs-6 mb-2">Apellido</label>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    class="form-control form-control-solid"
+                                    placeholder="Apellido del Usuario"
+                                    [(ngModel)]="surname"
+                                    [ngClass]="{
+                                        'border-danger': apellidoInvalid && !surname,
+                                        'border-success': surname
+                                    }"
+                                />
+                            </div>
+                        </div>
+
+                        <div class="fv-row row my-1">
+                            <div class="col-6">
+                                <label class="fw-bold fs-6 mb-2">Tipo de documento:</label>
+                                <select
+                                    class="form-control form-select-solid fw-bolder"
+                                    [(ngModel)]="type_document"
+                                    name="type_document"
+                                    (change)="onTypeDocumentChange()"
+                                    [ngClass]="{
+                                        'border-danger': apellidoInvalid && !type_document,
+                                        'border-success': type_document
+                                    }"
+                                >
+                                    <option value="" disabled selected>Seleccione Tipo de Documento</option>
+                                    <ng-container *ngFor="let tipo of tiposDocumento">
+                                        <option [value]="tipo.value">{{ tipo.label }}</option>
+                                    </ng-container>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="required fw-bold fs-6 mb-2">Número de documento</label>
+
+                                <div *ngIf="type_document === 'CEDULA IDENTIDAD'" class="input-group">
+                                    <input type="text"
+                                        class="form-control form-control-solid"
+                                        [(ngModel)]="n_document"
+                                        name="n_document"
+                                        placeholder="Ingrese cédula"
+                                        maxlength="10"
+                                        (input)="cedulaValida = validarDocumento(n_document)"
+                                        [ngClass]="{
+                                            'border-danger': cedulaValida === false,
+                                            'border-success': cedulaValida === true
+                                        }"
+                                    />
+                                    <span class="input-group-text">
+                                        <i class="fa fa-id-card text-primary"></i>
+                                    </span>
+                                </div>
+
+                                <div *ngIf="type_document === 'RUC'" class="input-group mt-2">
+                                    <input type="text"
+                                        class="form-control form-control-solid"
+                                        [(ngModel)]="n_document"
+                                        name="n_document"
+                                        placeholder="Ingrese RUC"
+                                        maxlength="13"
+                                        (input)="cedulaValida = validarDocumento(n_document)"
+                                        [ngClass]="{
+                                            'border-danger': cedulaValida === false,
+                                            'border-success': cedulaValida === true
+                                        }"
+                                    />
+                                    <span class="input-group-text">
+                                        <i class="fa fa-building text-success"></i>
+                                    </span>
+                                </div>
+
+                                <div *ngIf="type_document === 'PASAPORTE'" class="input-group mt-2">
+                                    <input type="text"
+                                        class="form-control form-control-solid"
+                                        [(ngModel)]="n_document"
+                                        name="n_document"
+                                        placeholder="Ingrese pasaporte"
+                                        (input)="cedulaValida = validarDocumento(n_document)"
+                                        [ngClass]="{
+                                            'border-danger': cedulaValida === false,
+                                            'border-success': cedulaValida === true
+                                        }"
+                                    />
+                                    <span class="input-group-text">
+                                        <i class="fa fa-passport text-warning"></i>
+                                    </span>
+                                </div>
+
+                                <div *ngIf="n_document.length > 0">
+                                    <small *ngIf="cedulaValida === true" class="text-success d-block">
+                                        ✅ {{ type_document }} válido
+                                    </small>
+                                    <small *ngIf="cedulaValida === false" class="text-danger d-block">
+                                        ❌ {{ type_document }} inválido
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="fv-row row my-1">
+                            <div class="col-md-6">
+                                <label class="fw-bold fs-6 mb-2">Dirección:</label>
+                                <textarea
+                                    class="form-control form-control-solid"
+                                    rows="4"
+                                    [(ngModel)]="address"
+                                    name="address">
+                                </textarea>
+                            </div>
+
+                            <!-- Avatar oculto -->
+                            <div class="col-md-6" *ngIf="false">
+                                <label class="fw-bold fs-6 mb-2">Avatar:</label>
+                                <input
+                                    type="file"
+                                    class="custom-file-input"
+                                    accept=".jpeg,.bmp,.jpg,.png,.gif,.webp"
+                                    (change)="processFile($event)"
+                                />
+                                <div *ngIf="imagen_previzualiza" class="mt-2 text-center">
+                                    <img
+                                        [src]="imagen_previzualiza"
+                                        class="rounded"
+                                        style="height:80px;width:80px;object-fit:cover;border:1px solid #ddd;"
+                                    />
+                                </div>
+                            </div>
+                            
+                            <!-- Teléfono junto a dirección con adorno visual +593 (no se guarda el +) -->
+                            <div class="col-md-6">
+                              <label class="required fw-bold fs-6 mb-2">Teléfono Móvil:</label>
+                              <div class="input-group">
+                                  <span class="input-group-text">+593</span>
+                                  <input
+                                      type="text"
+                                      class="form-control form-control-solid"
+                                      placeholder="999999999"
+                                      [(ngModel)]="phone"
+                                      name="phone"
+                                      maxlength="10"
+                                      (input)="onlyNumbers($event)"
+                                  />
+                              </div>
+                              <div *ngIf="phone && phone.length !== 10" class="text-danger">
+                                  El número debe tener exactamente 10 dígitos
+                              </div>
+                              <!-- Sigla profesional -->
+                              <div class="mt-4">
+                                <label class="fw-bold fs-6 mb-2">Sigla profesional:</label>
+                                <input
+                                  type="text"
+                                  class="form-control form-control-solid"
+                                  placeholder="Ej.: Ing., Eco., Arq."
+                                  [(ngModel)]="sigla"
+                                  name="sigla"
+                                  maxlength="20"
+                                />
+                                <small class="text-muted">Opcional. Se usa como prefijo del nombre (ej.: Ing. Juan Pérez).</small>
+                              </div>
+
+                              <!-- Título profesional -->
+                              <div class="mt-4">
+                                <label class="fw-bold fs-6 mb-2">Título profesional:</label>
+                                <input
+                                  type="text"
+                                  class="form-control form-control-solid"
+                                  placeholder="Ej.: Ingeniero en Sistemas"
+                                  [(ngModel)]="titulo"
+                                  name="titulo"
+                                  maxlength="100"
+                                />
+                                <small class="text-muted">Opcional. Se usa en pie de firma o datos del usuario.</small>
+                              </div>
+
+                               <!-- Estado del usuario -->
+                               <div class="mt-4 row">
+                                 <div class="col-md-6">
+                                   <label class="required fw-bold fs-6 mb-2">Estado:</label>
+                                   <select [(ngModel)]="estado" [ngModelOptions]="{standalone: true}" class="form-select form-select-solid">
+                                     <option [value]="1">Activo</option>
+                                     <option [value]="0">Inactivo</option>
+                                   </select>
+                                 </div>
+                                 <div class="col-md-6">
+                                   <label class="form-label fw-bold fs-6 mb-2">Resetear Contraseña:</label>
+                                   <div class="form-check form-switch mt-2">
+                                     <input 
+                                       class="form-check-input" 
+                                       type="checkbox" 
+                                       id="cambio_pass_switch"
+                                       [(ngModel)]="cambio_pass"
+                                       [value]="1"
+                                       [checked]="cambio_pass === 1"
+                                       name="cambio_pass"
+                                     />
+                                     <label class="form-check-label" for="cambio_pass_switch">
+                                       Obligar cambio en próximo acceso
+                                     </label>
+                                   </div>
+                                 </div>
+                               </div>
+                            </div>
+                        </div>
+                        
+
+                    </div>
+                </div>
+
+
+                
+
+                
+                <div class="card mb-6" style="border: 2px solid #0dcaf0; border-radius: 12px;">
+
+                    <!-- HEADER -->
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <h5 class="mb-0 fw-bold text-primary">
+                            🏢 Área a la que pertenece el usuario
+                        </h5>
+                
+                        <!-- SWITCH RECEPCIONISTA -->
+                        <div class="form-check form-switch">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                id="usuarioRecepcionista"
+                                [(ngModel)]="usuario_recepcionista"
+                                name="usuario_recepcionista"
+                                (change)="onUsuarioRecepcionistaChange()"
+                            />
+                            <label class="form-check-label fw-bold" for="usuarioRecepcionista">
+                                Usuario recepcionista para trámites
+                            </label>
+                        </div>
+
+                        <!-- SWITCH DESPACHO -->
+                        <div class="form-check form-switch">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                id="usuarioDespacho"
+                                [(ngModel)]="usuario_despacho"
+                                name="usuario_despacho"
+                                (change)="onUsuarioDespachoChange()"
+                            />
+                            <label class="form-check-label fw-bold" for="usuarioDespacho">
+                                Usuario despacho para trámites
+                            </label>
+                        </div>
+                    </div>
+                
+                    <!-- BODY -->
+                    <div class="card-body">
+                
+                        <div class="row">
+                
+                            <!-- SECCIÓN -->
+                            <div class="col-md-4">
+                                <label class="fs-6 fw-bold mb-2">Sección</label>
+                                <select
+                                    class="form-select form-select-solid"
+                                    name="seccion_principal"
+                                    [(ngModel)]="id_proyecto_seleccionado"
+                                    (change)="onSeccionChange1(id_proyecto_seleccionado, true)">
+                                    <option value="">Seleccione Sección</option>
+                                    <option *ngFor="let item of seccion" [value]="item.id_proyecto">
+                                        {{ item.nombre }}
+                                    </option>
+                                </select>
+                            </div>
+                
+                            <!-- SUBSECCIÓN -->
+                            <div class="col-md-4">
+                                <label class="fs-6 fw-bold mb-2">Subsección</label>
+                                <select
+                                    class="form-select form-select-solid"
+                                    name="subseccion"
+                                    [(ngModel)]="id_subseccion_seleccionada"
+                                    (change)="onSubseccionChange1(id_subseccion_seleccionada, true)"
+                                    [disabled]="subsecciones.length === 0">
+                                    <option value="">Seleccione Subsección</option>
+                                    <option *ngFor="let item of subsecciones" [value]="item.id_proyecto">
+                                        {{ item.nombre }}
+                                    </option>
+                                </select>
+                            </div>
+                
+                            <!-- SUB-SUBSECCIÓN -->
+                            <div class="col-md-4">
+                                <label class="fs-6 fw-bold mb-2">Sub-Subsección</label>
+                                <select
+                                    class="form-select form-select-solid"
+                                    name="subsubseccion"
+                                    [(ngModel)]="id_subsubseccion_seleccionada"
+                                    [disabled]="subsubsecciones.length === 0">
+                                    <option value="">Seleccione Sub-Subsección</option>
+                                    <option *ngFor="let item of subsubsecciones" [value]="item.id_proyecto">
+                                        {{ item.nombre }}
+                                    </option>
+                                </select>
+                            </div>
+                
+                        </div>
+                
+                    </div>
+                </div>
+                
+
+
+
+
+
+
+                <div class="card mb-6" style="border: 2px solid #0dcaf0; border-radius: 12px;">
+
+                    <!-- HEADER -->
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0 fw-bold text-primary">
+                            🔐 Configuración de acceso del usuario
+                        </h5>
+                    </div>
+                
+                    <!-- BODY -->
+                    <div class="card-body">
+                
+                        <div class="fv-row row my-1">
+                
+                            <!-- EMAIL -->
+                            <div class="col-md-6">
+                                <label class="required fw-bold fs-6 mb-2">Email</label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    class="form-control form-control-solid"
+                                    placeholder="Correo electrónico"
+                                    [(ngModel)]="email"
+                                    (ngModelChange)="onEmailChange($event)"
+                                    [ngClass]="{
+                                        'border-danger': correoInvalid || emailExiste || (email && !isValidEmail(email)),
+                                        'border-success': email && isValidEmail(email) && !emailExiste
+                                    }"
+                                />
+                
+                                <div *ngIf="correoInvalid && !email" class="text-danger">
+                                    El correo es requerido.
+                                </div>
+                
+                                <div *ngIf="email && !isValidEmail(email)" class="text-danger">
+                                    Correo inválido.
+                                </div>
+                
+                                <div *ngIf="emailChecking" class="text-info">
+                                    Verificando correo...
+                                </div>
+                
+                                <div *ngIf="emailExiste" class="text-danger">
+                                    Este correo ya está registrado.
+                                </div>
+                
+                                <div *ngIf="email && isValidEmail(email) && !emailExiste" class="text-success">
+                                    Correo disponible.
+                                </div>
+                            </div>
+                
+                            <!-- CONTRASEÑA -->
+                            <div class="col-md-6">
+                                <label class="fw-bold fs-6 mb-2">Contraseña</label>
+                                <input
+                                    type="password"
+                                    name="password"
+                                    class="form-control form-control-solid"
+                                    placeholder="Contraseña"
+                                    [(ngModel)]="password"
+                                    [ngClass]="{
+                                        'border-danger': password && password.length < 6,
+                                        'border-success': password && password.length >= 6
+                                    }"
+                                />
+                
+                                <div *ngIf="adminPasswordInvalid && password && password.length < 6" class="text-danger">
+                                    La contraseña debe tener al menos 6 caracteres.
+                                </div>
+                
+                                <div *ngIf="password && password.length >= 6" class="text-success">
+                                    Contraseña válida.
+                                </div>
+                            </div>
+                
+                            <!-- REPETIR CONTRASEÑA -->
+                            <div class="col-md-6 mt-3">
+                                <label class="fw-bold fs-6 mb-2">Repetir contraseña</label>
+                                <input
+                                    type="password"
+                                    name="password_repit"
+                                    class="form-control form-control-solid"
+                                    placeholder="Confirmar contraseña"
+                                    [(ngModel)]="password_repit"
+                                    [ngClass]="{
+                                        'border-danger': password_repit && password !== password_repit,
+                                        'border-success': password_repit && password === password_repit
+                                    }"
+                                />
+                
+                                <div *ngIf="adminPasswordConfirmInvalid && password_repit && password !== password_repit" class="text-danger">
+                                    Las contraseñas no coinciden.
+                                </div>
+                
+                                <div *ngIf="password_repit && password === password_repit" class="text-success">
+                                    Contraseña confirmada correctamente.
+                                </div>
+                            </div>
+                
+                        </div>
+                
+                    </div>
+                </div>
+                
+
+            </div>
+            <!--end::Scroll-->
+
+    
+
+
+            
+
+                <!-- Asignar permisos -->
+                <div class="card mb-6" style="border: 2px solid #0dcaf0; border-radius: 12px;">
+                    <div class="card-header bg-light py-3" style="min-height: auto;">
+                        <h5 class="mb-0 fw-bold text-primary">
+                            🛡️ Asignación de Permisos Especiales
+                        </h5>
+                    </div>
+                    
+                    <div class="card-body p-6">
+                        <div class="alert alert-info py-1 px-2" style="font-size: 10px;">
+                            Debug: Rol ID seleccionado: <strong>{{ role_id }}</strong> | 
+                            Total Roles cargados: <strong>{{ roles?.length || 0 }}</strong>
+                        </div>
+
+                        <div class="fv-row row my-1">
+                            <div class="col-md-6">
+                                <label class="required fw-bold fs-6 mb-2">Roles</label>
+                                
+                                <select 
+                                    *ngIf="roles && roles.length > 0; else loadingRoles"
+                                    class="form-control form-select-solid fw-bolder" 
+                                    [(ngModel)]="role_id"
+                                    name="role_selected" 
+                                    [disabled]="isRoleDisabled">
+                                    
+                                    <option [ngValue]="null" disabled>Seleccione un Rol</option>
+                                    
+                                    <ng-container *ngFor="let rol of roles">
+                                        <option [ngValue]="rol.id">{{ rol.name }}</option>
+                                    </ng-container>
+                                </select>
+
+                                <ng-template #loadingRoles>
+                                    <select class="form-control" disabled>
+                                        <option>Cargando roles...</option>
+                                    </select>
+                                </ng-template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h4 class="fw-bold text-primary mt-8 mb-4">
+                    Listado de Permisos Disponibles
+                    <span class="text-muted fs-6 ms-2">
+                        (Rol actual: {{ roleName || 'Sin rol' }})
+                    </span>
+                </h4>
+
+                <!-- Selector masivo de permisos visibles -->
+                <div class="card mb-7" style="border: 1px dashed #009ef7; background-color: #f1faff;">
+                  <div class="card-body p-4">
+                    <div class="form-check form-switch form-check-custom form-check-solid">
+                      <input class="form-check-input h-30px w-50px" type="checkbox" id="edit_select_all_permissions"
+                             [checked]="isAllSelected()" (change)="toggleAllPermissions($event)" />
+                      <label class="form-check-label fw-bold text-gray-800 fs-5" for="edit_select_all_permissions">
+                        Seleccionar todos los permisos disponibles
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                
+                <hr />
+                
+                <div class="row row-permisos" style="padding: 10px;">
+
+                    <div class="col-12 mb-7">
+                        <div class="card shadow border-top border-primary border-3">
+                            <div class="card-header bg-primary py-3 d-flex align-items-center" style="min-height: auto;">
+                                <h3 class="card-title fw-bolder text-white fs-4 mb-0">
+                                    <i class="bi bi-folder2-open fs-3 me-3 text-white"></i>Módulo de Administración
+                                </h3>
+                            </div>
+                            <div class="card-body bg-gray-100 p-7">
+                                <div class="row">
+                                    <ng-container *ngFor="let item of availablePermissions">
+                                        <div class="col-md-4 mb-6" *ngIf="['Dashboard', 'Empresa', 'Usuarios', 'Auditoria', 'Respaldo Archivo_&_BD'].includes(item.name)">
+                                             
+                                            <div class="card h-100 bg-white border border-gray-300 shadow-sm" style="border-radius: 8px;">
+                                                <div class="card-header border-bottom border-primary border-2 justify-content-center pt-4 pb-3" style="background-color: #fafcff; min-height: auto;">
+                                                    <h6 class="card-title fw-bolder text-uppercase fs-7 text-primary m-0 tracking-wider">
+                                                        {{ item.name }}
+                                                    </h6>
+                                                </div>
+                                                <div class="card-body pt-5 pb-5 px-6">
+                                                    <div class="form-check mb-3" *ngFor="let permiso of item.permisos">
+                                                        <input type="checkbox" class="form-check-input h-20px w-20px"
+                                                            [checked]="selectedPermissions.includes(permiso.permiso)"
+                                                            (change)="addPermission(permiso.permiso, $event)"
+                                                            [id]="'edit-permiso-'+item.name+'-'+permiso.permiso">
+                                                        <label class="form-check-label fs-7 fw-semibold text-gray-800 ms-2" [for]="'edit-permiso-'+item.name+'-'+permiso.permiso">
+                                                            {{ permiso.name }}
+                                                            <span *ngIf="item.name === 'Tramite' && (permiso.permiso === 'register_Tramite' || permiso.name === 'Registrar')" class="text-danger ms-1">(cliente externo)</span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                
+                                        </div>
+                                    </ng-container>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <!-- Gestión Documental -->
+                    <div class="col-12 mb-7">
+                        <div class="card shadow border-top border-primary border-3">
+                            <div class="card-header bg-primary py-3 d-flex align-items-center" style="min-height: auto;">
+                                <h3 class="card-title fw-bolder text-white fs-4 mb-0">
+                                    <i class="bi bi-folder2-open fs-3 me-3 text-white"></i>Módulo de Gestión Documental
+                                </h3>
+                            </div>
+                            <div class="card-body bg-gray-100 p-7">
+                                <div class="row">
+                                    <ng-container *ngFor="let item of availablePermissions">
+                                        <div class="col-md-4 mb-6" *ngIf="['Sección Docuemntal', 'Busqueda de documentos', 'Reporte', 'Prestamo Expediente', 'Certifiados Expediente'].includes(item.name)">
+                                            
+                                            <div class="card h-100 bg-white border border-gray-300 shadow-sm" style="border-radius: 8px;">
+                                                <div class="card-header border-bottom border-primary border-2 justify-content-center pt-4 pb-3" style="background-color: #fafcff; min-height: auto;">
+                                                    <h6 class="card-title fw-bolder text-uppercase fs-7 text-primary m-0 tracking-wider">
+                                                        {{ item.name }}
+                                                    </h6>
+                                                </div>
+                                                <div class="card-body pt-5 pb-5 px-6">
+                                                    <div class="form-check mb-3" *ngFor="let permiso of item.permisos">
+                                                        <input type="checkbox" class="form-check-input h-20px w-20px"
+                                                            [checked]="selectedPermissions.includes(permiso.permiso)"
+                                                            (change)="addPermission(permiso.permiso, $event)"
+                                                            [id]="'edit-permiso-'+item.name+'-'+permiso.permiso">
+                                                        <label class="form-check-label fs-7 fw-semibold text-gray-800 ms-2" [for]="'edit-permiso-'+item.name+'-'+permiso.permiso">
+                                                            {{ permiso.name }}
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </ng-container>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 mb-5">
+                        <div class="card shadow border-top border-success border-3">
+                            <div class="card-header bg-success py-3 d-flex align-items-center" style="min-height: auto;">
+                                <h3 class="card-title fw-bolder text-white fs-4 mb-0">
+                                    <i class="bi bi-arrow-repeat fs-3 me-3 text-white"></i>Sistema de Trámites y Seguimiento
+                                </h3>
+                            </div>
+                            <div class="card-body bg-gray-100 p-7">
+                                <!-- Grupo 1: Recepcion y Admin -->
+                                <div class="mb-4">
+                                    <div class="d-flex align-items-center mb-2 justify-content-between">
+                                        <h5 class="mb-0 text-primary">(Desapacho o Recepcion y Admin)</h5>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox"
+                                                   [checked]="isGroupSelected(groupRecepAdminMods)"
+                                                   (change)="toggleGroupPermissions(groupRecepAdminMods, $event)">
+                                            <label class="form-check-label small">Seleccionar grupo</label>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <ng-container *ngFor="let item of availablePermissions">
+                                            <div class="col-md-4 mb-6" *ngIf="['Tipo Documento','Tipo Tramite','Cliente','Recepcion Trámite','Despacho Trámite'].includes(item.name)">
+                                                <div class="card h-100 bg-white border border-gray-300 shadow-sm" style="border-radius: 8px;">
+                                                    <div class="card-header border-bottom border-success border-2 justify-content-center pt-4 pb-3" style="background-color: #fafffb; min-height: auto;">
+                                                        <h6 class="card-title fw-bolder text-uppercase fs-7 text-success m-0 tracking-wider">
+                                                            {{ titulosAmigables[item.name] || item.name }}
+                                                        </h6>
+                                                    </div>
+                                                    <div class="card-body pt-5 pb-5 px-6">
+                                                        <div class="form-check mb-3" *ngFor="let permiso of item.permisos">
+                                                            <input type="checkbox" class="form-check-input h-20px w-20px"
+                                                                [checked]="selectedPermissions.includes(permiso.permiso)"
+                                                                (change)="addPermission(permiso.permiso, $event)"
+                                                                [id]="'edit-permiso-'+item.name+'-'+permiso.permiso">
+                                                            <label class="form-check-label fs-7 fw-semibold text-gray-800 ms-2" [for]="'edit-permiso-'+item.name+'-'+permiso.permiso">
+                                                                {{ permiso.name }}
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </ng-container>
+                                    </div>
+                                </div>
+
+                                <!-- Grupo 2: USUARIO INTERNO -->
+                                <div class="mb-4">
+                                    <div class="d-flex align-items-center mb-2 justify-content-between">
+                                        <h5 class="mb-0 text-dark">(USUARIO INTERNO)</h5>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox"
+                                                   [checked]="isGroupSelected(groupUsuarioInternoMods)"
+                                                   (change)="toggleGroupPermissions(groupUsuarioInternoMods, $event)">
+                                            <label class="form-check-label small">Seleccionar grupo</label>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <ng-container *ngFor="let item of availablePermissions">
+                                            <div class="col-md-4 mb-6" *ngIf="['Asignar Tramites','Historial Tramite','Buzon Tramite'].includes(item.name)">
+                                                <div class="card h-100 bg-white border border-gray-300 shadow-sm" style="border-radius: 8px;">
+                                                    <div class="card-header border-bottom border-success border-2 justify-content-center pt-4 pb-3" style="background-color: #fafffb; min-height: auto;">
+                                                        <h6 class="card-title fw-bolder text-uppercase fs-7 text-success m-0 tracking-wider">
+                                                            {{ titulosAmigables[item.name] || item.name }}
+                                                        </h6>
+                                                    </div>
+                                                    <div class="card-body pt-5 pb-5 px-6">
+                                                        <div class="form-check mb-3" *ngFor="let permiso of item.permisos">
+                                                            <input type="checkbox" class="form-check-input h-20px w-20px"
+                                                                [checked]="selectedPermissions.includes(permiso.permiso)"
+                                                                (change)="addPermission(permiso.permiso, $event)"
+                                                                [id]="'edit-permiso-'+item.name+'-'+permiso.permiso">
+                                                            <label class="form-check-label fs-7 fw-semibold text-gray-800 ms-2" [for]="'edit-permiso-'+item.name+'-'+permiso.permiso">
+                                                                {{ permiso.name }}
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </ng-container>
+                                    </div>
+                                </div>
+
+                                <!-- Grupo 3: cliente externo -->
+                                <div>
+                                    <div class="d-flex align-items-center mb-2 justify-content-between">
+                                        <h5 class="mb-0 text-danger">(cliente externo)</h5>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox"
+                                                   [checked]="isGroupSelected(groupClienteExternoMods)"
+                                                   (change)="toggleGroupPermissions(groupClienteExternoMods, $event)">
+                                            <label class="form-check-label small">Seleccionar grupo</label>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <ng-container *ngFor="let item of availablePermissions">
+                                            <div class="col-md-4 mb-6" *ngIf="['Tramite','Seguimiento'].includes(item.name)">
+                                                <div class="card h-100 bg-white border border-gray-300 shadow-sm" style="border-radius: 8px;">
+                                                    <div class="card-header border-bottom border-success border-2 justify-content-center pt-4 pb-3" style="background-color: #fafffb; min-height: auto;">
+                                                        <h6 class="card-title fw-bolder text-uppercase fs-7 text-success m-0 tracking-wider">
+                                                            {{ titulosAmigables[item.name] || item.name }}
+                                                        </h6>
+                                                    </div>
+                                                    <div class="card-body pt-5 pb-5 px-6">
+                                                        <div class="form-check mb-3" *ngFor="let permiso of item.permisos">
+                                                            <input type="checkbox" class="form-check-input h-20px w-20px"
+                                                                [checked]="selectedPermissions.includes(permiso.permiso)"
+                                                                (change)="addPermission(permiso.permiso, $event)"
+                                                                [id]="'edit-permiso-'+item.name+'-'+permiso.permiso">
+                                                            <label class="form-check-label fs-7 fw-semibold text-gray-800 ms-2" [for]="'edit-permiso-'+item.name+'-'+permiso.permiso">
+                                                                {{ permiso.name }}
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </ng-container>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                
+                </div>
+
+
+            
+
+
+
+
+
+                
+                <hr class="my-6 border border-primary border-2 opacity-75" />
+
+                <!-- CARD: REGISTRAR FIRMA DIGITAL -->
+                <div class="card shadow-sm border-0 mt-5">
+
+                <!-- HEADER -->
+                <div class="card-header bg-primary text-white text-center py-4">
+                <h2 class="mb-0 fw-bolder">
+                    <i class="fas fa-signature me-3"></i>
+                    Registrar Firma Digital
+                </h2>
+                </div>
+
+
+                <!-- BODY -->
+                <div class="card-body">
+
+                    <!-- Separador -->
+                    <hr class="my-4 border border-primary border-2 opacity-50" />
+
+                    <!-- SUB CARD FIRMA -->
+                    <div class="card shadow-sm border-0">
+                    <div class="card-header bg-info text-white d-flex align-items-center">
+                        <h5 class="mb-0">
+                        <i class="fas fa-key me-2"></i>
+                        Firma Electrónica
+                        </h5>
+                    </div>
+
+                    <div class="card-body">
+
+                        <!-- Archivo firma -->
+                        <div class="mb-4">
+                        <label for="firma" class="form-label fw-bold">
+                            Archivo de Firma (.p12 o .pfx)
+                        </label>
+
+                        <!-- Mostrar archivo existente -->
+                        <div *ngIf="USER_SELECTED.archivo_firma" class="mb-2 text-truncate">
+                            Archivo actual: 
+                            <a [href]="USER_SELECTED.archivo_firma" target="_blank">
+                            {{ USER_SELECTED.archivo_firma.split('/').pop() }}
+                            </a>
+                        </div>
+
+                        <input
+                            type="file"
+                            id="firma"
+                            class="form-control"
+                            accept=".p12,.pfx"
+                            (change)="onFirmaSelected($event)"
+                            name="firma"
+                        />
+
+                        <small class="text-muted">
+                            Seleccione un nuevo archivo de firma si desea reemplazar el actual.
+                        </small>
+                        </div>
+
+                        <!-- Contraseña -->
+                        <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            Contraseña de la Firma
+                        </label>
+                        <input
+                            type="password"
+                            class="form-control"
+                            [(ngModel)]="contrasena_firma"
+                            name="contrasena_firma"
+                            [placeholder]="USER_SELECTED.password_firma || 'Ingrese la contraseña del archivo de firma (opcional)'"
+                        />
+                        </div>
+
+                        <!-- Fecha expiración -->
+                        <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            Fecha de Expiración de la Firma
+                        </label>
+                        <input
+                            type="date"
+                            class="form-control"
+                            [(ngModel)]="fecha_expiracion_firma"
+                            name="fecha_expiracion_firma"
+                        />
+                        </div>
+
+
+                    </div>
+                    </div>
+
+
+                </div>
+                </div>
+
+
+
+
+
+
+                <!--begin::Actions-->
+                <div class="text-center pt-15 border-top mt-5">
+
+                    <button type="button"
+                        class="btn btn-light border border-danger text-danger me-3"
+                        (click)="modal.dismiss()">
+                        Cerrar
+                    </button>
+
+
+                    <button type="button"
+                        class="btn btn-primary"
+                        (click)="ActualizarUsuario()"
+                        [disabled]="isLoading | async">
+
+                        <span *ngIf="!(isLoading | async)">
+                            <i class="fa fa-save me-2"></i> Guardar
+                        </span>
+
+                        <span *ngIf="isLoading | async">
+                            Actualizando...
+                            <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+                        </span>
+
+                    </button>
+
+                </div>
+
+                <!--end::Actions-->
+
+
+        </form>
+        <!--end::Form-->
+
+    </div>
+    <!--end::Modal body-->
+
+
+
+
+
+
+
+
+
+
+</div>
+<!--end::Modal content CREATE-->

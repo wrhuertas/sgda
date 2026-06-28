@@ -1,0 +1,16 @@
+
+
+  <div class="modal-header">
+    <h5 class="modal-title">Eliminar Subsección</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <p>¿Estás seguro que deseas eliminar el Subsección <strong>{{ SUBSECCION_SELECTED?.nombre }}</strong>?</p>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-light" (click)="cancelar()">Cancelar</button>
+    <button class="btn btn-danger" (click)="eliminar()" [disabled]="isLoading">
+      <span *ngIf="!isLoading">Eliminar</span>
+      <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    </button>
+  </div>  

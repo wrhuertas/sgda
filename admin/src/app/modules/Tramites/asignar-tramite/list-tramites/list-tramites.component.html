@@ -1,0 +1,117 @@
+<div class="card">
+  <div class="card-header border-0 pt-6">
+    <div class="card-title">
+      <div class="d-flex align-items-center position-relative my-1">
+        <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-5">
+          <span class="path1"></span><span class="path2"></span>
+        </i>
+        <input type="text" [(ngModel)]="search" (keyup.enter)="listatramites()" name="search"
+          class="form-control form-control-solid w-250px ps-12" placeholder="Buscar Trámite..." />
+        
+        <span class="spinner-border spinner-border-sm align-middle ms-4" *ngIf="isLoading$ | async"></span>
+      </div>
+    </div>
+
+    <div class="card-toolbar">
+      <button type="button" class="btn btn-primary" (click)="crearTramite()">
+        <i class="ki-duotone ki-plus fs-2"></i> Crear Nuevo Trámite
+      </button>
+    </div>
+  </div>
+
+  <div class="card-body pt-3">
+    <div class="table-responsive">
+       <table class="table align-middle table-row-dashed fs-7 gy-3">
+              <thead>
+                <tr class="text-start text-gray-500 fw-bold fs-8 text-uppercase gs-0 bg-light">
+                  <th class="min-w-40px text-center" title="Documento principal firmado electrónicamente">
+                    <div class="d-flex flex-column align-items-center">
+                      <i class="fa fa-key fs-4 text-gray-400"></i>
+                    </div>
+                  </th>
+                  <th class="ps-4 min-w-40px">Anexos</th>
+                  <th class="min-w-90px">DE</th>
+                  <th class="min-w-90px">Para</th>
+                  <th class="min-w-200px">Asunto</th>
+                  <th class="min-w-90px">Fecha Trámite</th>
+                  <th class="min-w-80px">Nº Trámite</th>
+                  <th class="min-w-90px">Nº Documento</th>
+                  <th class="min-w-80px">Nº Referido</th>
+                  
+                  <th class="text-center min-w-120px">Acciones</th>
+                </tr>
+              </thead>
+              <tbody class="fw-semibold text-gray-600">
+                <tr *ngFor="let item of tramites">
+                  <td class="text-center align-middle">
+                    <i class="fa fa-flag"
+                       [ngClass]="(item?.documento_principal?.firmado ? 'text-success' : 'text-secondary')"
+                       [title]="item?.documento_principal?.firmado ? 'Firmado electrónicamente' : 'No firmado'"></i>
+                  </td>
+                  <td class="ps-4">
+                    <div class="position-relative d-inline-block" title="Anexos" (click)="abrirAnexos(item)" style="cursor:pointer;">
+                      <i class="fa fa-folder text-warning"></i>
+                      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary text-white fs-9">
+                        {{ item.anexos_count || 0 }}
+                      </span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="d-flex flex-column" style="max-width: 90px; white-space: normal; word-break: break-all;">
+                      <span class="text-gray-800 text-hover-primary mb-1">{{ item.usuario_origen?.nombre_completo || item.cliente?.nombre || '-' }}</span>
+                      <span class="fs-9 text-muted">{{ item.cliente?.cedula_ruc || '-' }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="text-gray-800 d-inline-block" style="max-width: 90px; white-space: normal; word-break: break-all;">
+                      {{ item.usuario_destino?.nombre_completo || '-' }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="text-gray-800 text-truncate d-inline-block" style="max-width: 260px;" title="{{ item.asignacion?.asunto_asignar || item.tramite?.asunto }}">
+                      {{ item.asignacion?.asunto_asignar || item.tramite?.asunto || '-' }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="text-gray-800 d-inline-block" style="max-width: 90px; white-space: normal; word-break: break-all;">{{ item.asignacion?.fecha_registro | date:'dd/MM/yyyy HH:mm' }}</span>
+                  </td>
+                  <td>
+                    <span class="fw-bold text-primary d-inline-block" style="max-width: 90px; white-space: normal; word-break: break-all;">{{ item.asignacion?.numero_tramite || '-' }}</span>
+                  </td>
+                  <td>
+                    <span class="text-gray-800 d-inline-block" style="max-width: 90px; white-space: normal; word-break: break-all;">{{ item.asignacion?.num_documento_interno || '-' }}</span>
+                  </td>
+                  <td>
+                    <span class="text-gray-800 d-inline-block" style="max-width: 90px; white-space: normal; word-break: break-all;">{{ item.asignacion?.numero_referido || '-' }}</span>
+                  </td>
+                  
+                  <td class="text-center">
+                    <div class="d-flex justify-content-center gap-2">
+                      <button (click)="verMasDatos(item)" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm" title="Datos"><i class="fa fa-eye"></i></button>
+                      <button (click)="verSeguimiento(item)" class="btn btn-icon btn-bg-light btn-active-color-success btn-sm" title="Seguimiento"><i class="fa fa-history"></i></button>
+                      <button
+                        *ngIf="item.asignacion?.tipo_asignacion === 'PARA' && item.asignacion?.estado_tramite === 'DERIVAR' && item.asignacion?.estado === 2"
+                        (click)="asignarTramite(item)"
+                        class="btn btn-icon btn-bg-light btn-active-color-warning btn-sm"
+                        title="Asignar"
+                        [disabled]="calcularVigencia(item).bloqueado"
+                      >
+                        <i class="fa fa-share-square"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                
+                <tr *ngIf="tramites.length === 0">
+                  <td colspan="10" class="text-center text-muted py-4 fs-8 italic">No hay documentos para mostrar</td>
+                </tr>
+              </tbody>
+            </table>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap mt-5">
+      <div class="text-muted fs-7 fw-bold">Total: {{ totalPages }}</div>
+      <ngb-pagination [collectionSize]="totalPages" [(page)]="currentPage" [pageSize]="10" (pageChange)="listatramites($event)"></ngb-pagination>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,88 @@
+<!--begin::Modal content-->
+<div class="modal-content">
+  <!--begin::Modal header-->
+  <div class="modal-header" id="kt_modal_add_user_header">
+    <h5 class="modal-title">Agregar Documento - Sección #{{ idSeccion }}, Módulo #{{ idModulo }}</h5>
+    <div class="btn btn-sm btn-icon btn-active-color-primary" (click)="close()" style="cursor:pointer">
+      <i class="fas fa-times"></i>
+    </div>
+  </div>
+  <!--end::Modal header-->
+
+  <!--begin::Modal body-->
+  <div class="modal-body py-10 px-lg-17">
+    <form class="form" (ngSubmit)="store()">
+      <div class="row g-5">
+        <!-- Columna 1 -->
+        <div class="col-md-6">
+          <div class="fv-row mb-5">
+            <label class="form-label">Tipología</label>
+            <input type="text" class="form-control" [(ngModel)]="tipologia" name="tipologia" required />
+          </div>
+
+          <div class="fv-row mb-5">
+            <label class="form-label">Tema</label>
+            <input type="text" class="form-control" [(ngModel)]="tema" name="tema" required />
+          </div>
+
+          <div class="fv-row mb-5">
+            <label class="form-label">Estantería</label>
+            <select class="form-select" [(ngModel)]="id_estanteria" name="estanteria" required>
+              <option value="" disabled selected>Seleccione estantería</option>
+              <option *ngFor="let est of estanterias" [value]="est.id">{{ est.nombre }}</option>
+            </select>
+          </div>
+
+          <div class="fv-row mb-5">
+            <label class="form-label">Caja</label>
+            <select class="form-select" [(ngModel)]="id_caja" name="caja" required>
+              <option value="" disabled selected>Seleccione caja</option>
+              <option *ngFor="let c of cajas" [value]="c.id">{{ c.nombre }}</option>
+            </select>
+          </div>
+
+          <div class="fv-row mb-5">
+            <label class="form-label">Fecha del Documento</label>
+            <input type="date" class="form-control" [(ngModel)]="fecha" name="fecha" />
+          </div>
+        </div>
+
+        <!-- Columna 2 -->
+        <div class="col-md-6">
+          <div class="fv-row mb-5">
+            <label class="form-label">Subir documentos</label>
+            <input
+              type="file"
+              class="form-control"
+              (change)="onFileSelected($event)"
+              multiple
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+            />
+          </div>
+
+          <div class="mt-2" *ngIf="archivosSeleccionados.length > 0">
+            <label class="form-label">Archivos seleccionados:</label>
+            <ul class="list-group">
+              <li
+                class="list-group-item py-1 px-2 d-flex align-items-center justify-content-between"
+                *ngFor="let archivo of archivosSeleccionados"
+              >
+                {{ archivo.name }}
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones -->
+      <div class="text-end pt-10">
+        <button type="button" class="btn btn-light me-3" (click)="close()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">
+          <span class="indicator-label">Guardar</span>
+        </button>
+      </div>
+    </form>
+  </div>
+  <!--end::Modal body-->
+</div>
+<!--end::Modal content-->

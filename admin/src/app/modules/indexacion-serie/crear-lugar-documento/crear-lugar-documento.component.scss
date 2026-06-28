@@ -1,0 +1,68 @@
+// Estilos compactos para la lista de estanterías dentro de col-md-3
+.est-hdr {
+  font-size: 0.8rem; // -1 nivel
+}
+
+.est-row {
+  font-size: 0.85rem; // -1 nivel
+}
+
+.est-nombre,
+.est-nombre-link {
+  font-size: 0.85rem; // compacta el nombre
+}
+
+.est-cantidad {
+  width: 68px; // cantidad más angosta para caber en una fila
+  font-size: 0.85rem;
+  padding-top: 0.1rem;
+  padding-bottom: 0.1rem;
+}
+
+.qty-col {
+  flex: 0 0 auto;
+}
+
+.btns-col {
+  flex: 0 0 auto;
+  min-width: 60px;
+}
+
+.est-icon-btn {
+  line-height: 1;
+}
+
+// Iconos un paso más pequeños dentro de los botones
+.est-icon-btn i {
+  font-size: 0.8rem;
+}
+
+/* Unificar estilo de tarjetas: mismo color y borde delgado */
+:host ::ng-deep .card {
+  border: 1px solid #dee2e6 !important; /* borde delgado gris claro */
+  box-shadow: none; /* opcional: sin sombras fuertes */
+}
+
+/* Neutralizar bordes izquierdos de color y grosor */
+:host ::ng-deep .border-start {
+  border-left: 1px solid #dee2e6 !important;
+}
+
+:host ::ng-deep .border-4 {
+  border-width: 1px !important;
+}
+
+:host ::ng-deep .border-primary,
+:host ::ng-deep .border-success,
+:host ::ng-deep .border-warning,
+:host ::ng-deep .border-danger,
+:host ::ng-deep .border-purple {
+  --bs-border-opacity: 1;
+  border-color: #dee2e6 !important;
+}
+
+/* Encabezados y cuerpos con fondo uniforme */
+:host ::ng-deep .card-header,
+:host ::ng-deep .card-body {
+  background-color: #ffffff !important;
+}

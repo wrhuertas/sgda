@@ -1,0 +1,107 @@
+<div class="card">
+  <!--begin::Card header-->
+  <div class="card-header border-0 pt-6">
+    <!--begin::Card title-->
+    <div class="card-title">
+      <!--begin::Search-->
+      <div class="d-flex align-items-center position-relative my-1">
+        <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-5">
+          <span class="path1"></span><span class="path2"></span>
+        </i>
+        <input
+          type="text"
+          [(ngModel)]="search"
+          (keyup.enter)="listModulos()"
+          name="search"
+          class="form-control form-control-solid w-250px ps-12"
+          placeholder="Buscar Módulo"
+        />
+      </div>
+      <!--end::Search-->
+    </div>
+    <span class="spinner-border spinner-border-sm align-middle ms-2" *ngIf="isLoading$ | async"></span>
+
+    <!--begin::Card toolbar-->
+    <div class="card-toolbar">
+      <div class="d-flex justify-content-end">
+        <button type="button" class="btn btn-primary" (click)="createModulo()">+ Agregar Módulo</button>
+      </div>
+    </div>
+    <!--end::Card toolbar-->
+  </div>
+  <!--end::Card header-->
+
+  <!--begin::Card body-->
+<div class="card-body pt-4">
+  <!-- Si no hay módulos -->
+  <div *ngIf="modulos.length === 0">
+    <p style="color:red;">No hay módulos para mostrar</p>
+  </div>
+
+  <!-- Mostrar módulos en cards -->
+  <div class="row">
+    <ng-container *ngFor="let MODULO of modulos">
+      <div class="col-md-4 mb-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-body text-center">
+            <!-- Título del módulo -->
+            <h4 class="card-title fw-bold text-dark mb-3 fs-2">{{ MODULO.nombre }}</h4>
+
+            <!-- Descripción si existe -->
+            <p *ngIf="MODULO.descripcion" class="mb-1 text-muted">
+              {{ MODULO.descripcion }}
+            </p>
+
+            <!-- Fecha de creación -->
+            <p class="mb-1">
+              <strong>Fecha Registro:</strong> {{ MODULO.created_at | date:'dd/MM/yyyy hh:mm a' }}
+            </p>
+
+            <!-- Estado -->
+            <p>
+              <strong>Estado:</strong>
+              <span class="badge badge-light-success" *ngIf="MODULO.estado == 1">Activo</span>
+              <span class="badge badge-light-danger" *ngIf="MODULO.estado == 0">Inactivo</span>
+            </p>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="card-footer d-flex justify-content-between gap-2">
+            <div>
+              <button class="btn btn-sm btn-light-primary" (click)="editModulo(MODULO)">
+                <i class="ki-duotone ki-pencil"></i> Editar
+              </button>
+              <button class="btn btn-sm btn-light-danger" (click)="deleteModulo(MODULO)">
+                <i class="ki-duotone ki-trash"></i> Eliminar
+              </button>
+            </div>
+
+            <button 
+                class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm" 
+                title="Crear indexación"
+                (click)="crearIndexacion(MODULO)">
+                <i class="fas fa-arrow-right fs-2"></i>
+           </button>
+
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+
+  <!-- Paginación -->
+  <ngb-pagination
+    *ngIf="modulos.length > 0"
+    [collectionSize]="totalPages"
+    [(page)]="currentPage"
+    [pageSize]="25"
+    [rotate]="true"
+    [boundaryLinks]="true"
+    (pageChange)="loadPage($event)"
+  ></ngb-pagination>
+</div>
+
+<!--end::Card body-->
+
+  <!--end::Card body-->
+</div>

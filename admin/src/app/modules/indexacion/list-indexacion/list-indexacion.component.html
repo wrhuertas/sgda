@@ -1,0 +1,100 @@
+<p><strong>Sección:</strong> {{ nombreProyecto }}</p>
+<div class="card shadow-sm border border-primary">
+  <div class="card-header">
+    <h3 class="card-title mb-0">
+     
+    </h3>
+  </div>
+
+  <div class="card-body pt-3">
+    <!-- Botón para agregar indexación -->
+    <button
+      class="btn btn-sm btn-success"
+      type="button"
+      (click)="crearIndexacion()"
+    >
+      <i class="fas fa-plus me-2"></i> Agregar Indexación
+    </button>
+
+    <hr />
+  </div>
+</div>
+<div
+  *ngIf="listaTitulos.length > 0"
+  class="card shadow-sm border border-primary mt-3 p-3"
+>
+  <div class="d-flex flex-wrap gap-3 justify-content-start">
+    <div
+      *ngFor="let titulo of listaTitulos; let i = index"
+      class="d-flex align-items-center"
+      style="gap: 4px"
+    >
+      <label
+        [for]="'input-' + i"
+        class="form-label mb-0"
+        style="min-width: auto; margin-right: 4px"
+        >{{ titulo }}:</label
+      >
+      <input
+        type="text"
+        [id]="'input-' + i"
+        class="form-control"
+        [(ngModel)]="valoresInputs[i]"
+        placeholder="..."
+        style="max-width: 160px; min-width: 120px"
+      />
+    </div>
+  </div>
+
+  <!-- Botón de búsqueda centrado -->
+  <div class="d-flex justify-content-center mt-4">
+    <button
+      class="btn btn-primary d-flex align-items-center gap-2"
+      (click)="buscarIndexaciones()"
+    >
+      <i class="fas fa-search"></i> Buscar
+    </button>
+  </div>
+</div>
+
+<table class="table table-bordered mt-3" *ngIf="documentosPaginados?.data?.length > 0">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Proyecto Padre</th>
+      <th>Proyecto</th>
+      <th>Documento (PDF)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let documento of documentosPaginados.data">
+      <!-- ID -->
+      <td>{{ documento.id_indexacion }}</td>
+
+      <!-- Nombre del Proyecto Padre -->
+      <td>
+        {{ documento.proyecto?.parent?.nombre || 'Sin padre' }}
+      </td>
+
+      <!-- Nombre del Proyecto (hijo) -->
+      <td>
+        {{ documento.proyecto?.nombre }}
+      </td>
+
+      <!-- Link al PDF -->
+      <td>
+        <ng-container *ngIf="documento.archivo_url">
+          <a
+            [href]="getArchivoUrl(documento)"
+            target="_blank"
+            class="btn btn-outline-primary btn-sm"
+          >
+            <i class="fas fa-file-pdf me-2"></i> Descargar PDF
+          </a>
+        </ng-container>
+        <span *ngIf="!documento.archivo_url" class="text-muted">No hay archivo</span>
+      </td>
+    </tr>
+  </tbody>
+</table>
+

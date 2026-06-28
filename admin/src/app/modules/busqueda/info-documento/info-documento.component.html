@@ -1,0 +1,221 @@
+<div class="modal-content">
+  <div class="modal-header">
+    <h2 class="fw-bolder">Información Detallada del Documento</h2>
+    <div class="btn btn-icon btn-sm btn-active-icon-primary" (click)="cerrar()">
+      <span class="svg-icon svg-icon-1">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <rect opacity="0.5" x="6" y="17.3137" width="16" height="2" rx="1" transform="rotate(-45 6 17.3137)" fill="black" />
+          <rect x="7.41422" y="6" width="16" height="2" rx="1" transform="rotate(45 7.41422 6)" fill="black" />
+        </svg>
+      </span>
+    </div>
+  </div>
+
+  <div class="modal-body scroll-y mx-5 mx-xl-15 my-7">
+    <div *ngIf="cargando" class="text-center">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="text-muted mt-3">Cargando información documental...</p>
+    </div>
+
+    <div *ngIf="!cargando && detalle">
+      
+      <div class="d-flex flex-stack mb-8 border-bottom pb-5">
+        <div class="d-flex align-items-center">
+          <div class="symbol symbol-60px me-5">
+            <span class="symbol-label bg-light-danger">
+              <i class="fa fa-file-pdf fs-2x text-danger"></i>
+            </span>
+          </div>
+          <div class="d-flex flex-column">
+            <a class="text-dark text-hover-primary fs-3 fw-bolder">{{ detalle.nombre_archivo }}</a>
+            <div class="d-flex align-items-center">
+              <span class="badge badge-light-dark fw-bold me-2">ID: {{ detalle.id_documento }}</span>
+              <span class="text-muted fw-bold">{{ (detalle.tamano_archivo / 1024 / 1024) | number:'1.2-2' }} MB</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-12 mb-10">
+        <h4 class="fw-bold mb-5 border-bottom pb-2 text-primary">Estructura Organizacional</h4>
+        <div class="bg-light-primary p-6 rounded border-primary border border-dashed">
+          <div class="d-flex flex-column">
+            
+            <div class="d-flex align-items-center mb-2" *ngIf="detalle.serie?.padre?.proyecto?.parent">
+              <span class="badge badge-circle badge-primary me-3">1</span>
+              <div class="d-flex flex-column">
+                <span class="text-muted fs-8 fw-bold uppercase">SECCIÓN DOCUMENTAL</span>
+                <span class="text-dark fw-bolder fs-6">{{ detalle.serie.padre.proyecto.parent.nombre }}</span>
+              </div>
+            </div>
+
+            <div class="ms-3 ps-1 border-start border-2 border-primary-light h-20px" *ngIf="detalle.serie?.padre?.proyecto"></div>
+
+            <div class="d-flex align-items-center mb-2" *ngIf="detalle.serie?.padre?.proyecto">
+              <span class="badge badge-circle badge-success me-3">2</span>
+              <div class="d-flex flex-column">
+                <span class="text-muted fs-8 fw-bold uppercase">SUBSECCIÓN DOCUMENTAL</span>
+                <span class="text-dark fw-bolder fs-6">{{ detalle.serie.padre.proyecto.nombre }}</span>
+              </div>
+            </div>
+
+            <div class="ms-3 ps-1 border-start border-2 border-primary-light h-20px" *ngIf="detalle.serie?.padre"></div>
+
+            <div class="d-flex align-items-center mb-2" *ngIf="detalle.serie?.padre">
+              <span class="badge badge-circle badge-warning me-3">3</span>
+              <div class="d-flex flex-column">
+                <span class="text-muted fs-8 fw-bold uppercase">SERIE DOCUMENTAL</span>
+                <span class="text-dark fw-bolder fs-6">{{ detalle.serie.padre.nombre }}</span>
+              </div>
+            </div>
+
+            <div class="ms-3 ps-1 border-start border-2 border-primary-light h-20px"></div>
+
+            <div class="d-flex align-items-center">
+              <span class="badge badge-circle badge-danger me-3">4</span>
+              <div class="d-flex flex-column">
+                <span class="text-muted fs-8 fw-bold uppercase">SUBSERIE / EXPEDIENTE</span>
+                <span class="text-dark fw-bolder fs-6">{{ detalle.serie?.nombre }}</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-9 mb-8">
+        <div class="col-md-6">
+          <h4 class="fw-bold mb-5 border-bottom pb-2">Datos Generales</h4>
+          
+          <div class="mb-5">
+            <label class="fw-bold text-muted d-block">Título / Descripción</label>
+            <span class="fw-bolder fs-6">{{ detalle.titulo || 'Sin Título' }}</span>
+          </div>
+
+          <div class="mb-5">
+            <label class="fw-bold text-muted d-block">Código / Número</label>
+            <span class="fw-bolder fs-6">{{ detalle.numero_documento || 'S/N' }}</span>
+          </div>
+
+          <div class="row">
+            <div class="col-6">
+              <label class="fw-bold text-muted d-block">Tipo Soporte</label>
+              <span class="badge badge-light-info fw-bolder">{{ detalle.tipo_soporte }}</span>
+            </div>
+            <div class="col-6">
+              <label class="fw-bold text-muted d-block">Acceso</label>
+              <span class="badge badge-light-success fw-bolder">{{ detalle.tipo_acceso }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <h4 class="fw-bold mb-5 border-bottom pb-2">Ubicación Física</h4>
+          
+          <div class="row g-5">
+            <div class="col-4 text-center">
+              <div class="bg-light p-3 rounded">
+                <label class="fw-bold text-muted d-block fs-8">Caja</label>
+                <span class="fw-bolder text-dark">{{ detalle.nro_caja || '-' }}</span>
+              </div>
+            </div>
+            <div class="col-4 text-center">
+              <div class="bg-light p-3 rounded">
+                <label class="fw-bold text-muted d-block fs-8">Carpeta</label>
+                <span class="fw-bolder text-dark">{{ detalle.nro_carpeta_fisica || '-' }}</span>
+              </div>
+            </div>
+            <div class="col-4 text-center">
+              <div class="bg-light p-3 rounded">
+                <label class="fw-bold text-muted d-block fs-8">Tomo</label>
+                <span class="fw-bolder text-dark">{{ detalle.nro_tomo || '-' }}</span>
+              </div>
+            </div>
+            <div class="col-4 text-center">
+              <div class="bg-light p-3 rounded">
+                <label class="fw-bold text-muted d-block fs-8">Estantería</label>
+                <span class="fw-bolder text-dark">{{ detalle.nro_estanteria || '-' }}</span>
+              </div>
+            </div>
+            <div class="col-4 text-center">
+              <div class="bg-light p-3 rounded">
+                <label class="fw-bold text-muted d-block fs-8">Bandeja</label>
+                <span class="fw-bolder text-dark">{{ detalle.nro_bandeja || '-' }}</span>
+              </div>
+            </div>
+            <div class="col-4 text-center">
+              <div class="bg-light p-3 rounded border-primary border border-dashed">
+                <label class="fw-bold text-muted d-block fs-8">Folios</label>
+                <span class="fw-bolder text-primary">{{ detalle.nro_folios || '0' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-8" *ngIf="detalle.observaciones">
+        <label class="fw-bold text-muted mb-2">Observaciones Especiales</label>
+        <div class="bg-light-warning p-4 rounded text-gray-800 border-start border-4 border-warning">
+          {{ detalle.observaciones }}
+        </div>
+      </div>
+
+      <div class="mt-5">
+        <h4 class="fw-bold mb-4">Información de Sistema</h4>
+        <div class="table-responsive">
+          <table class="table table-row-dashed table-row-gray-300 align-middle">
+             <tbody class="fs-7">
+             
+               <tr>
+                 <td class="text-muted fw-bold">Fecha de Registro:</td>
+                 <td class="text-dark fw-bold">{{ detalle.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+               </tr>
+             </tbody>
+          </table>
+        </div>
+      </div>
+
+
+      <div class="mt-8">
+        <h4 class="fw-bold mb-4 text-dark">
+          <i class="fa fa-list-ul me-2 text-dark"></i>Índices del Expediente
+        </h4>
+        
+        <div class="table-responsive border rounded">
+          <table class="table table-row-dashed table-row-gray-300 align-middle gs-7 gy-4">
+            <thead>
+              <tr class="fw-bolder fs-7 text-uppercase text-muted bg-light">
+                <th class="min-w-150px">Paramtros</th>
+                <th class="min-w-200px">Descripción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let meta of detalle.metadatos">
+                <td>
+                  <span class="text-muted fw-bold d-block fs-7">{{ meta.nombre }}</span>
+                </td>
+                <td>
+                  <span class="text-dark fw-bolder d-block fs-7 text-hover-primary">
+                    {{ meta.valor || '---' }}
+                  </span>
+                </td>
+              </tr>
+      
+              <tr *ngIf="!detalle.metadatos || detalle.metadatos.length === 0">
+                <td colspan="2" class="text-center text-muted fs-7 py-5">
+                  No hay índices adicionales registrados para este documento.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="modal-footer bg-light">
+    <button type="button" class="btn btn-light" (click)="cerrar()">Cerrar</button>
+   
+  </div>
+</div>

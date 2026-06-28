@@ -1,0 +1,78 @@
+<!-- ✅ Mostrar el select solo si es superadmin por ID o por role_name (según usuario original) -->
+<div *ngIf="userOriginal?.id === 1 || userOriginal?.role_name === 'Super-Admin'" class="app-navbar-item " [ngClass]="itemClass" style="margin-right: 350px;">
+  <label class="fw-bold me-2">Seleccionar:</label>
+
+<select class="form-select ms-3" [(ngModel)]="selectedEntidad" (change)="onChangeEntidad()" *ngIf="userOriginal">
+  <option value="" disabled [selected]="!selectedEntidad">Seleccione una empresa</option>
+  <option [value]="'usuario_' + userOriginal.id">{{ userOriginal.full_name }}</option>
+  <option *ngFor="let empresa of empresas" [value]="'empresa_' + empresa.id">
+    {{ empresa.nombre_empresa }}
+  </option>
+</select>
+
+
+
+
+</div>
+
+<!-- ❗ Mensaje si NO es superadmin (usar userOriginal para la condición) -->
+<div *ngIf="userOriginal && userOriginal.id !== 1 && userOriginal.role_name !== 'Super-Admin'" class="app-navbar-item" [ngClass]="itemClass" style="margin-right: 350px;">
+  <label class="fw-bold me-2">Empresa (Fondo Documental):</label>
+  <span>{{ empresaNombreUsuario }}</span>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+<div class="app-navbar-item" [ngClass]="itemClass">
+<div>
+  <label> {{ user?.role_name || 'No hay rol' }}</label><br>
+  <label>{{ user?.full_name || 'No hay nombre' }}</label>
+</div>
+
+</div>
+
+
+
+
+<!--begin::User menu-->
+<div class="app-navbar-item" [ngClass]="itemClass">
+  <!--begin::Menu wrapper-->
+  <div
+    class="cursor-pointer symbol"
+    [ngClass]="userAvatarClass"
+    data-kt-menu-trigger="{default: 'click'}"
+    data-kt-menu-attach="parent"
+    data-kt-menu-placement="bottom-end"
+  >
+    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="avatar">
+
+  </div>
+  <app-user-inner data-kt-menu="true"></app-user-inner>
+  <!--end::Menu wrapper-->
+</div>
+<!--end::User menu-->
+
+<!--begin::Header menu toggle-->
+<ng-container *ngIf="appHeaderDefaulMenuDisplay">
+  <div class="app-navbar-item d-lg-none ms-2 me-n3" title="Show header menu">
+    <div
+      class="btn btn-icon btn-active-color-primary w-35px h-35px"
+      id="kt_app_header_menu_toggle"
+    >
+      <app-keenicon
+        name="element-4"
+        class="fs-1"
+        [ngClass]="btnIconClass"
+      ></app-keenicon>
+    </div>
+  </div>
+</ng-container>
+<!--end::Header menu toggle-->

@@ -1,0 +1,309 @@
+<div class="modal-header">
+  <h5 class="modal-title fw-bold text-dark">Editar Ubicación Topográfica</h5>
+  <button type="button" class="btn-close" aria-label="Close" (click)="cerrarModal()"></button>
+</div>
+
+<div class="modal-body bg-light">
+  <!-- Estructura completa de la ruta 
+  <div class="card border-secondary mb-3" *ngIf="estructuraRuta">
+    <div class="card-header bg-primary" style="background-color: #0d6efd !important;">
+      <h6 class="mb-0 fw-bold text-white" style="color: #ffffff !important;">
+        <i class="bi bi-diagram-3 me-1"></i>Estructura Actual de la Ruta
+      </h6>
+    </div>
+    <div class="card-body bg-light">-->
+      <!-- Edificio 
+      <div class="mb-3">
+        <p class="mb-1 fw-bold text-dark">
+          <i class="bi bi-building me-2 text-secondary"></i>{{ nombreEdificio }}
+        </p>-->
+        
+        <!-- Sala 
+        <div class="ms-4 mb-3">
+          <p class="mb-2 fw-semibold text-dark">
+            <i class="bi bi-door-open me-2"></i>{{ nombreSala }}
+            <span class="badge bg-primary ms-2">{{ cantidadEstanterias }} estanterías</span>
+          </p>-->
+
+          <!-- Estanterías 
+          <div class="ms-3" *ngIf="estanteriasConEstructura?.length">
+            <div *ngFor="let est of estanteriasConEstructura; let i = index" class="mb-3 p-2 bg-white rounded border border-secondary">
+              <p class="mb-2 fw-semibold text-dark">
+                <i class="bi bi-grid-3x3-gap me-2"></i>{{ est.codigo }} ({{ est.cantidad_filas }} filas)
+              </p>-->
+
+              <!-- Filas 
+              <div class="ms-3" *ngIf="est.filas?.length">
+                <div *ngFor="let fila of est.filas; let j = index" class="mb-2 p-2 border-start border-secondary border-2 bg-light">
+                  <p class="small text-dark mb-1">
+                    <i class="bi bi-list me-2"></i>Fila {{ j + 1 }} ({{ fila.cantidad_cajas }} cajas)
+                  </p>
+                  -->
+                  <!-- Cajas
+                  <div class="ms-3" *ngIf="fila.cajas?.length">
+                    <div *ngFor="let caja of fila.cajas; let k = index" class="small text-dark mb-1">
+                      <i class="bi bi-box-seam me-2"></i>Caja {{ caja.numero_caja }} ({{ caja.cantidad_carpetas }} carpetas)
+                       -->
+                      <!-- Carpetas 
+                      <div class="ms-3 text-muted" *ngIf="caja.carpetas?.length">
+                        <div *ngFor="let carpeta of caja.carpetas; let l = index" class="small">
+                          <i class="bi bi-folder2-open me-2"></i>{{ carpeta.nombre }} ({{ carpeta.numero_documentos }} docs)
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="my-3">-->
+
+  <div class="mb-3">
+    <label class="form-label fw-bold">Sede /Edificio</label>
+    <div class="input-group">
+      <select class="form-select" [(ngModel)]="idEdificioSeleccionado" disabled>
+        <option value="">Seleccione un edificio</option>
+        <option *ngFor="let e of edificiosEmpresa" [value]="e.id_edificio">{{ e.nombre }}</option>
+      </select>
+      <button class="btn btn-success" type="button" style="width: 130px;" *ngIf="idEdificioSeleccionado" (click)="abrirModalEditarEdificio()">
+        <i class="bi bi-pencil me-2"></i> Editar
+      </button>
+    </div>
+  </div>
+  
+  <div class="mb-3">
+    <label class="form-label fw-bold">Depósito/Archivo/Zona</label>
+    <div class="input-group">
+      <select class="form-select" [(ngModel)]="idSalaSeleccionada" disabled>
+        <option value="">Seleccione una sala</option>
+        <option *ngFor="let s of salasEdificio" [value]="s.id_sala">{{ s.nombre }}</option>
+      </select>
+      <button class="btn btn-success" type="button" style="width: 130px;" *ngIf="idSalaSeleccionada" (click)="abrirModalEditarSala()">
+        <i class="bi bi-pencil me-2"></i> Editar
+      </button>
+    </div>
+  </div>
+
+  <div class="row g-3" *ngIf="idSalaSeleccionada">
+    
+    <div class="col-lg-6" *ngIf="idSalaSeleccionada">
+      <div class="card shadow-sm border-start border-primary border-4 h-100">
+        <div class="card-header bg-white py-3">
+          <h6 class="mb-0 fw-bold text-primary">
+            <i class="bi bi-grid-3x3-gap me-2"></i>Configuración de Estanterías
+          </h6>
+        </div>
+        
+        <div class="card-body bg-white" style="max-height: 380px; overflow-y: auto;">
+
+          <div class="text-muted small mb-1" *ngIf="estanteriasLista?.length">
+            <div class="d-flex est-hdr">
+              <div class="flex-grow-1">Nombre</div>
+              <div class="qty-col text-center">Cantidad</div>
+              <div class="btns-col text-center">Acciones</div>
+            </div>
+          </div>
+
+          <div class="d-flex align-items-center est-row mb-2 px-1 py-1 rounded" *ngFor="let estanteria of estanteriasLista; let i = index" [class.bg-light]="selectedEstanteria?.id === estanteria.id">
+            <div class="flex-grow-1 me-1">
+              <button type="button" class="btn btn-link p-0 text-start w-100 est-nombre-link" (click)="seleccionarEstanteria(estanteria)" title="Seleccionar estantería">
+                {{ estanteria.nombre || ('Estantería ' + (i + 1)) }}
+              </button>
+            </div>
+            <div class="qty-col me-1">
+              <input 
+                type="number" 
+                [(ngModel)]="estanteria.cantidad_filas" 
+                class="form-control form-control-sm text-center est-cantidad" 
+                min="1" 
+                placeholder="#" 
+                [disabled]="selectedEstanteria?.id !== estanteria.id" 
+                title="Cantidad de filas">
+            </div>
+            <div class="btns-col d-flex align-items-center justify-content-center gap-1">
+              <button 
+                type="button" 
+                class="btn btn-primary btn-sm px-1 py-0 est-icon-btn"
+                [disabled]="selectedEstanteria?.id !== estanteria.id"
+                title="Ver">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="!estanteriasLista?.length" class="text-center text-muted small py-4">
+            No hay estanterías para esta sala.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel de Filas -->
+    <div class="col-lg-6" *ngIf="selectedEstanteria">
+      <div class="card shadow-sm border-start border-primary border-4 h-100">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+          <h6 class="mb-0 fw-bold text-primary">
+            <i class="bi bi-list-ul me-2"></i>
+            Filas de Estantería: {{ selectedEstanteria?.nombre || ('ID ' + selectedEstanteria?.id) }}
+          </h6>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-light text-muted">Total creadas: {{ filasLista?.length || 0 }}</span>
+          </div>
+        </div>
+        <div class="card-body bg-white" style="max-height: 380px; overflow-y: auto;">
+          <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle mb-0">
+              <thead>
+                <tr>
+                  <th class="fw-semibold" style="width: 50%">Nombre</th>
+                  <th class="fw-semibold text-center" style="width: 50%">Cajas</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngIf="(filasLista?.length || 0) === 0">
+                  <td class="text-muted" colspan="2">0 filas registradas.</td>
+                </tr>
+                <tr *ngFor="let f of filasLista; let idx = index" (click)="seleccionarFila(f)" [class.table-active]="selectedFila?.id === f.id" style="cursor: pointer;">
+                  <td>{{ f.nombre || ('Fila ' + (idx + 1)) }}</td>
+                  <td class="text-center">
+                    <input type="number" class="form-control form-control-sm text-center" min="0" [(ngModel)]="f.cantidad_cajas" (click)="$event.stopPropagation()" />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel de Cajas -->
+    <div class="col-lg-6" *ngIf="selectedFila">
+      <div class="card shadow-sm border-start border-primary border-4 h-100">
+        <div class="card-header bg-white py-3">
+          <h6 class="mb-0 fw-bold text-primary">
+            <i class="bi bi-box-seam me-2"></i>
+            Cajas de: {{ selectedFila?.nombre || 'Fila seleccionada' }}
+          </h6>
+        </div>
+        <div class="card-body bg-white" style="max-height: 380px; overflow-y: auto;">
+          <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle mb-0">
+              <thead>
+                <tr>
+                  <th class="fw-semibold" style="width: 50%">Caja</th>
+                  <th class="fw-semibold text-center" style="width: 50%">Carpetas</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngIf="(cajasLista?.length || 0) === 0">
+                  <td class="text-muted" colspan="2">0 cajas registradas.</td>
+                </tr>
+                <tr *ngFor="let c of cajasLista; let idx = index" (click)="seleccionarCaja(c)" [class.table-active]="selectedCaja?.id === c.id" style="cursor: pointer;">
+                  <td>{{ c.nombre || ('Caja ' + (idx + 1)) }}</td>
+                  <td class="text-center">
+                    <input type="number" class="form-control form-control-sm text-center" min="0" [(ngModel)]="c.cantidad_carpetas" (click)="$event.stopPropagation()" />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel de Carpetas -->
+    <div class="col-lg-6" *ngIf="selectedCaja">
+      <div class="card shadow-sm border-start border-primary border-4 h-100">
+        <div class="card-header bg-white py-3">
+          <h6 class="mb-0 fw-bold text-primary">
+            <i class="bi bi-folder2-open me-2"></i>
+            Carpetas de: {{ selectedCaja?.nombre || 'Caja seleccionada' }}
+          </h6>
+        </div>
+        <div class="card-body bg-white" style="max-height: 380px; overflow-y: auto;">
+          <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle mb-0">
+              <thead>
+                <tr>
+                  <th class="fw-semibold" style="width: 40%">Carpeta</th>
+                  <th class="fw-semibold text-center" style="width: 30%">N° Carpeta</th>
+                  <th class="fw-semibold text-center" style="width: 30%">Documentos</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngIf="(carpetasLista?.length || 0) === 0">
+                  <td class="text-muted" colspan="3">0 carpetas registradas.</td>
+                </tr>
+                <tr *ngFor="let k of carpetasLista; let idx = index">
+                  <td>{{ k.nombre || ('Carpeta ' + (idx + 1)) }}</td>
+                  <td class="text-center">{{ idx + 1 }}</td>
+                  <td class="text-center">
+                    <input type="number" class="form-control form-control-sm text-center" min="0" [(ngModel)]="k.numero_documentos" style="max-width: 120px; margin: 0 auto;" />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Modal para editar edificio -->
+  <div *ngIf="mostrarModalCrearEdificio" class="modal d-block" style="background-color: rgba(0,0,0,0.5); overflow: auto;">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Editar Depósito /Archivo /Zona</h5>
+          <button type="button" class="btn-close" (click)="cerrarModalEdificio()"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Nombre del Depósito /Archivo /Zona</label>
+            <input type="text" class="form-control" [(ngModel)]="nuevoEdificioNombre" placeholder="Ej: Edificio Principal">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="cerrarModalEdificio()">Cancelar</button>
+          <button type="button" class="btn btn-primary" (click)="guardarNuevoEdificio()">Actualizar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para editar sala -->
+  <div *ngIf="mostrarModalCrearSala" class="modal d-block" style="background-color: rgba(0,0,0,0.5); overflow: auto;">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Editar Depósito /Archivo /Zona</h5>
+          <button type="button" class="btn-close" (click)="cerrarModalSala()"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Nombre del Depósito /Archivo /Zona</label>
+            <input type="text" class="form-control" [(ngModel)]="nuevoSalaNombre" placeholder="Ej: Archivo Pasivo A">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Cantidad de Estanterías *</label>
+            <input type="number" class="form-control" [(ngModel)]="cantidadEstanteriasModal" placeholder="Ej: 4" min="1">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="cerrarModalSala()">Cancelar</button>
+          <button type="button" class="btn btn-primary" (click)="guardarNuevaSala()">Actualizar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-center gap-2 mt-4">
+    <button type="button" class="btn btn-primary btn-lg" (click)="actualizarRuta()"> Guardar</button>
+  </div>
+</div>

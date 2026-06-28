@@ -1,0 +1,28 @@
+<div class="modal-content">
+  <div class="modal-header">
+    <h2 class="fw-bolder">Eliminar Tipo de Trámite</h2>
+    <div class="btn btn-icon btn-sm btn-active-icon-primary" (click)="cerrar()">
+      <app-keenicon name="cross" class="fs-1"></app-keenicon>
+    </div>
+  </div>
+
+  <div class="modal-body mx-5 mx-xl-15 my-7">
+    <div class="text-gray-700 fs-6">
+      ¿Está seguro de eliminar el tipo de trámite
+      <span class="fw-bold">{{ TIPOTRAMITE_SELECTED?.nombre }}</span>?
+    </div>
+
+    <div class="text-center pt-10">
+      <button type="button" class="btn btn-light me-3" (click)="cerrar()" [disabled]="isLoading">
+        Cancelar
+      </button>
+      <button type="button" class="btn btn-danger" (click)="delete()" [disabled]="isLoading">
+        <span class="indicator-label" *ngIf="!isLoading">Eliminar</span>
+        <span class="indicator-progress" *ngIf="isLoading">
+          Eliminando...
+          <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+        </span>
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,1746 @@
+<div class="modal-content">
+    <div class="modal-header" id="kt_modal_add_user_header">
+        <h2 class="fw-bolder">Registrar Usuario</h2>
+        <div class="btn btn-icon btn-sm btn-active-icon-primary" (click)="modal.dismiss()">
+            <span class="svg-icon svg-icon-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                    viewBox="0 0 24 24" fill="none">
+                    <rect opacity="0.5" x="6" y="17.3137" width="16" height="2"
+                        rx="1" transform="rotate(-45 6 17.3137)" fill="currentColor" />
+                    <rect x="7.41422" y="6" width="16" height="2"
+                        rx="1" transform="rotate(45 7.41422 6)" fill="currentColor" />
+                </svg>
+            </span>
+        </div>
+    </div>
+
+    <div class="modal-body scroll-y mx-5 my-3">
+
+        <div class="alert alert-info mb-4">
+         <strong>(*) Campos obligatorios</strong>
+        </div>
+        <form id="kt_modal_add_user_form" class="form">
+
+            <h4 class="fw-bold text-primary mb-3">Datos Personales</h4>
+
+         <!-- ================= DATOS PRINCIPALES DEL USUARIO ================= -->
+        <div class="card mb-6" style="border: 2px solid #0dcaf0; border-radius: 12px;">
+            <div class="card-header bg-light">
+                <h5 class="mb-0 fw-bold text-primary">
+                    📋 Datos principales del usuario
+                </h5>
+            </div>
+
+            <div class="card-body">
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="required fw-bold fs-6 mb-2">Nombre</label>
+                        <input
+                            type="text"
+                            name="name"
+                            class="form-control form-control-solid"
+                            placeholder="Nombre del Usuario"
+                            [(ngModel)]="name"
+                            [ngClass]="{
+                                'border-danger': nombreInvalid && !name,
+                                'border-success': name
+                            }"
+                        />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="required fw-bold fs-6 mb-2">Apellido</label>
+                        <input
+                            type="text"
+                            name="name"
+                            class="form-control form-control-solid"
+                            placeholder="Apelli del Usuario"
+                            [(ngModel)]="surname"
+                            [ngClass]="{
+                                'border-danger': apellidoInvalid && !surname,
+                                'border-success': surname
+                            }"
+                        />
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="required fw-bold fs-6 mb-2">Tipo de documento</label>
+                        <select
+                            class="form-control form-select-solid fw-bolder"
+                            [(ngModel)]="type_document"
+                            name="type_document"
+                            (change)="onTypeDocumentChange()"
+                            [ngClass]="{
+                                'border-danger': apellidoInvalid && !type_document,
+                                'border-success': type_document
+                            }"
+                        >
+                            <option value="" disabled selected>Seleccione Tipo de Documento</option>
+                            <ng-container *ngFor="let tipo of tiposDocumento">
+                                <option [value]="tipo.value">{{ tipo.label }}</option>
+                            </ng-container>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="required fw-bold fs-6 mb-2">Número de documento</label>
+
+                        <div *ngIf="type_document === 'CEDULA IDENTIDAD'" class="input-group">
+                            <input type="text"
+                                class="form-control form-control-solid"
+                                [(ngModel)]="n_document"
+                                name="n_document"
+                                placeholder="Ingrese cédula"
+                                maxlength="10"
+                                (input)="cedulaValida = validarDocumento(n_document)"
+                                [ngClass]="{
+                                    'border-danger': cedulaValida === false,
+                                    'border-success': cedulaValida === true
+                                }" />
+                            <span class="input-group-text">
+                                <i class="fa fa-id-card" style="color: #007bff;"></i>
+                            </span>
+                        </div>
+
+                        <div *ngIf="type_document === 'RUC'" class="input-group mt-2">
+                            <input type="text"
+                                class="form-control form-control-solid"
+                                [(ngModel)]="n_document"
+                                name="n_document"
+                                placeholder="Ingrese RUC"
+                                maxlength="13"
+                                (input)="cedulaValida = validarDocumento(n_document)"
+                                [ngClass]="{
+                                    'border-danger': cedulaValida === false,
+                                    'border-success': cedulaValida === true
+                                }" />
+                            <span class="input-group-text">
+                                <i class="fa fa-building" style="color: #28a745;"></i>
+                            </span>
+                        </div>
+
+                        <div *ngIf="type_document === 'PASAPORTE'" class="input-group mt-2">
+                            <input type="text"
+                                class="form-control form-control-solid"
+                                [(ngModel)]="n_document"
+                                name="n_document"
+                                placeholder="Ingrese pasaporte"
+                                (input)="cedulaValida = validarDocumento(n_document)"
+                                [ngClass]="{
+                                    'border-danger': cedulaValida === false,
+                                    'border-success': cedulaValida === true
+                                }" />
+                            <span class="input-group-text">
+                                <i class="fa fa-passport" style="color: #fd7e14;"></i>
+                            </span>
+                        </div>
+
+                        <div *ngIf="n_document.length > 0">
+                            <small *ngIf="cedulaValida === true" class="text-success mt-1 d-block">
+                                ✅ {{ type_document }} válido
+                            </small>
+                            <small *ngIf="cedulaValida === false" class="text-danger mt-1 d-block">
+                                ❌ {{ type_document }} inválido
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dirección y Teléfono en la misma fila -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="fw-bold fs-6 mb-2">Dirección</label>
+                        <textarea
+                            class="form-control form-control-solid"
+                            rows="2"
+                            [(ngModel)]="address"
+                            name="address"
+                            placeholder="Dirección domiciliaria...">
+                        </textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="fw-bold fs-6 mb-2">Teléfono</label>
+                        <div class="input-group">
+                            <span class="input-group-text">+593</span>
+                            <input
+                                type="text"
+                                class="form-control form-control-solid"
+                                [(ngModel)]="phone"
+                                (keypress)="allowOnlyNumbers($event)"
+                                name="phone"
+                                maxlength="10"
+                                placeholder="0999999999" />
+                        </div>
+                        <!-- Sigla profesional -->
+                        <div class="mt-4">
+                          <label class="fw-bold fs-6 mb-2">Sigla profesional</label>
+                          <input
+                            type="text"
+                            class="form-control form-control-solid"
+                            placeholder="Ej.: Ing., Eco., Arq."
+                            [(ngModel)]="sigla"
+                            name="sigla"
+                            maxlength="20" />
+                          <small class="text-muted">Opcional. Se usa como prefijo del nombre (ej.: Ing. Juan Pérez).</small>
+                        </div>
+                        <!-- Título profesional -->
+                        <div class="mt-4">
+                          <label class="fw-bold fs-6 mb-2">Título profesional</label>
+                          <input
+                            type="text"
+                            class="form-control form-control-solid"
+                            placeholder="Ej.: Ingeniero en Sistemas"
+                            [(ngModel)]="titulo"
+                            name="titulo"
+                            maxlength="100" />
+                          <small class="text-muted">Opcional. Se usa en pie de firma o datos del usuario.</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6" *ngIf="false">
+                        <label class="fw-bold fs-6 mb-2">Avatar</label>
+                        <input
+                            type="file"
+                            class="form-control form-control-solid form-control-sm"
+                            accept=".jpeg,.jpg,.png,.webp"
+                            (change)="processFile($event)" />
+
+                        <div *ngIf="imagen_previzualiza" class="mt-2 text-center">
+                            <img
+                                [src]="imagen_previzualiza"
+                                style="height: 60px; border-radius: 8px; border: 1px solid #eee; object-fit: cover;" />
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <!-- =============================================================== -->
+
+        <!-- ================= ÁREA A LA QUE PERTENECE EL USUARIO ================= -->
+        <div class="card mb-6" style="border: 2px solid #0dcaf0; border-radius: 12px;">
+
+            <!-- HEADER -->
+            <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <h5 class="mb-0 fw-bold text-primary">
+                    🏢 Área a la que pertenece el usuario
+                </h5>
+
+                <!-- SWITCH RECEPCIONISTA -->
+                <div class="form-check form-switch">
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        id="usuarioRecepcionista"
+                        [(ngModel)]="usuario_recepcionista"
+                        (change)="onUsuarioRecepcionistaChange()"
+                    />
+                    <label class="form-check-label fw-bold" for="usuarioRecepcionista">
+                        Usuario recepcionista para trámites
+                    </label>
+                </div>
+
+                <!-- SWITCH DESPACHO -->
+                <div class="form-check form-switch">
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        id="usuarioDespacho"
+                        [(ngModel)]="usuario_despacho"
+                        (change)="onUsuarioDespachoChange()"
+                    />
+                    <label class="form-check-label fw-bold" for="usuarioDespacho">
+                        Usuario despacho para trámites
+                    </label>
+                </div>
+
+                
+            </div>
+
+            <!-- BODY -->
+            <div class="card-body">
+
+                <div class="row g-3">
+
+                    <!-- SECCIÓN -->
+                    <div class="col-md-4">
+                        <label class="fs-6 fw-bold mb-2">Sección</label>
+                        <select
+                            class="form-select form-select-solid"
+                            name="seccion_principal"
+                            [(ngModel)]="id_proyecto_seleccionado"
+                            (change)="onSeccionChange1(id_proyecto_seleccionado)">
+                            <option value="">Seleccione Sección</option>
+                            <option *ngFor="let item of seccion" [value]="item.id_proyecto">
+                                {{ item.nombre }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- SUBSECCIÓN -->
+                    <div class="col-md-4">
+                        <label class="fs-6 fw-bold mb-2">Subsección</label>
+                        <select
+                            class="form-select form-select-solid"
+                            name="subseccion"
+                            [(ngModel)]="id_subseccion_seleccionada"
+                            (change)="onSubseccionChange1(id_subseccion_seleccionada)"
+                            [disabled]="subsecciones.length === 0">
+                            <option value="">Seleccione Subsección</option>
+                            <option *ngFor="let item of subsecciones" [value]="item.id_proyecto">
+                                {{ item.nombre }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- SUB-SUBSECCIÓN -->
+                    <div class="col-md-4">
+                        <label class="fs-6 fw-bold mb-2">Sub-Subsección</label>
+                        <select
+                            class="form-select form-select-solid"
+                            name="subsubseccion"
+                            [(ngModel)]="id_subsubseccion_seleccionada"
+                            [disabled]="subsubsecciones.length === 0">
+                            <option value="">Seleccione Sub-Subsección</option>
+                            <option *ngFor="let item of subsubsecciones" [value]="item.id_proyecto">
+                                {{ item.nombre }}
+                            </option>
+                        </select>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+        <!-- ===================================================================== -->
+
+
+
+
+    
+            <!-- ================= CONFIGURACIÓN DE ACCESO ================= -->
+            <div class="card mb-6" style="border: 2px solid #0dcaf0; border-radius: 12px;">
+                
+                <!-- TÍTULO -->
+                <div class="card-header bg-light" >
+                    <h4 class="required fw-bold text-primary mb-0">
+                        Configuración de Acceso
+                    </h4>
+                </div>
+
+                <!-- CONTENIDO -->
+                <div class="card-body">
+
+                    <!-- CORREO -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="required fw-bold fs-6 mb-2">Correo</label>
+                            <input
+                                type="email"
+                                name="email"
+                                class="form-control form-control-solid"
+                                placeholder="Correo electrónico"
+                                [(ngModel)]="email"
+                                (ngModelChange)="onEmailChange($event)"
+                                [ngClass]="{
+                                    'border-danger': correoInvalid || emailExiste || (email && !isValidEmail(email)),
+                                    'border-success': email && isValidEmail(email) && !emailExiste
+                                }"
+                            />
+
+                            <div *ngIf="correoInvalid && !email" class="text-danger">
+                                El correo es requerido.
+                            </div>
+
+                            <div *ngIf="email && !isValidEmail(email)" class="text-danger">
+                                Correo inválido.
+                            </div>
+
+                            <div *ngIf="emailChecking" class="text-info">
+                                Verificando correo...
+                            </div>
+
+                            <div *ngIf="emailExiste" class="text-danger">
+                                Este correo ya está registrado.
+                            </div>
+
+                            <div *ngIf="email && isValidEmail(email) && !emailExiste" class="text-success">
+                                Correo disponible.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CONTRASEÑAS -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="required fw-bold fs-6 mb-2">Contraseña</label>
+                            <input
+                                type="password"
+                                name="password"
+                                class="form-control form-control-solid"
+                                placeholder="Contraseña"
+                                [(ngModel)]="password"
+                                [ngClass]="{
+                                    'border-danger': password && password.length < 6,
+                                    'border-success': password && password.length >= 6
+                                }"
+                            />
+
+                            <div *ngIf="adminPasswordInvalid && !password" class="text-danger">
+                                La contraseña es requerida.
+                            </div>
+                            <div *ngIf="adminPasswordInvalid && password && password.length < 6" class="text-danger">
+                                La contraseña debe tener al menos 6 caracteres.
+                            </div>
+                            <div *ngIf="password && password.length >= 6" class="text-success">
+                                Contraseña válida.
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="required fw-bold fs-6 mb-2">Repetir contraseña</label>
+                            <input
+                                type="password"
+                                name="password_repit"
+                                class="form-control form-control-solid"
+                                placeholder="Confirmar contraseña"
+                                [(ngModel)]="password_repit"
+                                [ngClass]="{
+                                    'border-danger': password_repit && password !== password_repit,
+                                    'border-success': password_repit && password === password_repit
+                                }"
+                            />
+
+                            <div *ngIf="adminPasswordConfirmInvalid && !password_repit" class="text-danger">
+                                La confirmación es requerida.
+                            </div>
+                            <div *ngIf="adminPasswordConfirmInvalid && password_repit && password !== password_repit" class="text-danger">
+                                Las contraseñas no coinciden.
+                            </div>
+                            <div *ngIf="password_repit && password === password_repit" class="text-success">
+                                Contraseña confirmada correctamente.
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <!-- ================= fin CONFIGURACIÓN DE ACCESO ================= -->
+
+            <!-- ================= ASIGNACIÓN DE PERMISOS ESPECIALES ================= -->
+            <div class="card mb-6" style="border: 2px solid #0dcaf0; border-radius: 12px;">
+
+                <!-- TÍTULO -->
+                <div class="card-header bg-light" style="border-bottom: 1px solid #0dcaf0;">
+                    <h4 class="fw-bold text-primary mb-0">
+                        Asignación de Permisos Especiales
+                    </h4>
+                </div>
+
+                <!-- CONTENIDO -->
+                <div class="card-body">
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="required fw-bold fs-6 mb-2">Rol del usuario</label>
+                            <select
+                                class="form-control form-select-solid fw-bolder"
+                                [(ngModel)]="role_id"
+                                name="role_id"
+                                [ngClass]="{
+                                    'border-danger': rolInvalid,
+                                    'border-success': role_id
+                                }"
+                            >
+                                <option value="">Seleccione un Rol</option>
+                                <option value="usuario">Permisos del usuario</option>
+                                <ng-container *ngFor="let rol of roles">
+                                    <option [value]="rol.id">{{ rol.name }}</option>
+                                </ng-container>
+                            </select>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+
+           
+
+            <div *ngIf="role_id && role_id !== 'usuario'" class="mb-5">
+                <div class="alert alert-dismissible bg-light-primary border border-primary d-flex flex-column flex-sm-row p-4">
+                    <i class="bi bi-shield-check fs-2hx text-primary me-4 mb-5 mb-sm-0"></i>
+                    <div class="d-flex flex-column">
+                        <h5 class="mb-1 text-primary">Aviso de Configuración</h5>
+                        <span>El rol <strong>{{ rolSeleccionadoNombre }}</strong> ya tiene permisos predefinidos.</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-7" *ngIf="role_id === 'usuario'" style="border: 1px dashed #009ef7; background-color: #f1faff;">
+                <div class="card-body p-4">
+                    <div class="form-check form-switch form-check-custom form-check-solid">
+                        <input class="form-check-input h-30px w-50px" type="checkbox" id="select_all_permissions"
+                            [checked]="isAllSelected()" (change)="toggleAllPermissions($event)" />
+                        <label class="form-check-label fw-bold text-gray-800 fs-5" for="select_all_permissions">
+                            Seleccionar todos los permisos disponibles
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div *ngIf="role_id === 'usuario'">
+                
+                <div class="card shadow-sm mb-9 border-top border-primary border-3">
+                    <div class="card-header bg-light-primary">
+                        <h3 class="card-title fw-bolder text-primary">
+                            <i class="bi bi-folder2-open fs-2 me-2 text-primary"></i> 
+                            Módulo de Administración
+                        </h3>
+                    </div>
+                    <div class="card-body bg-gray-100">
+                        <div class="row">
+                            <ng-container *ngFor="let item of availablePermissions">
+                                <div class="col-md-4 mb-5" *ngIf="['Empresa', 'Usuarios', 'Auditoria', 'Respaldo Archivo_&_BD', 'Dashboard'].includes(item.name)">
+                                    <div class="card card-dashed p-4 h-100 shadow-none">
+                                        <h6 class="fw-bold mb-3 border-bottom pb-2 text-uppercase fs-7 text-gray-700">{{ item.name }}</h6>
+                                        <div class="form-check mb-2" *ngFor="let permiso of item.permisos">
+                                            <input type="checkbox" class="form-check-input" 
+                                                [checked]="permisions.includes(permiso.permiso)"
+                                                (change)="addPermission(permiso.permiso, $event)"
+                                                [id]="'permiso-'+item.name+'-'+permiso.permiso">
+                                            <label class="form-check-label fs-7 fw-semibold text-dark" [for]="'permiso-'+item.name+'-'+permiso.permiso">
+                                                {{ permiso.name }}
+                                                <span *ngIf="item.name === 'Tramite' && (permiso.permiso === 'register_Tramite' || permiso.name === 'Registrar')" class="text-danger ms-1">(cliente externo)</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </ng-container>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gestión Documental -->
+                <div class="card shadow-sm mb-9 border-top border-primary border-3">
+                    <div class="card-header bg-light-primary">
+                        <h3 class="card-title fw-bolder text-primary">
+                            <i class="bi bi-folder2-open fs-2 me-2 text-primary"></i> 
+                            Módulo de Gestión Documental
+                        </h3>
+                    </div>
+                    <div class="card-body bg-gray-100">
+                        <div class="row">
+                            <ng-container *ngFor="let item of availablePermissions">
+                                <div class="col-md-4 mb-5" *ngIf="['Sección Docuemntal', 'Busqueda de documentos', 'Reporte', 'Prestamo Expediente', 'Certifiados Expediente'].includes(item.name)">
+                                    <div class="card card-dashed p-4 h-100 shadow-none">
+                                        <h6 class="fw-bold mb-3 border-bottom pb-2 text-uppercase fs-7 text-gray-700">{{ item.name }}</h6>
+                                        <div class="form-check mb-2" *ngFor="let permiso of item.permisos">
+                                            <input type="checkbox" class="form-check-input" 
+                                                [checked]="permisions.includes(permiso.permiso)"
+                                                (change)="addPermission(permiso.permiso, $event)"
+                                                [id]="'permiso-'+item.name+'-'+permiso.permiso">
+                                            <label class="form-check-label fs-7 fw-semibold text-dark" [for]="'permiso-'+item.name+'-'+permiso.permiso">
+                                                {{ permiso.name }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </ng-container>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="card shadow-sm mb-5 border-top border-success border-3">
+                    <div class="card-header bg-light-success">
+                        <h3 class="card-title fw-bolder text-success">
+                            <i class="bi bi-arrow-repeat fs-2 me-2 text-success"></i> 
+                            Módulo de Gestión de Trámites
+                        </h3>
+                    </div>
+                    <div class="card-body bg-gray-100">
+                        <!-- Grupo 1: Recepcion y Admin -->
+                        <div class="mb-4">
+                            <div class="d-flex align-items-center mb-2 justify-content-between">
+                                <h5 class="mb-0 text-primary">(Desapacho o Recepcion, Admin)</h5>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox"
+                                           [checked]="isGroupSelected(groupRecepAdminMods)"
+                                           (change)="toggleGroupPermissions(groupRecepAdminMods, $event)">
+                                    <label class="form-check-label small">Seleccionar grupo</label>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <ng-container *ngFor="let item of availablePermissions">
+                                    <div class="col-md-4 mb-5" *ngIf="['Tipo Documento','Tipo Tramite','Cliente','Recepcion Trámite','Despacho Trámite'].includes(item.name)">
+                                        <div class="card card-dashed p-4 h-100 shadow-none border-success-subtle">
+                                            <h6 class="fw-bold mb-3 border-bottom pb-2 text-uppercase fs-7 text-success">{{ titulosAmigables[item.name] || item.name }}</h6>
+                                            <div class="form-check mb-2" *ngFor="let permiso of item.permisos">
+                                                <input type="checkbox" class="form-check-input" 
+                                                    [checked]="permisions.includes(permiso.permiso)"
+                                                    (change)="addPermission(permiso.permiso, $event)"
+                                                    [id]="'permiso-'+item.name+'-'+permiso.permiso">
+                                                <label class="form-check-label fs-7 fw-semibold text-dark" [for]="'permiso-'+item.name+'-'+permiso.permiso">
+                                                    {{ permiso.name }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ng-container>
+                            </div>
+                        </div>
+
+                        <!-- Grupo 2: USUARIO INTERNO -->
+                        <div class="mb-4">
+                            <div class="d-flex align-items-center mb-2 justify-content-between">
+                                <h5 class="mb-0 text-dark">(USUARIO INTERNO)</h5>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox"
+                                           [checked]="isGroupSelected(groupUsuarioInternoMods)"
+                                           (change)="toggleGroupPermissions(groupUsuarioInternoMods, $event)">
+                                    <label class="form-check-label small">Seleccionar grupo</label>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <ng-container *ngFor="let item of availablePermissions">
+                                    <div class="col-md-4 mb-5" *ngIf="['Asignar Tramites','Historial Tramite','Buzon Tramite'].includes(item.name)">
+                                        <div class="card card-dashed p-4 h-100 shadow-none border-success-subtle">
+                                            <h6 class="fw-bold mb-3 border-bottom pb-2 text-uppercase fs-7 text-success">{{ titulosAmigables[item.name] || item.name }}</h6>
+                                            <div class="form-check mb-2" *ngFor="let permiso of item.permisos">
+                                                <input type="checkbox" class="form-check-input" 
+                                                    [checked]="permisions.includes(permiso.permiso)"
+                                                    (change)="addPermission(permiso.permiso, $event)"
+                                                    [id]="'permiso-'+item.name+'-'+permiso.permiso">
+                                                <label class="form-check-label fs-7 fw-semibold text-dark" [for]="'permiso-'+item.name+'-'+permiso.permiso">
+                                                    {{ permiso.name }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ng-container>
+                            </div>
+                        </div>
+
+                        <!-- Grupo 3: cliente externo -->
+                        <div>
+                            <div class="d-flex align-items-center mb-2 justify-content-between">
+                                <h5 class="mb-0 text-danger">(cliente externo)</h5>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox"
+                                           [checked]="isGroupSelected(groupClienteExternoMods)"
+                                           (change)="toggleGroupPermissions(groupClienteExternoMods, $event)">
+                                    <label class="form-check-label small">Seleccionar grupo</label>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <ng-container *ngFor="let item of availablePermissions">
+                                    <div class="col-md-4 mb-5" *ngIf="['Tramite','Seguimiento'].includes(item.name)">
+                                        <div class="card card-dashed p-4 h-100 shadow-none border-success-subtle">
+                                            <h6 class="fw-bold mb-3 border-bottom pb-2 text-uppercase fs-7 text-success">
+                                                {{ titulosAmigables[item.name] || item.name }}
+                                            </h6>
+                                            <div class="form-check mb-2" *ngFor="let permiso of item.permisos">
+                                                <input type="checkbox" class="form-check-input" 
+                                                    [checked]="permisions.includes(permiso.permiso)"
+                                                    (change)="addPermission(permiso.permiso, $event)"
+                                                    [id]="'permiso-'+item.name+'-'+permiso.permiso">
+                                                <label class="form-check-label fs-7 fw-semibold text-dark" [for]="'permiso-'+item.name+'-'+permiso.permiso">
+                                                    {{ permiso.name }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ng-container>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            
+            </div>
+
+
+            
+
+
+
+
+            <!-- ===============================
+                INICIO PERMISOS DOCUMENTALES
+            ================================ 
+
+            <h4
+            *ngIf="enablePermisosDocumentales"
+            class="fw-bold text-success mt-6 d-flex align-items-center"
+            style="cursor:pointer; background:#e9f7ef; padding:10px;"
+            (click)="togglePermisosDocumentales()">
+
+            <i
+                class="bi me-2"
+                [ngClass]="showPermisosDocumentales 
+                ? 'bi-chevron-down text-success' 
+                : 'bi-chevron-right text-success'">
+            </i>
+
+            Permisos Documentales (CLICK AQUÍ)
+            </h4>
+
+            <hr *ngIf="enablePermisosDocumentales" class="border-success" />
+
+            <div
+            *ngIf="showPermisosDocumentales && enablePermisosDocumentales"
+            class="border border-success rounded p-4"
+            style="background:#f6fffa;">
+-->
+            <!-- ===============================
+                SELECCIÓN DE UBICACIÓN
+            ================================ 
+            <h6 class="fw-bold text-success mb-3">
+                Ubicación Documental
+            </h6>
+
+            <div class="row mb-4">
+-->
+            <!-- SECCIONES 
+            <div *ngFor="let s of secciones" class="mb-2">
+-->
+                <!-- SECCIÓN DOCUMENTAL CON CHECK MODERNO Y ICONO DE CARPETA 
+                <div class="form-check d-flex align-items-center gap-2 mb-2">
+                    <input class="form-check-input" type="checkbox"
+                        id="checkSeccion{{s.id_proyecto}}"
+                        [checked]="!!permisosMap['seccion_'+s.id_proyecto]"
+                        (change)="toggleSeccion(s, $event)"
+                        style="width: 24px; height: 24px; cursor: pointer;">
+                
+                    <i class="bi bi-folder-fill text-warning fs-5"></i>
+                
+                    <label class="form-check-label fw-bold mb-0 text-dark" for="checkSeccion{{s.id_proyecto}}">
+                        Sección Documental: <span class="text-primary">{{ s.nombre }}</span>
+                    </label>
+                
+                    <div class="form-check form-switch ms-3">
+                        <input class="form-check-input" type="checkbox" role="switch" 
+                            id="switchAll{{s.id_proyecto}}"
+                            [checked]="isAllPermsTrue('seccion_'+s.id_proyecto)"
+                            (change)="marcarTodoMasivo(s, $event)"
+                            style="width: 35px; height: 18px; cursor: pointer;">
+                        <label class="form-check-label text-muted small" for="switchAll{{s.id_proyecto}}">Marcar todo</label>
+                    </div>
+                </div>
+-->
+
+                <!-- PERMISOS SECCIÓN CON ICONOS GRIS Y ACTIVOS 
+                <div class="ms-4 d-flex gap-3" *ngIf="permisosMap['seccion_'+s.id_proyecto]">
+
+               
+                <label class="d-flex align-items-center gap-1 cursor-pointer">
+                    <input type="checkbox"
+                        [(ngModel)]="permisosMap['seccion_'+s.id_proyecto].ver"
+                        (ngModelChange)="logPermiso('seccion_'+s.id_proyecto, 'ver', $event)"
+                        [ngModelOptions]="{standalone:true}"
+                        class="d-none">
+                    <i class="bi bi-eye fs-5"
+                    [ngStyle]="{'color': permisosMap['seccion_'+s.id_proyecto].ver ? '#28a745' : '#b0b0b0'}"></i>
+                    Ver
+                </label>
+
+                
+                <label class="d-flex align-items-center gap-1 cursor-pointer">
+                    <input type="checkbox"
+                        [(ngModel)]="permisosMap['seccion_'+s.id_proyecto].crear"
+                        (ngModelChange)="logPermiso('seccion_'+s.id_proyecto, 'crear', $event)"
+                        [ngModelOptions]="{standalone:true}"
+                        class="d-none">
+                    <i class="bi bi-plus-circle fs-5"
+                    [ngStyle]="{'color': permisosMap['seccion_'+s.id_proyecto].crear ? '#0d6efd' : '#b0b0b0'}"></i>
+                    Crear
+                </label>
+
+           
+                <label class="d-flex align-items-center gap-1 cursor-pointer">
+                    <input type="checkbox"
+                        [(ngModel)]="permisosMap['seccion_'+s.id_proyecto].editar"
+                        (ngModelChange)="logPermiso('seccion_'+s.id_proyecto, 'editar', $event)"
+                        [ngModelOptions]="{standalone:true}"
+                        class="d-none">
+                    <i class="bi bi-pencil-square fs-5"
+                    [ngStyle]="{'color': permisosMap['seccion_'+s.id_proyecto].editar ? '#ffc107' : '#b0b0b0'}"></i>
+                    Editar
+                </label>
+
+         
+                <label class="d-flex align-items-center gap-1 cursor-pointer">
+                    <input type="checkbox"
+                        [(ngModel)]="permisosMap['seccion_'+s.id_proyecto].eliminar"
+                        (ngModelChange)="logPermiso('seccion_'+s.id_proyecto, 'eliminar', $event)"
+                        [ngModelOptions]="{standalone:true}"
+                        class="d-none">
+                    <i class="bi bi-trash fs-5"
+                    [ngStyle]="{'color': permisosMap['seccion_'+s.id_proyecto].eliminar ? '#dc3545' : '#b0b0b0'}"></i>
+                    Eliminar
+                </label>
+
+                </div>
+
+
+
+
+             
+                <div class="ms-4 mt-2" *ngIf="subseccionesMap[s.id_proyecto]">
+
+                    <div *ngFor="let sub of subseccionesMap[s.id_proyecto]" class="mb-2">
+
+                        <div class="d-flex align-items-center flex-wrap">
+            
+                            <input type="checkbox"
+                                   class="me-2"
+                                   [checked]="!!permisosMap['sub_'+sub.id_proyecto]"
+                                   (change)="toggleSubSeccion(sub,$event); initPermisos('sub_'+sub.id_proyecto)">
+                            
+                            <strong class="fw-bold">
+                                <i class="bi bi-folder me-1 text-primary"></i>
+                                Sub Sección Documental : <span class="text-primary">{{ sub.nombre }}</span>
+                            </strong>
+                
+                            <div class="form-check form-switch ms-3 d-flex align-items-center">
+                                <input class="form-check-input" type="checkbox" 
+                                       style="cursor: pointer;"
+                                       [checked]="isAllPermsTrue('sub_'+sub.id_proyecto)"
+                                       (change)="marcarTodoNodo(sub, $event, 'sub_')">
+                                <label class="form-check-label small text-muted ms-1" style="white-space: nowrap;">
+                                    Marcar todo
+                                </label>
+                            </div>
+                        </div>
+
+
+                
+                    <div class="ms-4 d-flex gap-3" *ngIf="permisosMap['sub_'+sub.id_proyecto]">
+
+                  
+                    <label class="d-flex align-items-center gap-1 cursor-pointer">
+                        <input type="checkbox"
+                            [(ngModel)]="permisosMap['sub_'+sub.id_proyecto].ver"
+                            (ngModelChange)="logPermiso('sub_'+sub.id_proyecto, 'ver', $event)"
+                            [ngModelOptions]="{standalone:true}"
+                            class="d-none">
+                        <i class="bi bi-eye fs-5"
+                        [ngStyle]="{'color': permisosMap['sub_'+sub.id_proyecto].ver ? '#28a745' : '#b0b0b0'}"></i>
+                        Ver
+                    </label>
+
+       
+                    <label class="d-flex align-items-center gap-1 cursor-pointer">
+                        <input type="checkbox"
+                            [(ngModel)]="permisosMap['sub_'+sub.id_proyecto].crear"
+                            (ngModelChange)="logPermiso('sub_'+sub.id_proyecto, 'crear', $event)"
+                            [ngModelOptions]="{standalone:true}"
+                            class="d-none">
+                        <i class="bi bi-plus-circle fs-5"
+                        [ngStyle]="{'color': permisosMap['sub_'+sub.id_proyecto].crear ? '#0d6efd' : '#b0b0b0'}"></i>
+                        Crear
+                    </label>
+
+                  
+                    <label class="d-flex align-items-center gap-1 cursor-pointer">
+                        <input type="checkbox"
+                            [(ngModel)]="permisosMap['sub_'+sub.id_proyecto].editar"
+                            (ngModelChange)="logPermiso('sub_'+sub.id_proyecto, 'editar', $event)"
+                            [ngModelOptions]="{standalone:true}"
+                            class="d-none">
+                        <i class="bi bi-pencil-square fs-5"
+                        [ngStyle]="{'color': permisosMap['sub_'+sub.id_proyecto].editar ? '#ffc107' : '#b0b0b0'}"></i>
+                        Editar
+                    </label>
+
+                 
+                    <label class="d-flex align-items-center gap-1 cursor-pointer">
+                        <input type="checkbox"
+                            [(ngModel)]="permisosMap['sub_'+sub.id_proyecto].eliminar"
+                            (ngModelChange)="logPermiso('sub_'+sub.id_proyecto, 'eliminar', $event)"
+                            [ngModelOptions]="{standalone:true}"
+                            class="d-none">
+                        <i class="bi bi-trash fs-5"
+                        [ngStyle]="{'color': permisosMap['sub_'+sub.id_proyecto].eliminar ? '#dc3545' : '#b0b0b0'}"></i>
+                        Eliminar
+                    </label>
+
+                    </div>
+
+
+
+            
+                    <div class="ms-4 mt-2" *ngIf="subSubSeccionesMap[sub.id_proyecto]">
+
+                        <div *ngFor="let ss of subSubSeccionesMap[sub.id_proyecto]" class="mb-2">
+
+                        <input type="checkbox"
+                                [checked]="!!permisosMap['subsub_'+ss.id_proyecto]"
+                                (change)="toggleSubSub(ss,$event); initPermisos('subsub_'+ss.id_proyecto)">
+                        <strong class="fw-bold">
+                        <i class="bi bi-folder2-open me-1 text-info"></i>
+                        Sub Sub Sección Documental : <span class="text-primary">{{ ss.nombre }}</span>
+                        </strong>
+
+
+                            <div class="ms-4 d-flex gap-3" *ngIf="permisosMap['subsub_'+ss.id_proyecto]">
+
+                    
+                            <label class="d-flex align-items-center gap-2 cursor-pointer">
+                                <input type="checkbox"
+                                    [(ngModel)]="permisosMap['subsub_'+ss.id_proyecto].ver"
+                                    (ngModelChange)="logPermiso('subsub_'+ss.id_proyecto, 'ver', $event)"
+                                    [ngModelOptions]="{standalone:true}"
+                                    class="d-none">
+                                <i class="bi bi-eye fs-5"
+                                [ngStyle]="{'color': permisosMap['subsub_'+ss.id_proyecto].ver ? '#28a745' : '#b0b0b0'}"></i>
+                                Ver
+                            </label>
+
+                      
+                            <label class="d-flex align-items-center gap-2 cursor-pointer">
+                                <input type="checkbox"
+                                    [(ngModel)]="permisosMap['subsub_'+ss.id_proyecto].crear"
+                                    (ngModelChange)="logPermiso('subsub_'+ss.id_proyecto, 'crear', $event)"
+                                    [ngModelOptions]="{standalone:true}"
+                                    class="d-none">
+                                <i class="bi bi-plus-circle fs-5"
+                                [ngStyle]="{'color': permisosMap['subsub_'+ss.id_proyecto].crear ? '#0d6efd' : '#b0b0b0'}"></i>
+                                Crear
+                            </label>
+
+                      
+                            <label class="d-flex align-items-center gap-2 cursor-pointer">
+                                <input type="checkbox"
+                                    [(ngModel)]="permisosMap['subsub_'+ss.id_proyecto].editar"
+                                    (ngModelChange)="logPermiso('subsub_'+ss.id_proyecto, 'editar', $event)"
+                                    [ngModelOptions]="{standalone:true}"
+                                    class="d-none">
+                                <i class="bi bi-pencil-square fs-5"
+                                [ngStyle]="{'color': permisosMap['subsub_'+ss.id_proyecto].editar ? '#ffc107' : '#b0b0b0'}"></i>
+                                Editar
+                            </label>
+
+                    
+                            <label class="d-flex align-items-center gap-2 cursor-pointer">
+                                <input type="checkbox"
+                                    [(ngModel)]="permisosMap['subsub_'+ss.id_proyecto].eliminar"
+                                    (ngModelChange)="logPermiso('subsub_'+ss.id_proyecto, 'eliminar', $event)"
+                                    [ngModelOptions]="{standalone:true}"
+                                    class="d-none">
+                                <i class="bi bi-trash fs-5"
+                                [ngStyle]="{'color': permisosMap['subsub_'+ss.id_proyecto].eliminar ? '#dc3545' : '#b0b0b0'}"></i>
+                                Eliminar
+                            </label>
+
+                            </div>
+
+
+
+                    
+                        <div class="ms-4 mt-2" *ngIf="seriesMap[ss.id_proyecto]">
+
+                            <div *ngFor="let serie of seriesMap[ss.id_proyecto]" class="mb-2">
+
+                            <input type="checkbox"
+                                    [checked]="!!permisosMap['serie_'+serie.id_serie]"
+                                    (change)="toggleSerie(serie,$event); initPermisos('serie_'+serie.id_serie)">
+                            <strong class="fw-bold d-inline-flex align-items-center gap-2 flex-wrap">
+                              <span>
+                                <i class="bi bi-archive-fill me-1 text-success"></i>
+                                Serie Documental : <span class="text-primary">{{ serie.nombre }}</span>
+                              </span>
+                              <span class="form-check form-switch ms-2 d-inline-flex align-items-center">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                       [checked]="isAllPermsTrue('serie_'+serie.id_serie)"
+                                       (change)="marcarTodoSerie(serie, $event)"
+                                       style="width: 35px; height: 18px; cursor: pointer;">
+                                <label class="form-check-label small text-muted ms-1">Marcar todo</label>
+                              </span>
+                            </strong>
+
+
+                     
+                            <div class="ms-4 d-flex gap-4"
+                                *ngIf="permisosMap['serie_'+serie.id_serie]">
+
+                        
+                                <div>
+
+                           
+                                    <label class="d-flex align-items-center gap-2 cursor-pointer">
+                                        <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].ver"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'ver', $event)"
+                                            [ngModelOptions]="{standalone:true}"
+                                            class="d-none">
+                                        <i class="bi bi-eye fs-5"
+                                        [ngStyle]="{'color': permisosMap['serie_'+serie.id_serie].ver ? '#28a745' : '#b0b0b0'}"></i>
+                                        Ver
+                                    </label>
+
+                           
+                                    <label class="d-flex align-items-center gap-2 cursor-pointer">
+                                        <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].crear"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'crear', $event)"
+                                            [ngModelOptions]="{standalone:true}"
+                                            class="d-none">
+                                        <i class="bi bi-plus-circle fs-5"
+                                        [ngStyle]="{'color': permisosMap['serie_'+serie.id_serie].crear ? '#0d6efd' : '#b0b0b0'}"></i>
+                                        Crear
+                                    </label>
+
+                               
+                                    <label class="d-flex align-items-center gap-2 cursor-pointer">
+                                        <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].editar"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'editar', $event)"
+                                            [ngModelOptions]="{standalone:true}"
+                                            class="d-none">
+                                        <i class="bi bi-pencil-square fs-5"
+                                        [ngStyle]="{'color': permisosMap['serie_'+serie.id_serie].editar ? '#ffc107' : '#b0b0b0'}"></i>
+                                        Editar
+                                    </label>
+
+                           
+                                    <label class="d-flex align-items-center gap-2 cursor-pointer">
+                                        <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].eliminar"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'eliminar', $event)"
+                                            [ngModelOptions]="{standalone:true}"
+                                            class="d-none">
+                                        <i class="bi bi-trash fs-5"
+                                        [ngStyle]="{'color': permisosMap['serie_'+serie.id_serie].eliminar ? '#dc3545' : '#b0b0b0'}"></i>
+                                        Eliminar
+                                    </label>
+
+                                </div>
+
+                            
+                                <div class="border-start ps-3">
+
+                                    <label>
+                                    <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].buscar"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'buscar', $event)"
+                                            [ngModelOptions]="{standalone:true}">
+                                    Buscar
+                                    </label><br>
+
+                                    <label>
+                                    <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].subir_documentos"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'subir_documentos', $event)"
+                                            [ngModelOptions]="{standalone:true}">
+                                    Subir documentos
+                                    </label><br>
+
+                                    <label>
+                                    <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].ver_documento"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'ver_documento', $event)"
+                                            [ngModelOptions]="{standalone:true}">
+                                    Ver documento
+                                    </label><br>
+
+                                    <label>
+                                    <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].registrar_datos"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'registrar_datos', $event)"
+                                            [ngModelOptions]="{standalone:true}">
+                                    Registrar datos
+                                    </label><br>
+
+                                    <label>
+                                    <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].indexar"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'indexar', $event)"
+                                            [ngModelOptions]="{standalone:true}">
+                                    Indexar
+                                    </label><br>
+
+                                    <label>
+                                    <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].indexar_masivo"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'indexar_masivo', $event)"
+                                            [ngModelOptions]="{standalone:true}">
+                                    Indexar masivo
+                                    </label><br>
+
+                                    <label>
+                                    <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].eliminar_documento"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'eliminar_documento', $event)"
+                                            [ngModelOptions]="{standalone:true}">
+                                    Eliminar documento
+                                    </label><br>
+
+                                    <label>
+                                    <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].firmar_documento"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'firmar_documento', $event)"
+                                            [ngModelOptions]="{standalone:true}">
+                                    Firmar documento
+                                    </label><br>
+
+                                    <label>
+                                    <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].limpiar_documento"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'limpiar_documento', $event)"
+                                            [ngModelOptions]="{standalone:true}">
+                                    Limpiar documento
+                                    </label>
+
+                                </div>
+
+                                </div>
+
+
+
+                        
+                            <div class="ms-4 mt-2" *ngIf="subSeriesMap[serie.id_serie]">
+
+                                <div *ngFor="let subS of subSeriesMap[serie.id_serie]" class="mb-1">
+
+                                <input type="checkbox"
+                                        [checked]="!!permisosMap['subserie_'+subS.id_serie]"
+                                        (change)="initPermisos('subserie_'+subS.id_serie)">
+                                <strong class="fw-bold">
+                                <i class="bi bi-files me-1 text-secondary"></i>
+                            Sub Serie Documental  : <span class="text-primary">{{ subS.nombre }}</span>
+                                </strong>
+
+
+                         
+                                <div class="ms-4 d-flex gap-4"
+                                    *ngIf="permisosMap['subserie_'+subS.id_serie]">
+
+                           
+                                    <div>
+
+                              
+                                        <label class="d-flex align-items-center gap-2 cursor-pointer">
+                                            <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].ver"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'ver', $event)"
+                                                [ngModelOptions]="{standalone:true}"
+                                                class="d-none">
+                                            <i class="bi bi-eye fs-5"
+                                            [ngStyle]="{'color': permisosMap['subserie_'+subS.id_serie].ver ? '#28a745' : '#b0b0b0'}"></i>
+                                            Ver
+                                        </label>
+
+                                 
+                                        <label class="d-flex align-items-center gap-2 cursor-pointer">
+                                            <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].crear"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'crear', $event)"
+                                                [ngModelOptions]="{standalone:true}"
+                                                class="d-none">
+                                            <i class="bi bi-plus-circle fs-5"
+                                            [ngStyle]="{'color': permisosMap['subserie_'+subS.id_serie].crear ? '#0d6efd' : '#b0b0b0'}"></i>
+                                            Crear
+                                        </label>
+
+                                 
+                                        <label class="d-flex align-items-center gap-2 cursor-pointer">
+                                            <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].editar"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'editar', $event)"
+                                                [ngModelOptions]="{standalone:true}"
+                                                class="d-none">
+                                            <i class="bi bi-pencil-square fs-5"
+                                            [ngStyle]="{'color': permisosMap['subserie_'+subS.id_serie].editar ? '#ffc107' : '#b0b0b0'}"></i>
+                                            Editar
+                                        </label>
+
+                         
+                                        <label class="d-flex align-items-center gap-2 cursor-pointer">
+                                            <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].eliminar"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'eliminar', $event)"
+                                                [ngModelOptions]="{standalone:true}"
+                                                class="d-none">
+                                            <i class="bi bi-trash fs-5"
+                                            [ngStyle]="{'color': permisosMap['subserie_'+subS.id_serie].eliminar ? '#dc3545' : '#b0b0b0'}"></i>
+                                            Eliminar
+                                        </label>
+
+                                    </div>
+
+                                
+                                    <div class="border-start ps-3">
+
+                                        <label>
+                                        <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].buscar"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'buscar', $event)"
+                                                [ngModelOptions]="{standalone:true}">
+                                        Buscar
+                                        </label><br>
+
+                                        <label>
+                                        <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].subir_documentos"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'subir_documentos', $event)"
+                                                [ngModelOptions]="{standalone:true}">
+                                        Subir documentos
+                                        </label><br>
+
+                                        <label>
+                                        <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].ver_documento"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'ver_documento', $event)"
+                                                [ngModelOptions]="{standalone:true}">
+                                        Ver documento
+                                        </label><br>
+
+                                        <label>
+                                        <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].registrar_datos"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'registrar_datos', $event)"
+                                                [ngModelOptions]="{standalone:true}">
+                                        Registrar datos
+                                        </label><br>
+
+                                        <label>
+                                        <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].indexar"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'indexar', $event)"
+                                                [ngModelOptions]="{standalone:true}">
+                                        Indexar
+                                        </label><br>
+
+                                        <label>
+                                        <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].indexar_masivo"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'indexar_masivo', $event)"
+                                                [ngModelOptions]="{standalone:true}">
+                                        Indexar masivo
+                                        </label><br>
+
+                                        <label>
+                                        <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].eliminar_documento"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'eliminar_documento', $event)"
+                                                [ngModelOptions]="{standalone:true}">
+                                        Eliminar documento
+                                        </label><br>
+
+                                        <label>
+                                        <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].firmar_documento"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'firmar_documento', $event)"
+                                                [ngModelOptions]="{standalone:true}">
+                                        Firmar documento
+                                        </label><br>
+
+                                        <label>
+                                        <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].limpiar_documento"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'limpiar_documento', $event)"
+                                                [ngModelOptions]="{standalone:true}">
+                                        Limpiar documento
+                                        </label>
+
+                                    </div>
+                                </div>
+
+
+
+                                </div>
+                            </div>
+
+                            </div>
+                        </div>
+
+                        </div>
+                    </div>
+
+       
+                    <div class="ms-4 mt-2" *ngIf="seriesMap[sub.id_proyecto]">
+
+                        <div *ngFor="let serie of seriesMap[sub.id_proyecto]" class="mb-2">
+
+                        <input type="checkbox"
+                                [checked]="!!permisosMap['serie_'+serie.id_serie]"
+                                (change)="toggleSerie(serie,$event); initPermisos('serie_'+serie.id_serie)">
+                        <strong class="fw-bold d-inline-flex align-items-center gap-2 flex-wrap">
+                          <span>
+                            <i class="bi bi-archive-fill me-1 text-success"></i>
+                            Serie Documental : <span class="text-primary">{{ serie.nombre }}</span>
+                          </span>
+                          <span class="form-check form-switch ms-2 d-inline-flex align-items-center">
+                            <input class="form-check-input" type="checkbox" role="switch"
+                                   [checked]="isAllPermsTrue('serie_'+serie.id_serie)"
+                                   (change)="marcarTodoSerie(serie, $event)"
+                                   style="width: 35px; height: 18px; cursor: pointer;">
+                            <label class="form-check-label small text-muted ms-1">Marcar todo</label>
+                          </span>
+                        </strong>
+
+
+            
+                        <div class="ms-4 d-flex gap-4"
+                                    *ngIf="permisosMap['serie_'+serie.id_serie]">
+
+                                <div>
+
+                        
+                                    <label class="d-flex align-items-center gap-2 cursor-pointer">
+                                        <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].ver"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'ver', $event)"
+                                            [ngModelOptions]="{standalone:true}"
+                                            class="d-none">
+                                        <i class="bi bi-eye fs-5"
+                                        [ngStyle]="{'color': permisosMap['serie_'+serie.id_serie].ver ? '#28a745' : '#b0b0b0'}"></i>
+                                        Ver
+                                    </label>
+
+                            
+                                    <label class="d-flex align-items-center gap-2 cursor-pointer">
+                                        <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].crear"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'crear', $event)"
+                                            [ngModelOptions]="{standalone:true}"
+                                            class="d-none">
+                                        <i class="bi bi-plus-circle fs-5"
+                                        [ngStyle]="{'color': permisosMap['serie_'+serie.id_serie].crear ? '#0d6efd' : '#b0b0b0'}"></i>
+                                        Crear
+                                    </label>
+
+                                    <label class="d-flex align-items-center gap-2 cursor-pointer">
+                                        <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].editar"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'editar', $event)"
+                                            [ngModelOptions]="{standalone:true}"
+                                            class="d-none">
+                                        <i class="bi bi-pencil-square fs-5"
+                                        [ngStyle]="{'color': permisosMap['serie_'+serie.id_serie].editar ? '#ffc107' : '#b0b0b0'}"></i>
+                                        Editar
+                                    </label>
+
+                               
+                                    <label class="d-flex align-items-center gap-2 cursor-pointer">
+                                        <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].eliminar"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'eliminar', $event)"
+                                            [ngModelOptions]="{standalone:true}"
+                                            class="d-none">
+                                        <i class="bi bi-trash fs-5"
+                                        [ngStyle]="{'color': permisosMap['serie_'+serie.id_serie].eliminar ? '#dc3545' : '#b0b0b0'}"></i>
+                                        Eliminar
+                                    </label>
+
+                                </div>
+
+                                <div class="border-start ps-3">
+
+                                    <label>
+                                    <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].buscar"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'buscar', $event)"
+                                            [ngModelOptions]="{standalone:true}">
+                                    Buscar
+                                    </label><br>
+
+                                    <label>
+                                    <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].subir_documentos"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'subir_documentos', $event)"
+                                            [ngModelOptions]="{standalone:true}">
+                                    Subir documentos
+                                    </label><br>
+
+                                    <label>
+                                    <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].ver_documento"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'ver_documento', $event)"
+                                            [ngModelOptions]="{standalone:true}">
+                                    Ver documento
+                                    </label><br>
+
+                                    <label>
+                                    <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].registrar_datos"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'registrar_datos', $event)"
+                                            [ngModelOptions]="{standalone:true}">
+                                    Registrar datos
+                                    </label><br>
+
+                                    <label>
+                                    <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].indexar"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'indexar', $event)"
+                                            [ngModelOptions]="{standalone:true}">
+                                    Indexar
+                                    </label><br>
+
+                                    <label>
+                                    <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].indexar_masivo"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'indexar_masivo', $event)"
+                                            [ngModelOptions]="{standalone:true}">
+                                    Indexar masivo
+                                    </label><br>
+
+                                    <label>
+                                    <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].eliminar_documento"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'eliminar_documento', $event)"
+                                            [ngModelOptions]="{standalone:true}">
+                                    Eliminar documento
+                                    </label><br>
+
+                                    <label>
+                                    <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].firmar_documento"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'firmar_documento', $event)"
+                                            [ngModelOptions]="{standalone:true}">
+                                    Firmar documento
+                                    </label><br>
+
+                                    <label>
+                                    <input type="checkbox"
+                                            [(ngModel)]="permisosMap['serie_'+serie.id_serie].limpiar_documento"
+                                            (ngModelChange)="logPermiso('serie_'+serie.id_serie, 'limpiar_documento', $event)"
+                                            [ngModelOptions]="{standalone:true}">
+                                    Limpiar documento
+                                    </label>
+
+                                </div>
+
+                                </div>
+
+        
+                        <div class="ms-4 mt-2" *ngIf="subSeriesMap[serie.id_serie]">
+
+                            <div *ngFor="let subS of subSeriesMap[serie.id_serie]">
+
+                            <input type="checkbox"
+                                    [checked]="!!permisosMap['subserie_'+subS.id_serie]"
+                                    (change)="initPermisos('subserie_'+subS.id_serie)">
+                            <strong class="fw-bold">
+                                <i class="bi bi-files me-1 text-secondary"></i>
+                            Sub Serie Documental : <span class="text-primary">{{ subS.nombre }}</span>
+                                </strong>
+
+
+                            
+                                <div class="ms-4 d-flex gap-4"
+                                    *ngIf="permisosMap['subserie_'+subS.id_serie]">
+
+                               
+                                    <div>
+
+                               
+                                        <label class="d-flex align-items-center gap-2 cursor-pointer">
+                                            <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].ver"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'ver', $event)"
+                                                [ngModelOptions]="{standalone:true}"
+                                                class="d-none">
+                                            <i class="bi bi-eye fs-5"
+                                            [ngStyle]="{'color': permisosMap['subserie_'+subS.id_serie].ver ? '#28a745' : '#b0b0b0'}"></i>
+                                            Ver
+                                        </label>
+
+                                        <label class="d-flex align-items-center gap-2 cursor-pointer">
+                                            <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].crear"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'crear', $event)"
+                                                [ngModelOptions]="{standalone:true}"
+                                                class="d-none">
+                                            <i class="bi bi-plus-circle fs-5"
+                                            [ngStyle]="{'color': permisosMap['subserie_'+subS.id_serie].crear ? '#0d6efd' : '#b0b0b0'}"></i>
+                                            Crear
+                                        </label>
+
+                                  
+                                        <label class="d-flex align-items-center gap-2 cursor-pointer">
+                                            <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].editar"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'editar', $event)"
+                                                [ngModelOptions]="{standalone:true}"
+                                                class="d-none">
+                                            <i class="bi bi-pencil-square fs-5"
+                                            [ngStyle]="{'color': permisosMap['subserie_'+subS.id_serie].editar ? '#ffc107' : '#b0b0b0'}"></i>
+                                            Editar
+                                        </label>
+
+                                 
+                                        <label class="d-flex align-items-center gap-2 cursor-pointer">
+                                            <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].eliminar"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'eliminar', $event)"
+                                                [ngModelOptions]="{standalone:true}"
+                                                class="d-none">
+                                            <i class="bi bi-trash fs-5"
+                                            [ngStyle]="{'color': permisosMap['subserie_'+subS.id_serie].eliminar ? '#dc3545' : '#b0b0b0'}"></i>
+                                            Eliminar
+                                        </label>
+
+                                    </div>
+
+                              
+                                    <div class="border-start ps-3">
+
+                                        <label>
+                                        <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].buscar"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'buscar', $event)"
+                                                [ngModelOptions]="{standalone:true}">
+                                        Buscar
+                                        </label><br>
+
+                                        <label>
+                                        <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].subir_documentos"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'subir_documentos', $event)"
+                                                [ngModelOptions]="{standalone:true}">
+                                        Subir documentos
+                                        </label><br>
+
+                                        <label>
+                                        <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].ver_documento"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'ver_documento', $event)"
+                                                [ngModelOptions]="{standalone:true}">
+                                        Ver documento
+                                        </label><br>
+
+                                        <label>
+                                        <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].registrar_datos"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'registrar_datos', $event)"
+                                                [ngModelOptions]="{standalone:true}">
+                                        Registrar datos
+                                        </label><br>
+
+                                        <label>
+                                        <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].indexar"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'indexar', $event)"
+                                                [ngModelOptions]="{standalone:true}">
+                                        Indexar
+                                        </label><br>
+
+                                        <label>
+                                        <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].indexar_masivo"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'indexar_masivo', $event)"
+                                                [ngModelOptions]="{standalone:true}">
+                                        Indexar masivo
+                                        </label><br>
+
+                                        <label>
+                                        <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].eliminar_documento"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'eliminar_documento', $event)"
+                                                [ngModelOptions]="{standalone:true}">
+                                        Eliminar documento
+                                        </label><br>
+
+                                        <label>
+                                        <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].firmar_documento"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'firmar_documento', $event)"
+                                                [ngModelOptions]="{standalone:true}">
+                                        Firmar documento
+                                        </label><br>
+
+                                        <label>
+                                        <input type="checkbox"
+                                                [(ngModel)]="permisosMap['subserie_'+subS.id_serie].limpiar_documento"
+                                                (ngModelChange)="logPermiso('subserie_'+subS.id_serie, 'limpiar_documento', $event)"
+                                                [ngModelOptions]="{standalone:true}">
+                                        Limpiar documento
+                                        </label>
+
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        </div>
+                    </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+
+
+
+
+
+                        </div>
+
+                      
+                        <div
+                            *ngIf="nodoSeleccionado"
+                            class="row row-permisos border border-success rounded p-3">
+
+                            <div class="col-md-6 mb-4" *ngFor="let item of documentPermissions">
+                            <div class="card card-dashed p-3 h-100 border-success">
+
+                         
+                                <h6 class="fw-bold mb-3 border-bottom pb-2 text-success">
+                                {{ item.name }}
+                                </h6>
+
+                        
+                                <div class="form-check mb-2" *ngFor="let permiso of item.permisos">
+                                <input
+                                    type="checkbox"
+                                    class="form-check-input border-success"
+                                    [checked]="permisions.includes(permiso.permiso)"
+                                    (change)="addPermission(permiso.permiso, $event)"
+                                    [id]="'doc-' + item.name + '-' + permiso.permiso">
+
+                                <label
+                                    class="form-check-label fs-7 fw-semibold text-dark"
+                                    [for]="'doc-' + item.name + '-' + permiso.permiso">
+                                    {{ permiso.name }}
+                                </label>
+                                </div>
+
+                            </div>
+                            </div>
+
+                        </div>
+
+                 
+                        <div *ngIf="!nodoSeleccionado" class="text-muted fst-italic">
+                            Seleccione una sección o subsección para asignar permisos.
+                        </div>
+
+            </div>
+-->
+            <!-- ===============================
+                FIN PERMISOS DOCUMENTALES
+            ================================ -->
+
+
+
+
+
+
+            <hr class="my-6 border border-primary border-2 opacity-75" />
+
+            <!-- CARD: REGISTRAR FIRMA DIGITAL -->
+            <div class="card shadow-sm border-0 mt-5">
+
+            <!-- HEADER -->
+            <div class="card-header bg-primary text-white text-center py-4">
+            <h2 class="mb-0 fw-bolder">
+                <i class="fas fa-signature me-3"></i>
+                Registrar Firma Digital
+            </h2>
+            </div>
+
+
+            <!-- BODY -->
+            <div class="card-body">
+
+                <!-- Separador -->
+                <hr class="my-4 border border-primary border-2 opacity-50" />
+
+                <!-- SUB CARD FIRMA -->
+                <div class="card shadow-sm border-0">
+                <div class="card-header bg-info text-white d-flex align-items-center">
+                    <h5 class="mb-0">
+                    <i class="fas fa-key me-2"></i>
+                    Firma Electrónica
+                    </h5>
+                </div>
+
+                <div class="card-body">
+
+                    <!-- Archivo firma -->
+                    <div class="mb-4">
+                    <label for="firma" class="form-label fw-bold">
+                        Archivo de Firma (.p12 o .pfx)
+                    </label>
+                    <input
+                        type="file"
+                        id="firma"
+                        class="form-control"
+                        accept=".p12,.pfx"
+                        (change)="onFirmaSelected($event)"
+                        name="firma"
+                    />
+                    <small class="text-muted">
+                        Seleccione el archivo de firma electrónica si desea registrar una.
+                    </small>
+                    </div>
+
+                    <!-- Contraseña -->
+                    <div class="mb-4">
+                    <label class="form-label fw-bold">
+                        Contraseña de la Firma
+                    </label>
+                    <input
+                        type="password"
+                        class="form-control"
+                        [(ngModel)]="contrasena_firma"
+                        name="contrasena_firma"
+                        placeholder="Ingrese la contraseña del archivo de firma (opcional)"
+                    />
+                    </div>
+
+                    <!-- Fecha expiración -->
+                    <div class="mb-3">
+                    <label class="form-label fw-bold">
+                        Fecha de Expiración de la Firma
+                    </label>
+                    <input
+                        type="date"
+                        class="form-control"
+                        [(ngModel)]="fecha_expiracion_firma"
+                        name="fecha_expiracion_firma"
+                    />
+                    </div>
+
+                </div>
+                </div>
+
+            </div>
+            </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+            <div class="text-center pt-10 border-top mt-5">
+                <button type="reset" class="btn btn-light border border-danger text-danger me-3" (click)="modal.dismiss()">
+                    Cancelar
+                </button>
+
+                <button type="button" class="btn btn-primary" (click)="store()" [disabled]="isLoading | async">
+                    <span *ngIf="!(isLoading | async)">
+                        <i class="fa fa-save me-2"></i> Guardar
+                    </span>
+                    <span *ngIf="isLoading | async">
+                        Procesando... <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+                    </span>
+                </button>
+
+            </div>
+
+        </form>
+    </div>
+</div>

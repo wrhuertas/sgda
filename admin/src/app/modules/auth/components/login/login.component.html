@@ -1,0 +1,198 @@
+<!--begin::Form-->
+<form class="form w-100" [formGroup]="loginForm" novalidate="novalidate" id="kt_login_signin_form"
+  (ngSubmit)="submit()">
+  <!--begin::Heading-->
+  <div class="text-center mb-11">
+    <h1 class="text-gray-900 fw-bolder mb-3">
+      Ingreso al Sistema Gestión Documental
+    </h1>
+    <!--begin::Subtitle-->
+    <div class="text-gray-500 fw-semibold fs-6">
+     
+    </div>
+    <!--end::Subtitle--->
+    <!-- <div class="text-gray-500 fw-bold fs-4">
+      New Here?
+      <a
+        routerLink="/auth/registration"
+        id="kt_login_signup"
+        class="link-primary fw-bolder"
+        >{{ "AUTH.GENERAL.SIGNUP_BUTTON" | translate }}</a
+      >
+    </div> -->
+  </div>
+  <!--end::Heading-->
+
+  <!--begin::Login options-->
+  <div class="row g-3 mb-9">
+    <!--begin::Col-->
+    <div class="col-md-6">
+      <!--begin::Google link--->
+     
+      <!--end::Google link--->
+    </div>
+    <!--end::Col-->
+
+    <!--begin::Col-->
+    <div class="col-md-6">
+      <!--begin::Google link--->
+      
+      <!--end::Google link--->
+    </div>
+    <!--end::Col-->
+  </div>
+  <!--end::Login options-->
+
+  <!-- Eliminado separador que generaba la franja superior -->
+
+  <!-- begin::Alert info-->
+  <ng-container *ngIf="!hasError">
+    <div class="mb-10 bg-light-info p-8 rounded">
+      
+    </div>
+  </ng-container>
+  <!-- end::Alert info-->
+
+
+  <!-- begin::Alert error (sin franja/borde) -->
+  <ng-container *ngIf="hasError">
+    <!-- Mostramos solo texto en rojo, sin fondo ni borde para evitar la franja -->
+    <div class="mb-6">
+      <div class="fw-semibold text-danger">{{ errorMessage }}</div>
+    </div>
+  </ng-container>
+  <!-- end::Alert error -->
+
+  <!--begin::Form group-->
+  <div class="fv-row mb-8">
+    <label class="form-label fs-6 fw-bolder text-gray-900">Correo</label>
+    <input class="form-control bg-transparent" type="email" name="email" formControlName="email" autocomplete="off"
+      [ngClass]="{
+        'is-invalid': loginForm.controls['email'].invalid,
+        'is-valid': loginForm.controls['email'].valid
+      }" />
+    <ng-container [ngTemplateOutlet]="formError" [ngTemplateOutletContext]="{
+        validation: 'required',
+        message: 'El correo es obligatorio',
+        control: loginForm.controls['email']
+      }"></ng-container>
+    <ng-container [ngTemplateOutlet]="formError" [ngTemplateOutletContext]="{
+        validation: 'email',
+        message: 'El formato del correo no es válido',
+        control: loginForm.controls['email']
+      }"></ng-container>
+    <ng-container [ngTemplateOutlet]="formError" [ngTemplateOutletContext]="{
+        validation: 'minLength',
+        message: 'Email should have at least 3 symbols',
+        control: loginForm.controls['email']
+      }"></ng-container>
+    <ng-container [ngTemplateOutlet]="formError" [ngTemplateOutletContext]="{
+        validation: 'maxLength',
+        message: 'Email should have maximum 360 symbols',
+        control: loginForm.controls['email']
+      }"></ng-container>
+  </div>
+  <!--end::Form group-->
+
+  <!--begin::Form group-->
+  <div class="fv-row mb-3">
+
+    <label class="form-label fw-bolder text-gray-900 fs-6 mb-0">Contraseña</label>
+
+    <input class="form-control bg-transparent" type="password" name="password" autocomplete="off"
+      formControlName="password" [ngClass]="{
+        'is-invalid': loginForm.controls['password'].invalid,
+        'is-valid': loginForm.controls['password'].valid
+      }" />
+    <ng-container [ngTemplateOutlet]="formError" [ngTemplateOutletContext]="{
+        validation: 'required',
+        message: 'La contraseña es obligatoria',
+        control: loginForm.controls['password']
+      }"></ng-container>
+    <ng-container [ngTemplateOutlet]="formError" [ngTemplateOutletContext]="{
+        validation: 'minlength',
+        message: 'La contraseña debe tener al menos 6 caracteres',
+        control: loginForm.controls['password']
+      }"></ng-container>
+    <ng-container [ngTemplateOutlet]="formError" [ngTemplateOutletContext]="{
+        validation: 'maxLength',
+        message: 'La contraseña no puede exceder los 100 caracteres',
+        control: loginForm.controls['password']
+      }"></ng-container>
+
+  </div>
+  <!--end::Form group-->
+
+  <!-- reCAPTCHA v3 no requiere elementos en UI -->
+
+  <!--begin::Wrapper-->
+  <div class="d-flex flex-stack flex-wrap gap-3 fs-base fw-semibold mb-8">
+    <div></div>
+
+    <!--begin::Link-->
+    <a routerLink="/auth/forgot-password" class="link-primary">
+      Olvidaste la contraseña ?
+    </a>
+    <!--end::Link-->
+  </div>
+  <!--end::Wrapper-->
+
+  <!--begin::Faux reCAPTCHA v2 UI -->
+  <div class="mb-6">
+    <div class="d-flex align-items-center justify-content-between border border-primary rounded py-3 px-3 bg-white" style="min-height:54px;">
+      <div class="d-flex align-items-center gap-3" (click)="marcarNoSoyRobot()" style="cursor: pointer;">
+        <div class="d-flex justify-content-center align-items-center border border-primary rounded" [ngClass]="fauxCaptchaVerified ? 'bg-primary-subtle' : 'bg-white'" style="width: 22px; height: 22px;">
+          <ng-container *ngIf="!fauxCaptchaLoading && fauxCaptchaVerified">
+            <i class="bi bi-check-lg text-primary" style="font-size: 18px; line-height: 1;"></i>
+          </ng-container>
+          <ng-container *ngIf="fauxCaptchaLoading">
+            <span class="spinner-border spinner-border-sm text-primary" style="width: 14px; height: 14px;"></span>
+          </ng-container>
+        </div>
+        <div class="fw-semibold text-gray-800">No soy un robot</div>
+      </div>
+      <div class="text-muted small d-flex align-items-center gap-2">
+        <i class="bi bi-shield-check text-primary"></i>
+        <span>reCAPTCHA</span>
+      </div>
+    </div>
+    <div *ngIf="fauxCaptchaLoading" class="text-primary small mt-1 d-flex align-items-center gap-2">
+      <span class="spinner-border spinner-border-sm"></span> Verificando...
+    </div>
+    <div *ngIf="!fauxCaptchaLoading && !fauxCaptchaVerified" class="form-text">Haz clic para verificar</div>
+    <div *ngIf="!fauxCaptchaLoading && fauxCaptchaVerified" class="text-primary small mt-1 d-flex align-items-center gap-2">
+      <i class="bi bi-check-circle-fill"></i> Verificado
+    </div>
+  </div>
+  <!--end::Faux reCAPTCHA v2 UI -->
+
+  <!--begin::Action-->
+  <div class="d-grid mb-10">
+    <button type="submit" id="kt_sign_in_submit" class="btn btn-primary" [disabled]="loginForm.invalid || !fauxCaptchaVerified || fauxCaptchaLoading">
+      <ng-container *ngIf="isLoading$ | async">
+        <span class="indicator-progress" [style.display]="'block'">
+          Espere Por favor...
+          <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+        </span>
+      </ng-container>
+      <ng-container *ngIf="(isLoading$ | async) === false">
+        <span class="indicator-label">Ingresar</span>
+      </ng-container>
+    </button>
+  </div>
+
+ 
+
+  <!--end::Action-->
+</form>
+<!--end::Form-->
+
+<ng-template #formError let-control="control" let-message="message" let-validation="validation">
+  <ng-container *ngIf="control.hasError(validation) && (control.dirty || control.touched)">
+    <div class="fv-plugins-message-container">
+      <span role="alert">
+        {{ message }}
+      </span>
+    </div>
+  </ng-container>
+</ng-template>

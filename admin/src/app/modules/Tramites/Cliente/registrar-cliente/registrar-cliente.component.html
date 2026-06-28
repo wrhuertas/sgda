@@ -1,0 +1,225 @@
+<div class="modal-content">
+
+  <!-- HEADER -->
+  <div class="modal-header" id="kt_modal_add_proyecto_header">
+    <h2 class="fw-bolder">Registrar Nuevo Cliente</h2>
+
+    <div class="btn btn-icon btn-sm btn-active-icon-primary" (click)="cerrar()">
+      <span class="svg-icon svg-icon-1">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <rect opacity="0.5" x="6" y="17.3137" width="16" height="2" rx="1"
+            transform="rotate(-45 6 17.3137)" fill="currentColor" />
+          <rect x="7.41422" y="6" width="16" height="2" rx="1"
+            transform="rotate(45 7.41422 6)" fill="currentColor" />
+        </svg>
+      </span>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="modal-body scroll-y mx-5 my-7">
+    <form class="form">
+
+      <!-- CÉDULA / RUC - NOMBRE -->
+      <div class="row g-9 mb-8">
+        <div class="col-md-6 fv-row">
+          <div class="d-flex justify-content-between align-items-center">
+            <label class="required fw-bold fs-6 mb-2">Cédula / RUC:</label>
+            <select
+              class="form-select form-select-solid w-auto"
+              style="min-width: 140px;"
+              [(ngModel)]="type_document"
+              (change)="onTypeDocumentChange()"
+              name="type_document"
+            >
+              <option [ngValue]="'CEDULA'">Cédula</option>
+              <option [ngValue]="'RUC'">RUC</option>
+              <option [ngValue]="'CEDULA_EXTRANJERA'">Cédula extranjera</option>
+            </select>
+          </div>
+          <input
+            type="text"
+            class="form-control form-control-solid"
+            placeholder="Ej: 1723456789"
+            [(ngModel)]="cedula_ruc"
+            (input)="onDocumentoChange()"
+            (blur)="onBlurDocumento()"
+            name="cedula_ruc"
+          />
+          <div class="d-flex justify-content-between align-items-center mt-2">
+            <div class="text-danger fw-semibold" *ngIf="touchedDocumento && (cedula_ruc && documentoValido === false)">
+              {{ type_document === 'RUC' ? 'RUC inválido' : (type_document === 'CEDULA' ? 'Cédula inválida' : 'Documento extranjero inválido') }}
+            </div>
+            <button
+              type="button"
+              class="btn btn-sm btn-light-primary"
+              *ngIf="type_document === 'RUC'"
+              (click)="consultarSri()"
+              [disabled]="isConsultandoSri || !cedula_ruc || documentoValido !== true"
+            >
+              <span *ngIf="!isConsultandoSri">Consultar SRI</span>
+              <span *ngIf="isConsultandoSri">
+                Consultando...
+                <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <div class="col-md-6 fv-row">
+          <label class="required fw-bold fs-6 mb-2">Nombre del Cliente:</label>
+          <input
+            type="text"
+            class="form-control form-control-solid"
+            placeholder="Ingrese nombres completos"
+            [(ngModel)]="nombre"
+            (blur)="onBlurNombre()"
+            name="nombre"
+          />
+          <div class="text-danger fw-semibold mt-2" *ngIf="touchedNombre && !nombre">
+            El nombre es obligatorio
+          </div>
+        </div>
+      </div>
+
+      <!-- TELÉFONO - CORREO -->
+      <div class="row g-9 mb-8">
+        <div class="col-md-6 fv-row">
+          <label class="fw-bold fs-6 mb-2">Teléfono:</label>
+          <input
+            type="tel"
+            class="form-control form-control-solid"
+            placeholder="Ej: 0987654321"
+            [(ngModel)]="telefono"
+            (input)="onTelefonoChange()"
+            (blur)="onBlurTelefono()"
+            (keydown)="allowOnlyDigits($event)"
+            (paste)="onTelefonoPaste($event)"
+            inputmode="numeric"
+            name="telefono"
+          />
+          <div class="text-danger fw-semibold mt-2" *ngIf="touchedTelefono && telefono && telefonoValido === false">
+            El teléfono debe contener solo números
+          </div>
+        </div>
+
+        <div class="col-md-6 fv-row">
+          <label class="required fw-bold fs-6 mb-2">Correo electrónico:</label>
+          <input
+            type="email"
+            class="form-control form-control-solid"
+            placeholder="cliente@correo.com"
+            [(ngModel)]="correo"
+            (input)="onCorreoChange()"
+            (blur)="onBlurCorreo()"
+            name="correo"
+          />
+          <div class="text-danger fw-semibold mt-2" *ngIf="touchedCorreo && !correo">
+            El correo es obligatorio
+          </div>
+          <div class="text-danger fw-semibold mt-2" *ngIf="touchedCorreo && correo && correoValido === false">
+            Correo electrónico inválido
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTRASEÑA -->
+      <div class="row g-9 mb-3">
+        <div class="col-md-6 fv-row">
+          <label class="required fw-bold fs-6 mb-2">Contraseña:</label>
+          <input
+            type="password"
+            class="form-control form-control-solid"
+            placeholder="Ingrese la contraseña"
+            [(ngModel)]="password"
+            name="password"
+          />
+        </div>
+
+        <div class="col-md-6 fv-row">
+          <label class="required fw-bold fs-6 mb-2">Repetir Contraseña:</label>
+          <input
+            type="password"
+            class="form-control form-control-solid"
+            placeholder="Repita la contraseña"
+            [(ngModel)]="password_confirmation"
+            name="password_confirmation"
+          />
+        </div>
+      </div>
+
+      <!-- ERROR CONTRASEÑA -->
+      <div class="text-danger fw-semibold mb-8"
+        *ngIf="password && password_confirmation && password !== password_confirmation">
+        ⚠️ Las contraseñas no coinciden
+      </div>
+
+      <!-- ESTADO -->
+      <div class="row g-9 mb-8">
+        <div class="col-md-6 fv-row">
+          <label class="required fw-bold fs-6 mb-2">Estado:</label>
+          <select
+            class="form-select form-select-solid"
+            [(ngModel)]="estado"
+            name="estado">
+            <option value="1">Activo</option>
+            <option value="0">Inactivo</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- DIRECCIÓN -->
+      <div class="fv-row mb-8">
+        <label class="required fw-bold fs-6 mb-2">Dirección:</label>
+        <textarea
+          class="form-control form-control-solid"
+          rows="3"
+          placeholder="Ingrese la dirección domiciliaria"
+          [(ngModel)]="direccion"
+          (blur)="onBlurDireccion()"
+          name="direccion"></textarea>
+        <div class="text-danger fw-semibold mt-2" *ngIf="touchedDireccion && !direccion">
+          La dirección es obligatoria
+        </div>
+      </div>
+
+      <!-- BOTONES -->
+      <div class="text-center pt-10">
+
+        <button type="button" class="btn btn-light me-3" (click)="cerrar()">
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="store()"
+          [disabled]="
+            !nombre ||
+            !cedula_ruc ||
+            !correo ||
+            !direccion ||
+            !password ||
+            !password_confirmation ||
+            password !== password_confirmation ||
+            documentoValido !== true ||
+            correoValido !== true ||
+            (telefono && telefonoValido === false) ||
+            isLoading
+          ">
+
+          <span class="indicator-label" *ngIf="!isLoading">
+            Registrar Cliente
+          </span>
+
+          <span class="indicator-progress" *ngIf="isLoading">
+            Espere por favor...
+            <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+          </span>
+        </button>
+
+      </div>
+
+    </form>
+  </div>
+</div>

@@ -1,0 +1,83 @@
+<div class="modal-header">
+  <h5 class="modal-title">{{ titulo }}</h5>
+  <button type="button" class="btn-close" (click)="cerrar()"></button>
+</div>
+
+<div class="modal-body">
+  <ul ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="nav nav-tabs mb-3">
+    
+    <li [ngbNavItem]="1">
+      <a ngbNavLink>Búsqueda por Ruta</a>
+      <ng-template ngbNavContent>
+        <div class="p-3">
+          <div *ngFor="let nivel of niveles; let i = index" class="mb-3">
+            <label class="form-label fw-bold">
+              {{ titulosNiveles[i] || 'Nivel adicional' }}
+            </label>
+            <select class="form-select" [(ngModel)]="nivel.seleccionado" (change)="seleccionarNivel(i)">
+              <option [ngValue]="null">-- Seleccione --</option>
+              <option *ngFor="let item of nivel.opciones" [ngValue]="item">
+                {{ item.nombre }}
+              </option>
+            </select>
+          </div>
+
+          <hr>
+
+          <div class="mt-3 p-3 border rounded bg-light">
+            <h6 class="mb-3">Criterio de Búsqueda</h6>
+            <input type="text" class="form-control" [(ngModel)]="terminoGeneral" 
+                   placeholder="Ej: Nombre, código o dato específico...">
+          </div>
+
+
+          <div class="mt-4">
+            <button class="btn btn-primary w-100" (click)="aplicarBusqueda()" [disabled]="isLoading">
+              <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1"></span>
+              <i *ngIf="!isLoading" class="bi bi-search me-1"></i> Buscar por Ruta
+            </button>
+          </div>
+        </div>
+      </ng-template>
+    </li>
+
+    <li [ngbNavItem]="2">
+      <a ngbNavLink>Tipo Documento</a>
+      <ng-template ngbNavContent>
+        <div class="card p-3 border">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Tipo Documento</label>
+            <select class="form-select" (change)="onTipoDocumentoChange($event)" 
+                    [disabled]="cargandoTipos || !tiposDocumento?.length">
+              <option value="">Seleccione...</option>
+              <option *ngFor="let t of tiposDocumento" [value]="t.id">
+                {{ t.nombre }}
+              </option>
+            </select>
+          </div>
+
+          <div *ngIf="parametrosActuales.length > 0" class="mb-3 p-3 border rounded bg-light">
+            <h6 class="mb-3">Parámetros del documento:</h6>
+            <div *ngFor="let param of parametrosActuales" class="mb-2">
+              <label class="form-label small fw-bold">{{ param }}</label>
+              <input type="text" class="form-control" [placeholder]="'Ingrese ' + param">
+            </div>
+          </div>
+
+          <div class="text-muted small mb-3">Este filtro se combinará con los demás criterios.</div>
+
+          <button class="btn btn-primary w-100" (click)="buscarPorDocumento()" [disabled]="isLoading">
+            <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1"></span>
+            <i *ngIf="!isLoading" class="bi bi-search me-1"></i> Buscar por Documento
+          </button>
+        </div>
+      </ng-template>
+    </li>
+  </ul>
+
+  <div [ngbNavOutlet]="nav"></div>
+</div>
+
+<div class="modal-footer">
+  <button class="btn btn-secondary" (click)="cerrar()" [disabled]="isLoading">Cerrar</button>
+</div>

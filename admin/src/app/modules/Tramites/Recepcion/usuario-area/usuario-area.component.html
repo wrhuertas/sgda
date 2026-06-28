@@ -1,0 +1,65 @@
+<div class="modal-header py-3 border-bottom">
+  <h5 class="modal-title d-flex align-items-center fw-bold">
+    <i class="fas fa-user me-2 text-primary"></i> Usuarios del Área
+  </h5>
+  <button type="button" class="btn-close" (click)="cerrar()"></button>
+</div>
+
+<div class="modal-body p-3">
+
+  <!-- Card Body para búsqueda y lista -->
+  <div class="card shadow-sm border-0">
+    <div class="card-body">
+
+      <!-- 🔍 BUSCADOR -->
+      <input 
+        type="text" 
+        placeholder="Buscar usuario" 
+        [(ngModel)]="search" 
+        (input)="filtrarUsuarios()"
+        class="form-control mb-3"
+      />
+
+      <!-- 📋 LISTA DE USUARIOS -->
+      <ul class="list-group list-group-flush overflow-auto" style="max-height: 400px;">
+  <li *ngFor="let user of usuariosFiltrados" class="list-group-item d-flex align-items-center" style="cursor:pointer; border-radius:0.25rem; margin-bottom:0.25rem;">
+    
+    <input 
+      type="checkbox" 
+      class="form-check-input me-2"
+      [checked]="isUsuarioSeleccionado(user)"
+      (change)="toggleUsuario(user, $event)"
+    />
+
+    <img src="assets/media/avatars/blank.png" 
+         alt="Avatar" 
+         class="rounded-circle me-2" 
+         style="width: 40px; height: 40px; object-fit: cover;"/>
+
+    <div>
+      <strong>{{ user.name }} {{ user.surname }}</strong>
+      <div class="text-muted small">{{ user.email }}</div>
+    </div>
+  </li>
+</ul>
+
+
+      <!-- Mensaje si no hay usuarios -->
+      <div *ngIf="usuariosFiltrados.length === 0"
+           class="text-center text-muted mt-3">
+        No se encontraron usuarios
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-footer py-2">
+  <button class="btn btn-secondary btn-sm" (click)="cerrar()">Cerrar</button>
+  <button class="btn btn-primary mt-3" 
+        [disabled]="usuariosSeleccionados.length === 0"
+        (click)="confirmarSeleccion()">
+  Confirmar
+</button>
+</div>

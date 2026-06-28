@@ -1,0 +1,31 @@
+image.png
+
+
+.border-danger {
+  border: 2px solid red;
+}
+
+.border-success {
+  border: 2px solid green;
+}
+
+.text-danger {
+  color: red;
+}
+
+.text-success {
+  color: green;
+}
+
+
+.card-dashed {
+  border: 1px dashed #e4e6ef !important; /* Borde punteado gris suave */
+  background-color: #ffffff;
+}
+
+.card-header-custom {
+  background-color: transparent !important; /* Fondo blanco/transparente */
+  border-bottom: 0 !important;              /* Sin línea divisoria */
+  justify-content: center !important;       /* Texto centrado */
+  padding-top: 1.25rem !important;
+}

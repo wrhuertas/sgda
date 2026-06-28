@@ -1,0 +1,34 @@
+.textLayer {
+  font-family: sans-serif;
+  line-height: 1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: transparent;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+.textLayer span {
+  color: black;
+  white-space: pre;
+  transform-origin: 0% 0%;
+  position: absolute;
+  pointer-events: auto;
+  user-select: text;
+}
+.textLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: auto;
+  user-select: text;
+  color: transparent; /* si quieres que el texto se vea transparente y solo se use para seleccionar */
+}
+.modal-xxl-custom .modal-dialog {
+  max-width:195% !important;
+  width: 195% !important;
+  margin: 1rem auto; /* para que no toque los bordes */
+}
+

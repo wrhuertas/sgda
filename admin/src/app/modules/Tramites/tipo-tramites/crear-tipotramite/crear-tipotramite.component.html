@@ -1,0 +1,53 @@
+<div class="modal-content">
+    <div class="modal-header">
+        <h2 class="fw-bolder">Crear Nuevo Tipo de Trámite</h2>
+        <div class="btn btn-icon btn-sm btn-active-icon-primary" (click)="cerrar()">
+            <app-keenicon name="cross" class="fs-1"></app-keenicon>
+        </div>
+    </div>
+
+    <div class="modal-body scroll-y mx-5 mx-xl-15 my-7">
+        <form id="kt_modal_add_user_form" class="form" action="#">
+            <div class="d-flex flex-column scroll-y me-n7 pe-7" id="kt_modal_add_user_scroll">
+                
+                <div class="fv-row mb-7">
+                    <label class="required fw-bold fs-6 mb-2">Nombre del Tipo de Trámite</label>
+                    <input 
+                        type="text" 
+                        name="nombre" 
+                        class="form-control form-control-solid mb-3 mb-lg-0" 
+                        placeholder="Ej: Memorando, Oficio, Hoja de Ruta" 
+                        [(ngModel)]="nombre" 
+                    />
+                </div>
+
+                <div class="fv-row mb-7">
+                    <label class="fw-bold fs-6 mb-2">Tiempo estimado para completar (en días)</label>
+                    <input 
+                        type="number" 
+                        name="tiempo_tramite" 
+                        class="form-control form-control-solid mb-3 mb-lg-0" 
+                        placeholder="Ej: 3" 
+                        min="0"
+                        [(ngModel)]="tiempo_tramite" 
+                        onkeypress="return event.charCode >= 48 && event.charCode <= 57"
+                    />
+                </div>
+
+            </div>
+
+            <div class="text-center pt-15">
+                <button type="reset" class="btn btn-light me-3" (click)="cerrar()" [disabled]="isLoading">
+                    Descartar
+                </button>
+                <button type="button" class="btn btn-primary" (click)="registrarTramite()" [disabled]="isLoading || !nombre">
+                    <span class="indicator-label" *ngIf="!isLoading">Registrar</span>
+                    <span class="indicator-progress" *ngIf="isLoading">
+                        Espere por favor...
+                        <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+                    </span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

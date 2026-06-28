@@ -1,0 +1,321 @@
+<ng-container *ngIf="isSuperAdmin; else vistaNoSuperAdmin">
+
+  <div class="card">
+    <div class="card-header border-0 pt-6">
+      <div class="card-title">
+        <div class="d-flex align-items-center position-relative my-1">
+          <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-5">
+            <span class="path1"></span><span class="path2"></span>
+          </i>
+          <input
+            type="text"
+            [(ngModel)]="search"
+            (keyup.enter)="listEmpresas()"
+            name="search"
+            class="form-control form-control-solid w-250px ps-12"
+            placeholder="Buscar Empresa"
+          />
+        </div>
+      </div>
+      <span class="spinner-border spinner-border-sm align-middle ms-2" *ngIf="isLoading$ | async"></span>
+
+      <div class="card-toolbar">
+        <div class="d-flex justify-content-end">
+         <!-- <button type="button" class="btn btn-success me-2" (click)="enviarMensajeWhatsApp()">
+            <i class="bi bi-whatsapp"></i> WhatsApp
+          </button>-->
+          <button type="button" class="btn btn-primary" (click)="createEmpresa()">+ Agregar Empresa</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-body pt-0">
+      <div class="table-responsive">
+        <table class="table align-middle table-row-dashed fs-6 gy-5 dataTable">
+          <thead>
+            <tr class="text-start text-gray-500 fw-bold fs-7 text-uppercase gs-0">
+              <th class="min-w-150px">Empresa</th>
+              <th class="min-w-125px">RUC</th>
+              <th class="min-w-200px">Correo</th>
+              <th class="min-w-125px">Estado</th>
+              <th class="min-w-150px">Fecha de Registro</th>
+              <th class="text-end min-w-100px">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="fw-semibold text-gray-600">
+            <ng-container *ngFor="let EMPRESA of EMPRESAS">
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="symbol symbol-50px me-5">
+                      <img [src]="EMPRESA.imagen" alt="Logo Empresa" />
+                    </div>
+                    <div class="fw-bold text-dark">{{ EMPRESA.nombre_empresa }}</div>
+                  </div>
+                </td>
+                <td>{{ EMPRESA.ruc_empresa }}</td>
+                <td>{{ EMPRESA.correo }}</td>
+                <td>
+                  <span class="badge badge-light-success" *ngIf="EMPRESA.estado == 1">Activo</span>
+                  <span class="badge badge-light-danger" *ngIf="EMPRESA.estado == 0">Inactivo</span>
+                </td>
+                <td>{{ EMPRESA.created_at }}</td>
+                <td class="">
+                                    <a href="#"  onclick="return false;" (click)="editEmpresa(EMPRESA)" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1">
+                                        <i class="ki-duotone ki-pencil fs-2"><span class="path1"></span><span class="path2"></span></i> 
+                                    </a>
+    
+                                    <a href="#"  onclick="return false;" (click)="deleteEmpresa(EMPRESA)" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm">
+                                        <i class="ki-duotone ki-trash fs-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i>
+                                    </a>
+                                </td>
+                
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
+
+      <ngb-pagination
+        [collectionSize]="totalPages"
+        [(page)]="currentPage"
+        [pageSize]="25"
+        [rotate]="true"
+        [boundaryLinks]="true"
+        (pageChange)="loadPage($event)"
+      ></ngb-pagination>
+    </div>
+  </div>
+</ng-container>
+
+
+ <!-- /////////////////////////////// DATOS DE LA EMPRESA SOLO DEL USUARIO LOGEADO //////////////////////// -->
+
+<ng-template #vistaNoSuperAdmin>
+
+  <!-- 👉 ENCABEZADO DEL USUARIO -->
+  <div class="alert alert-info" role="alert" *ngIf="usuarioActual">
+    Hola, <b>{{ usuarioActual.full_name }}</b> (Rol: {{ usuarioActual.role_name }}). 
+    Aquí puedes administrar la información de tu empresa.
+  </div>
+
+  <!-- 👉 CONTENIDO DEL FORMULARIO -->
+  <div class="modal-content">
+
+    <!--begin::Modal header-->
+    <div class="modal-header" id="kt_modal_add_user_header">
+      <h2 class="fw-bolder">Editar Empresa: {{ EMPRESA_SELECTED?.nombre }}</h2>
+
+      <div class="btn btn-icon btn-sm btn-active-icon-primary" (click)="cerrarVistaEmpresa()">
+        <span class="svg-icon svg-icon-1">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <rect opacity="0.5" x="6" y="17.3137" width="16" height="2" rx="1" transform="rotate(-45 6 17.3137)" fill="currentColor" />
+            <rect x="7.41422" y="6" width="16" height="2" rx="1" transform="rotate(45 7.41422 6)" fill="currentColor" />
+          </svg>
+        </span>
+      </div>
+    </div>
+    <!--end::Modal header-->
+
+    <!--begin::Modal body-->
+    <div class="modal-body scroll-y mx-5 my-7">
+      <form id="kt_modal_edit_empresa_form" class="form" action="#">
+
+        <!-- === DATOS DE EMPRESA === -->
+  <div class="card p-5">
+    <div class="row">
+
+      <!-- Columna izquierda -->
+      <div class="col-md-6">
+
+        <!-- Logo -->
+        <div class="fv-row mb-4">
+          <label class="fw-bold fs-6 mb-2">Logo de la empresa:</label>
+
+          <div class="custom-file mb-2">
+            <input
+              type="file"
+              class="custom-file-input"
+              accept=".jpeg,.bmp,.jpg,.png,.gif,.webp"
+              (change)="processFile($event)"
+            />
+            <label class="custom-file-label">Elegir archivo</label>
+          </div>
+
+          <div *ngIf="IMAGEN_PREVISUALIZA">
+            <img [src]="IMAGEN_PREVISUALIZA" style="height: 100px;" />
+          </div>
+        </div>
+
+        <!-- Imagen Cabecera -->
+        <div class="fv-row mb-4">
+          <label class="fw-bold fs-6 mb-2">Imagen Cabecera:</label>
+
+          <div class="custom-file mb-2">
+            <input
+              type="file"
+              class="custom-file-input"
+              accept=".jpeg,.bmp,.jpg,.png,.gif,.webp"
+              (change)="processCabecera($event)"
+            />
+            <label class="custom-file-label">Elegir archivo</label>
+          </div>
+
+          <div *ngIf="IMAGEN_CABECERA_PREVISUALIZA">
+            <img [src]="IMAGEN_CABECERA_PREVISUALIZA" style="height: 100px;" />
+          </div>
+        </div>
+
+        <!-- Imagen Pie de Página -->
+        <div class="fv-row mb-4">
+          <label class="fw-bold fs-6 mb-2">Imagen Pie de Página:</label>
+
+          <div class="custom-file mb-2">
+            <input
+              type="file"
+              class="custom-file-input"
+              accept=".jpeg,.bmp,.jpg,.png,.gif,.webp"
+              (change)="processPiePagina($event)"
+            />
+            <label class="custom-file-label">Elegir archivo</label>
+          </div>
+
+          <div *ngIf="IMAGEN_PIE_PAGINA_PREVISUALIZA">
+            <img [src]="IMAGEN_PIE_PAGINA_PREVISUALIZA" style="height: 100px;" />
+          </div>
+        </div>
+
+        <!-- Nombre -->
+        <div class="fv-row mb-4">
+          <label class="required fw-bold fs-6 mb-2">Nombre de la empresa:</label>
+          <input
+                        type="text"
+                        name="nombre"
+                        class="form-control form-control-solid"
+                        placeholder="Nombre de la empresa"
+                        [(ngModel)]="nombre"
+                        [ngClass]="{
+                            'border-danger': nombreInvalid && !nombre,
+                            'border-success': nombre
+                        }"
+
+                    />
+        </div>
+
+        <!-- RUC + Siglas en la misma fila -->
+        <div class="row mb-4">
+          <div class="col-md-8 fv-row">
+            <label class="required fw-bold fs-6 mb-2">RUC:</label>
+            <input
+              type="text"
+              name="ruc"
+              class="form-control form-control-solid"
+              placeholder="RUC"
+              [(ngModel)]="ruc"
+              (ngModelChange)="rucInvalid = false"
+              (keypress)="allowOnlyNumbers($event)"
+              [ngClass]="{
+                'border-danger': !validateRUC(ruc),
+                'border-success': validateRUC(ruc)
+              }"
+            />
+            <div *ngIf="rucInvalid && !ruc" class="text-danger">El RUC es requerido.</div>
+            <div *ngIf="ruc && !validateRUC(ruc)" class="text-danger">RUC inválido.</div>
+            <div *ngIf="validateRUC(ruc)" class="text-success">RUC válido.</div>
+          </div>
+          <div class="col-md-4 fv-row">
+            <label class="fw-bold fs-6 mb-2">Siglas:</label>
+            <input
+              type="text"
+              name="sigla_empresa"
+              class="form-control form-control-solid"
+              placeholder="Ej.: GADMCV, DIF, COG"
+              [(ngModel)]="sigla_empresa"
+              maxlength="20"
+            />
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Columna derecha -->
+      <div class="col-md-6">
+
+        <!-- Correo -->
+        <div class="fv-row mb-4">
+          <label class="fw-bold fs-6 mb-2">Correo:</label>
+          <input
+                            type="email"
+                            name="correo"
+                            class="form-control form-control-solid"
+                            placeholder="Correo"
+                            [(ngModel)]="correo"
+                            [ngClass]="{
+                            'border-danger': correo && !isValidEmail(correo),
+                            'border-success': correo && isValidEmail(correo)
+                            }"
+                        />
+
+                        <div *ngIf="correo && !isValidEmail(correo)" class="text-danger">
+                            Correo inválido.
+                        </div>
+                        <div *ngIf="correo && isValidEmail(correo)" class="text-success">
+                            Correo válido.
+                        </div>
+        </div>
+
+        <!-- Teléfono -->
+        <div class="fv-row mb-4">
+          <label class="fw-bold fs-6 mb-2">Teléfono:</label>
+           <input
+                        type="text"
+                        name="telefono"
+                        class="form-control form-control-solid"
+                        placeholder="Teléfono"
+                        [(ngModel)]="telefono"
+                        (keypress)="allowOnlyNumbers($event)"
+                    />
+        </div>
+
+        <!-- Dirección -->
+        <div class="fv-row mb-4">
+          <label class="fw-bold fs-6 mb-2">Dirección:</label>
+          <input
+            type="text"
+            class="form-control form-control-solid"
+            placeholder="Dirección"
+            [(ngModel)]="direccion"
+            [ngModelOptions]="{ standalone: true }"
+          />
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- === BOTONES === -->
+  <div class="text-center pt-10">
+   
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="ActulizarEmpresa()"
+    >
+      <i class="bi bi-arrow-repeat me-2"></i> <!-- Ícono de actualizar -->
+      <span class="indicator-label">Actualizar Empresa</span>
+      <span
+        class="spinner-border spinner-border-sm align-middle ms-2"
+        *ngIf="isLoading | async"
+      ></span>
+    </button>
+
+  </div>
+
+      </form>
+    </div>
+    <!--end::Modal body-->
+
+  </div>
+
+</ng-template>

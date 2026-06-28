@@ -1,0 +1,13 @@
+<div class="modal-header">
+    <h3 class="modal-title">Vista Previa del Documento</h3>
+    <button type="button" class="btn-close" (click)="activeModal.dismiss()"></button>
+</div>
+<div class="modal-body p-0" style="height: 85vh; background-color: #525659;">
+    <div *ngIf="!pdfUrl" class="d-flex justify-content-center align-items-center h-100">
+        <div class="spinner-border text-primary" role="status"></div>
+    </div>
+    <iframe *ngIf="pdfUrl" [src]="pdfUrl" width="100%" height="100%" frameborder="0"></iframe>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-light" (click)="activeModal.dismiss()">Cerrar</button>
+</div>

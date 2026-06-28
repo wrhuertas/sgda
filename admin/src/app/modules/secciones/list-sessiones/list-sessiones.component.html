@@ -1,0 +1,54 @@
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Lista de Secciones del Módulo #{{ idModulo }}</h3>
+  </div>
+
+  <div class="card-body pt-0">
+
+    <!-- Spinner de carga -->
+    <div *ngIf="isLoading" class="text-center my-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <div>Cargando secciones, por favor espera...</div>
+    </div>
+
+    <!-- Mensaje si no hay secciones -->
+    <div *ngIf="!isLoading && secciones.length === 0" class="alert alert-warning mt-3">
+      No hay secciones registradas para este módulo.
+    </div>
+
+    <!-- Cards de secciones -->
+    <!-- Cards de secciones -->
+<div *ngIf="!isLoading && secciones.length > 0" class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+  <div class="col" *ngFor="let seccion of secciones; index as i">
+    <div class="card h-100 shadow-sm border border-primary-hover">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <h5 class="card-title mb-0 text-uppercase">
+            {{ seccion.nombre }}
+          </h5>
+          <p class="text-muted small mb-0">
+            #{{ i + 1 }}
+          </p>
+        </div>
+
+        <!-- Botón con ícono de flecha -->
+       <button 
+  class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm" 
+  title="Seleccionar sección"
+  (click)="navegarADetalleSeccion(seccion.id, idModulo)">
+  <i class="fas fa-arrow-right fs-2"></i>
+</button>
+
+
+
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+  </div>
+</div>

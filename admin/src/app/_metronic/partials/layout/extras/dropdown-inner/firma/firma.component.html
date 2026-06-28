@@ -1,0 +1,87 @@
+<div class="modal-header">
+    <h5 class="modal-title">Configuración de Seguridad</h5>
+    <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" (click)="activeModal.dismiss()">
+        <i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span class="path2"></span></i>
+    </div>
+</div>
+
+<div class="modal-body">
+    <hr class="my-4 border border-primary border-2 opacity-50" />
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-info text-white d-flex align-items-center" style="min-height: 50px;">
+            <h5 class="mb-0 text-white">
+                <i class="fas fa-key me-2 text-white"></i>
+                Firma Electrónica
+            </h5>
+        </div>
+
+        <div class="card-body">
+            <div class="mb-6">
+                <label for="firma" class="form-label fw-bold fs-6">
+                    Archivo de Firma (.p12)
+                </label>
+
+                <div *ngIf="usuario_actual?.archivo_firma" class="mb-3 p-3 bg-light-info rounded border border-info border-dashed">
+                    <span class="fw-semibold text-gray-700">Archivo actual:</span>
+                    <a [href]="usuario_actual.archivo_firma" target="_blank" class="ms-2 text-primary fw-bold">
+                        <i class="fas fa-file-download me-1"></i>
+                        {{ usuario_actual.archivo_firma.split('/').pop() }}
+                    </a>
+                </div>
+
+                <input
+                    type="file"
+                    id="firma"
+                    class="form-control form-control-solid"
+                    accept=".p12,.pfx"
+                    (change)="onFileSelected($event)"
+                />
+
+                <div class="form-text text-muted">
+                    Seleccione un nuevo archivo de firma si desea reemplazar el actual.
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="form-label fw-bold fs-6">
+                    Contraseña de la Firma
+                </label>
+                <div class="position-relative">
+                    <input
+                        type="password"
+                        class="form-control form-control-solid"
+                        [(ngModel)]="password_firma"
+                        name="password_firma"
+                        placeholder="Ingrese la contraseña del certificado"
+                    />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold fs-6">
+                    Fecha de Expiración de la Firma
+                </label>
+                <input
+                    type="date"
+                    class="form-control form-control-solid"
+                    [(ngModel)]="fecha_expiracion"
+                    name="fecha_expiracion"
+                />
+                <div class="form-text">
+                    Esta fecha ayuda al sistema a notificarte antes de que caduque.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-footer bg-light">
+    <button type="button" class="btn btn-light" (click)="activeModal.dismiss()">
+        Cancelar
+    </button>
+    <button type="button" class="btn btn-primary" (click)="guardarFirma()" [disabled]="isLoading">
+        <span *ngIf="!isLoading"><i class="fas fa-save me-2"></i> Guardar Cambios</span>
+        <span *ngIf="isLoading" class="spinner-border spinner-border-sm"></span>
+    </button>
+</div>

@@ -1,0 +1,24 @@
+/* Estilos simples y neutros para página pública */
+.container { max-width: 720px; }
+/* Sobrescribir el verde de Bootstrap si es necesario */
+.btn-success {
+    background-color: #5fa53f; /* Ajusta este código HEX al color exacto de la web */
+    border-color: #5fa53f;
+}
+.btn-outline-success {
+    color: #5fa53f;
+    border-color: #5fa53f;
+}
+
+
+/* Estilo para fijar el color del botón sin importar el estado */
+.btn-fixed-blue,
+.btn-fixed-blue:hover,
+.btn-fixed-blue:focus,
+.btn-fixed-blue:active {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: white !important;
+    opacity: 1 !important;
+    box-shadow: none !important;
+}

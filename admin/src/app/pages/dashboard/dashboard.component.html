@@ -1,0 +1,251 @@
+<div class="d-flex flex-column flex-column-fluid">
+
+  <div class="mb-10">
+    <h1 class="text-dark fw-bold my-1 fs-2">Panel Principal</h1>
+    <span class="text-muted fw-semibold">Bienvenido al sistema de Gestión Documental: <b>{{userRole}}</b></span>
+  </div>
+
+  <div *ngIf="verTarjetas" class="row mb-10">
+    <div class="col-md-6 card shadow-sm p-5 bg-light-primary">Total Compras: {{total_purchase}}</div>
+    <div class="col-md-6 card shadow-sm p-5 bg-light-info">Total Clientes: {{total_clients}}</div>
+  </div>
+
+  <div class="dashboard-coordinacion mb-10" *ngIf="verGraficoBarras">
+    <div class="row g-5 mb-10">
+      <div class="col-md-4">
+        <div class="card shadow-sm p-6 text-center" style="border-top: 5px solid #2ecc71;">
+          <span class="text-gray-600 fw-bold fs-6">AHORRO BAJA DOCUMENTAL</span>
+          <div class="fs-2hx fw-bold text-gray-800">$1,450.00</div>
+          <span class="text-muted fs-7">Proyección Feb - Mar (Optimización)</span>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card shadow-sm p-6 text-center" style="border-top: 5px solid #f1416c;">
+          <span class="text-gray-600 fw-bold fs-6">ORFANDAD DOCUMENTAL</span>
+          <div class="fs-2hx fw-bold text-gray-800">22%</div>
+          <span class="text-muted fs-7">Documentos sin serie asignada</span>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card shadow-sm p-6 text-center" style="border-top: 5px solid #009ef7;">
+          <span class="text-gray-600 fw-bold fs-6">TRANSFERENCIAS</span>
+          <div class="fs-2hx fw-bold text-gray-800">88%</div>
+          <span class="text-muted fs-7">Cumplimiento del cronograma</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-5 g-xl-8 mb-10">
+      <div class="col-xl-6">
+        <div class="card shadow-sm p-5">
+          <h3 class="card-title fw-bold text-gray-800">Ciclo de Vida del Acervo</h3>
+          <div style="height: 300px;">
+            <canvas id="graficoVidaDocumental"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-6">
+        <div class="card shadow-sm p-5">
+          <h3 class="card-title fw-bold text-gray-800">Auditoría por Dirección</h3>
+          <div style="height: 300px;">
+            <canvas id="graficoAuditoria"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm p-8">
+      <h3 class="fw-bold text-gray-800 mb-5">Ocupación Física (Bodega Central)</h3>
+      <div class="row">
+        <div class="col-md-6 mb-5" *ngFor="let pasillo of ['Pasillo A (Gestión)', 'Pasillo B (Central)', 'Sótano (Histórico)']">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="fw-semibold text-gray-700">{{pasillo}}</span>
+            <span class="fw-bold text-gray-800">85%</span>
+          </div>
+          <div class="progress h-10px w-100 bg-light-danger">
+            <div class="progress-bar bg-danger" style="width: 85%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-coordinacion mb-10" *ngIf="verGraficoBarras">
+  <div class="row g-5 g-xl-8 mb-10">
+    <div class="col-xl-6">
+      <div class="card shadow-sm border-0" style="border-radius: 15px;">
+        <div class="card-header border-0 pt-5">
+          <h3 class="card-title align-items-start flex-column">
+            <span class="card-label fw-bold text-gray-800">Rendimiento Mensual</span>
+            <span class="text-muted mt-1 fw-semibold fs-7">Reporte de facturación actual</span>
+          </h3>
+        </div>
+        <div class="card-body" style="height: 350px;"> <canvas id="graficoBarras2"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-6">
+      <div class="card shadow-sm border-0" style="border-radius: 15px;">
+        <div class="card-header border-0 pt-5">
+          <h3 class="card-title align-items-start flex-column">
+            <span class="card-label fw-bold text-gray-800">Flujo de Facturación</span>
+          </h3>
+        </div>
+        <div class="card-body" style="height: 350px;">
+          <canvas id="graficoLineal2"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+  
+  <div class="panel-operativo mb-10" *ngIf="verGraficoLineal">  
+  <div class="panel-operativo mb-10" *ngIf="verGraficoLineal">
+  <div class="dashboard-grid">
+    
+    <div class="chart-card">
+      <canvas id="graficoLineal"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <canvas id="graficoPastel"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <canvas id="graficoExpedientes"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <canvas id="graficoInventarios"></canvas>
+    </div>
+
+  </div>
+</div>
+  </div>
+
+<div class="row g-5 g-xl-8" *ngIf="verGraficoPastel">
+    
+    <div class="col-12">
+        <div class="card bg-dark p-6 mb-5">
+            <h1 class="text-white fw-bold mb-0">SISTEMA DOCUMENTAL GLOBAL: Dashboard Multiempresa (Consolidado Feb-Mar)</h1>
+            <span class="text-gray-500">Super Administrador: Gestión de Infraestructura, Negocio y Seguridad</span>
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header border-0 pt-5">
+                <h3 class="card-title align-items-start flex-column">
+                    <span class="card-label fw-bold text-dark">Consumo de Hosting (GB)</span>
+                    <span class="text-muted mt-1 fw-semibold fs-7">Distribución total de Terabytes</span>
+                </h3>
+                <div class="card-toolbar">
+                    <span class="badge badge-light-success fw-bold">Backups: OK <i class="fa fa-check ml-1"></i></span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="height: 250px;"><canvas id="chartConsumo"></canvas></div>
+                <div class="d-flex flex-column mt-5">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-gray-400 fw-bold">Uso de CPU Global</span>
+                        <span class="text-gray-800 fw-bold">64%</span>
+                    </div>
+                    <div class="progress h-6px bg-light-primary"><div class="progress-bar bg-primary" style="width: 64%"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header border-0 pt-5">
+                <h3 class="card-title align-items-start flex-column">
+                    <span class="card-label fw-bold text-dark">Adopción y Uso</span>
+                    <span class="text-muted mt-1 fw-semibold fs-7">Trámites y Firmas (Feb vs Mar)</span>
+                </h3>
+            </div>
+            <div class="card-body">
+                <div style="height: 300px;"><canvas id="chartTransacciones"></canvas></div>
+                <div class="text-center mt-3">
+                    <span class="badge badge-light-info p-3">Usuarios Activos Hoy: 142</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header border-0 pt-5">
+                <h3 class="card-title fw-bold text-dark">Proyectos de Digitalización</h3>
+            </div>
+            <div class="card-body">
+                <div class="mb-8">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="fw-bold">GAD VALENCIA (Meta 500k fojas)</span>
+                        <span class="badge badge-light-primary">85%</span>
+                    </div>
+                    <div class="progress h-10px bg-light-primary"><div class="progress-bar bg-primary" style="width: 85%"></div></div>
+                </div>
+                <div class="mb-8">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="fw-bold">CONSEJO DE COMUNICACIÓN</span>
+                        <span class="badge badge-light-success">42%</span>
+                    </div>
+                    <div class="progress h-10px bg-light-success"><div class="progress-bar bg-success" style="width: 42%"></div></div>
+                </div>
+                <div class="">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="fw-bold">EMPRESA 3 (Nueva)</span>
+                        <span class="badge badge-light-warning">15%</span>
+                    </div>
+                    <div class="progress h-10px bg-light-warning"><div class="progress-bar bg-warning" style="width: 15%"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-12 mt-5">
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <div class="row g-0">
+                    <div class="col-md-4 p-10 border-end">
+                        <h3 class="fw-bold text-dark mb-5">Auditoría de Seguridad</h3>
+                        <div style="height: 250px;"><canvas id="chartSeguridad"></canvas></div>
+                    </div>
+                    <div class="col-md-8 p-10">
+                        <h3 class="fw-bold text-dark mb-5">Certificados de Firma por Vencer (< 15 días)</h3>
+                        <div class="table-responsive">
+                            <table class="table table-row-dashed table-row-gray-300 align-middle gs-0 gy-4">
+                                <thead>
+                                    <tr class="fw-bold text-muted">
+                                        <th>Funcionario</th>
+                                        <th>Institución</th>
+                                        <th>Expira en</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="text-dark fw-bold">Ing. Alcalde Valencia</span></td>
+                                        <td>GAD Valencia</td>
+                                        <td><span class="badge badge-light-danger">4 días</span></td>
+                                        <td><button class="btn btn-sm btn-icon btn-bg-light btn-active-color-primary"><i class="fa fa-bell text-danger"></i></button></td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="text-dark fw-bold">Abg. Secretario General</span></td>
+                                        <td>Consejo Comunicación</td>
+                                        <td><span class="badge badge-light-warning">11 días</span></td>
+                                        <td><button class="btn btn-sm btn-icon btn-bg-light btn-active-color-primary"><i class="fa fa-bell text-warning"></i></button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>

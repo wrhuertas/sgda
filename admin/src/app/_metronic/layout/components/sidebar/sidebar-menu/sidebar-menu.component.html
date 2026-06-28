@@ -1,0 +1,328 @@
+<!--begin::Menu wrapper-->
+<div
+  id="kt_app_sidebar_menu_scroll"
+  class="scroll-y my-5 mx-3"
+  data-kt-scroll="true"
+  data-kt-scroll-activate="true"
+  data-kt-scroll-height="auto"
+  data-kt-scroll-dependencies="#kt_app_sidebar_logo, #kt_app_sidebar_footer"
+  data-kt-scroll-wrappers="#kt_app_sidebar_menu"
+  data-kt-scroll-offset="5px"
+  data-kt-scroll-save-state="true"
+>
+  <!--begin::Menu-->
+  <div
+    class="menu menu-column menu-rounded menu-sub-indention fw-semibold fs-6"
+    id="#kt_app_sidebar_menu"
+    data-kt-menu="true"
+    data-kt-menu-expand="false"
+  >
+    <!-- Dashboard -->
+    <div class="menu-item" *ngIf="showMenu(['grafic_kpi'])">
+      <a class="menu-link without-sub" routerLink="/dashboard" routerLinkActive="active">
+        <span class="menu-icon">
+          <app-keenicon name="graph-4" class="fs-2"></app-keenicon>
+        </span>
+        <span class="menu-title" translate="MENU.DASHBOARD"></span>
+      </a>
+    </div>
+
+    <!-- Layout builder -->
+    <!-- <div class="menu-item">
+      <a class="menu-link without-sub" routerLink="/builder" routerLinkActive="active">
+        <span class="menu-icon">
+          <app-keenicon name="switch" class="fs-2"></app-keenicon>
+        </span>
+        <span class="menu-title">Layout Builder</span>
+      </a>
+    </div> -->
+    <!-- Título de sección Empresas -->
+
+ <!-- Super Admin puro: solo muestra Empresas -->
+ <ng-container *ngIf="isRole()">
+   <div class="menu-content pt-8 pb-2">
+     <span class="menu-section text-muted text-uppercase fs-8 ls-1">Administración</span>
+   </div>
+   <div class="menu-item">
+     <a class="menu-link without-sub" routerLinkActive="active" routerLink="/empresas/list">
+       <span class="menu-icon">
+         <app-keenicon name="setting-2" class="fs-2"></app-keenicon>
+       </span>
+       <span class="menu-title">Empresas</span>
+     </a>
+   </div>
+ </ng-container>
+
+ <!-- Admin de empresa: muestra todas las opciones -->
+ <ng-container *ngIf="!isRole()">
+   <ng-container *ngIf="showMenu([
+       'register_empresa', 'edit_empresa', 'delete_empresa',
+       'register_user', 'edit_user', 'delete_user',
+       'ver_Auditoria',
+       'backup_database'
+     ])">
+
+     <div class="menu-content pt-8 pb-2">
+       <span class="menu-section text-muted text-uppercase fs-8 ls-1">Administración</span>
+     </div>
+
+     <div class="menu-item menu-accordion" data-kt-menu-trigger="click" routerLinkActive="here show">
+       <span class="menu-link">
+         <span class="menu-icon">
+           <app-keenicon name="setting-2" class="fs-2"></app-keenicon>
+         </span>
+         <span class="menu-title">Administración</span>
+         <span class="menu-arrow"></span>
+       </span>
+
+       <div class="menu-sub menu-sub-accordion" routerLinkActive="menu-active-bg">
+         <div class="menu-item" *ngIf="showMenu(['register_empresa', 'edit_empresa', 'delete_empresa'])">
+           <a class="menu-link without-sub" routerLinkActive="active" routerLink="/empresas/list">
+             <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+             <span class="menu-title">Empresas</span>
+           </a>
+         </div>
+
+         <div class="menu-item" *ngIf="showMenu(['register_user', 'edit_user', 'delete_user'])">
+           <a class="menu-link without-sub" routerLinkActive="active" routerLink="/usuarios/list">
+             <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+             <span class="menu-title">Usuarios</span>
+           </a>
+         </div>
+         
+         <div class="menu-item" *ngIf="showMenu(['ver_Auditoria'])">
+           <a class="menu-link without-sub" routerLink="/auditoria/listadoAuditoria" routerLinkActive="active">
+             <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+             <span class="menu-title">Auditoría</span>
+           </a>
+         </div>
+
+         <div class="menu-item" *ngIf="showMenu(['backup_database'])">
+           <a class="menu-link without-sub" routerLink="/respaldo/listadRespaldo" routerLinkActive="active">
+             <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+             <span class="menu-title">Backup de Archivos</span>
+           </a>
+         </div>
+       </div>
+     </div>
+   </ng-container>
+ </ng-container>
+
+
+<ng-container *ngIf="!isRole() && showMenu([
+     'register_documento', 'edit_documento', 'delete_documento', 
+     'lista_documentos', 'buscar_documentos', 'prestamo_expediente', 
+     'certificado_expediente', 'reporte'
+   ])">
+
+   <div class="menu-content pt-8 pb-2">
+     <span class="menu-section text-muted text-uppercase fs-8 ls-1">Modulo Documental</span>
+   </div>
+
+   <div class="menu-item menu-accordion" 
+   *ngIf="!isRole() && showMenu([
+     'register_documento', 'edit_documento', 'delete_documento', 
+     'lista_documentos', 'buscar_documentos', 'prestamo_expediente', 
+     'certificado_expediente', 'reporte'
+   ])"
+   data-kt-menu-trigger="click" 
+   routerLinkActive="here show">
+
+  <span class="menu-link">
+    <span class="menu-icon">
+      <app-keenicon name="setting-2" class="fs-2"></app-keenicon>
+    </span>
+    <span class="menu-title">Gestión</span>
+    <span class="menu-arrow"></span>
+  </span>
+
+    <div class="menu-sub menu-sub-accordion" routerLinkActive="menu-active-bg">
+      <div class="menu-item" *ngIf="showMenu(['register_documento', 'edit_documento', 'delete_documento'])">
+        <a class="menu-link without-sub" routerLinkActive="active" routerLink="/proyectos/list">
+          <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+          <span class="menu-title">Gestión de Expedientes</span>
+        </a>
+      </div>
+
+      <div class="menu-item" *ngIf="showMenu(['prestamo_expediente'])">
+        <a class="menu-link without-sub" routerLinkActive="active" routerLink="/prestamo/list">
+          <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+          <span class="menu-title">Prestamo de Expedientes</span>
+        </a>
+      </div>
+
+      <div class="menu-item" *ngIf="showMenu(['certificado_expediente'])">
+        <a class="menu-link without-sub" routerLinkActive="active" routerLink="/certificado/list">
+          <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+          <span class="menu-title">Certificado de Expedientes</span>
+        </a>
+      </div>
+
+      <div class="menu-item" *ngIf="showMenu(['buscar_documentos'])">
+        <a class="menu-link without-sub" routerLinkActive="active" routerLink="/busqueda/list">
+          <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+          <span class="menu-title">Buscar Expedientes</span>
+        </a>
+      </div>
+
+      <div class="menu-item menu-accordion" *ngIf="showMenu(['reporte'])" data-kt-menu-trigger="click" routerLinkActive="show">
+        <span class="menu-link">
+          <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+          <span class="menu-title">Reportería</span>
+          <span class="menu-arrow"></span>
+        </span>
+        <div class="menu-sub menu-sub-accordion">
+          <div class="menu-item">
+            <a class="menu-link without-sub" routerLink="/reportes/list" routerLinkActive="active">
+              <span class="menu-icon"><app-keenicon name="people" class="fs-2"></app-keenicon></span>
+              <span class="menu-title">Inventario</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<!--
+    <div class="menu-item">
+      <a
+        class="menu-link without-sub"
+        *ngIf="showMenu(['Ocr']) || user?.id === 1 || isRole()"
+        routerLinkActive="active"
+        routerLink="/masivo/ver"
+      >
+        <span class="menu-bullet">
+          <span class="bullet bullet-dot"></span>
+        </span>
+        <span class="menu-title">PDF OCR</span>
+      </a>
+    </div>
+
+
+-->
+
+          <!-- Menu de Tramites (solo para Admin de empresa, no Super Admin) -->
+           <div class="menu-content pt-8 pb-2" *ngIf="!isRole()">
+             <span class="menu-section text-muted text-uppercase fs-8 ls-1">Trámites</span>
+           </div>
+           <div
+           class="menu-item menu-accordion"
+           *ngIf="!isRole() && showMenu([ 'register_Cliente', 'register_Tipotramite', 'register_TipoDocumento', 'ver_Tramite', 'asignar_tramite'])"
+           data-kt-menu-trigger="click"
+           routerLinkActive="here show"
+         >
+          <span class="menu-link">
+            <span class="menu-icon">
+              <app-keenicon name="briefcase" class="fs-2"></app-keenicon>
+            </span>
+            <span class="menu-title">Trámites</span>
+            <span class="menu-arrow"></span>
+          </span>
+        
+          <div class="menu-sub menu-sub-accordion" routerLinkActive="menu-active-bg">
+            
+            <div class="menu-item" *ngIf="showMenu(['cliente_list', 'register_Cliente', 'edit_Cliente', 'delete_Cliente'])">
+              <a class="menu-link without-sub" routerLink="/cliente/list" routerLinkActive="active">
+                <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                <span class="menu-title">Cliente</span>
+              </a>
+            </div>
+         
+            <div class="menu-item" *ngIf="showMenu(['register_Tramite'])">
+              <a class="menu-link without-sub" routerLink="/registrartramite/registrar" routerLinkActive="active">
+                <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                <span class="menu-title">Registrar Trámite</span>
+              </a>
+            </div>
+        
+            <div class="menu-item" *ngIf="showMenu(['register_TipoDocumento', 'edit_TipoDocumento', 'delete_TipoDocumento'])">
+              <a class="menu-link without-sub" routerLink="/tipodocumento/list" routerLinkActive="active">
+                <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                <span class="menu-title">Tipo Documento</span>
+              </a>
+            </div>
+        
+            <div class="menu-item" *ngIf="showMenu(['register_Tipotramite', 'edit_Tipotramite', 'delete_Tipotramite'])">
+              <a class="menu-link without-sub" routerLink="/tipotramite/list" routerLinkActive="active">
+                <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                <span class="menu-title">Tipo Trámite</span>
+              </a>
+            </div>
+        <!--
+            <div class="menu-item" *ngIf="showMenu(['seguimiento_tramite'])">
+              <a class="menu-link without-sub" routerLink="/seguimiento/seguimiento" routerLinkActive="active">
+                <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                <span class="menu-title">Seguimiento</span>
+              </a>
+            </div>-->
+
+            <div class="menu-item" *ngIf="showMenu(['despacho_tramite'])">
+              <a class="menu-link without-sub" routerLink="/despacho/list" routerLinkActive="active">
+                <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                <span class="menu-title">Despacho Trámite</span>
+              </a>
+            </div>
+        
+            <div class="menu-item" *ngIf="showMenu(['recepcion_tramite'])">
+              <a class="menu-link without-sub" routerLink="/recepcion/list" routerLinkActive="active">
+                <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                <span class="menu-title">Recepción Trámite</span>
+              </a>
+            </div>
+        
+            <div class="menu-item" *ngIf="showMenu(['buzon_tramite'])">
+              <a class="menu-link without-sub" routerLink="/asignar/list" routerLinkActive="active">
+                <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                <span class="menu-title">Buzón Trámite</span>
+              </a>
+            </div>
+        
+            <div class="menu-item" *ngIf="showMenu(['historial_tramite'])">
+              <a class="menu-link without-sub" routerLink="/historial/historial" routerLinkActive="active">
+                <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                <span class="menu-title">Historial Trámites</span>
+              </a>
+            </div>
+        
+          </div> </div> ```
+
+
+
+   
+
+
+
+
+
+
+<!--
+    <div class="menu-item">
+      <div class="menu-content pt-8 pb-2">
+        <span class="menu-section text-muted text-uppercase fs-8 ls-1"
+          >Proceso Masivos</span
+        >
+      </div>
+    </div>
+
+    <div class="menu-item">
+  <a
+    class="menu-link without-sub"
+ 
+    routerLinkActive="active"
+    routerLink="/masivo/ver"
+  >
+    <span class="menu-bullet">
+      <span class="bullet bullet-dot"></span>
+    </span>
+    <span class="menu-title">PDF OCR</span>
+  </a>
+</div>
+-->
+
+
+
+  </div>
+  <!--end::Menu-->
+</div>
+<!--end::Menu wrapper-->

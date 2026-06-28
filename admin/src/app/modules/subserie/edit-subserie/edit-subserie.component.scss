@@ -1,0 +1,23 @@
+/* Este código va en tu archivo .css o .scss */
+
+/* Estilos para el título/texto del tab cuando está ACTIVO (seleccionado) */
+.nav-pills-custom .nav-link.active,
+.nav-pills-custom .nav-link.active:focus,
+.nav-pills-custom .nav-link.active:hover,
+.nav-pills-custom .nav-item.show .nav-link {
+    /* **AQUÍ SE FUERZA EL COLOR DEL TEXTO A VERDE** */
+    color: #00E396 !important; /* Puedes cambiar este valor por el tono de verde que desees */
+    
+    /* Nota: El color de fondo (background-color) seguirá siendo el azul/primario de Metronic,
+       lo cual debería generar un contraste entre el verde del texto y el azul del fondo. */
+}
+
+/* Estilos para el título/texto del tab cuando está INACTIVO */
+/* Esto asegura que los tabs no seleccionados mantengan su color predeterminado (azul en tu caso, o gris). */
+.nav-pills-custom .nav-link {
+    /* Si el texto inactivo se pone en azul (como mencionaste), el tema ya lo hace.
+       Si quieres forzarlo a un color específico (ej. gris oscuro):
+       color: #4b5563 !important; 
+    */
+    /* Lo dejamos sin !important para que Metronic aplique su color por defecto (azul/gris). */
+}

@@ -1,0 +1,69 @@
+<div class="modal-header">
+  <h5 class="modal-title">
+    <i class="bi bi-file-pdf me-2"></i>{{ nombreArchivo }}
+  </h5>
+  <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
+</div>
+
+<div class="modal-body pretty-body">
+  <!-- Toolbar -->
+  <div class="toolbar shadow-sm">
+    <div class="left">
+      <div class="btn-group btn-group-sm" role="group" aria-label="Controles de zoom">
+        <button type="button" class="btn btn-outline-secondary" (click)="zoomMenos()" [disabled]="!canvasData" title="Alejar">
+          <i class="fa fa-search-minus"></i>
+        </button>
+        <button type="button" class="btn btn-outline-secondary" (click)="resetZoom()" [disabled]="!canvasData" title="Restablecer 100%">
+          100%
+        </button>
+        <button type="button" class="btn btn-outline-secondary" (click)="zoomMas()" [disabled]="!canvasData" title="Acercar">
+          <i class="fa fa-search-plus"></i>
+        </button>
+      </div>
+    </div>
+    <div class="right">
+      <button class="btn btn-primary btn-sm" (click)="descargarPDF()" [disabled]="!canvasData" title="Descargar PDF">
+        <i class="fa fa-download"></i>
+        <span class="d-none d-sm-inline">Descargar</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Visor -->
+  <div class="viewer-card shadow-sm">
+    <div class="viewer-inner">
+      <!-- Paginación superior -->
+      <div class="pagination-panel top">
+        <button class="btn btn-outline-secondary btn-sm" (click)="paginaAnterior()" [disabled]="paginaActual === 1">
+          <i class="fa fa-chevron-left"></i> Anterior
+        </button>
+        <div *ngIf="totalPaginas > 2" class="input-group input-group-sm goto">
+          <span class="input-group-text">Ir a</span>
+          <input type="number" class="form-control" min="1" [max]="totalPaginas" [(ngModel)]="jumpPage" (keyup.enter)="irAPagina()" [placeholder]="'1-' + totalPaginas" />
+        </div>
+        <span class="page-info">{{ paginaActual }} de {{ totalPaginas }}</span>
+        <button class="btn btn-outline-secondary btn-sm" (click)="siguientePagina()" [disabled]="paginaActual >= totalPaginas">
+          Siguiente <i class="fa fa-chevron-right"></i>
+        </button>
+      </div>
+
+      <!-- Contenedor de imagen -->
+      <div class="image-container" *ngIf="canvasData">
+        <img [src]="canvasData" alt="Página {{ paginaActual }}" class="page-image" />
+      </div>
+
+      <!-- Cargando -->
+      <div *ngIf="!canvasData" class="text-center py-5">
+        <div class="spinner-border" role="status">
+          <span class="visually-hidden">Cargando...</span>
+        </div>
+        <p class="mt-2">Cargando PDF...</p>
+      </div>
+
+      <!-- Paginación inferior -->
+      <div class="pagination-panel bottom">
+        <span class="page-info">Página {{ paginaActual }} de {{ totalPaginas }} | Zoom: {{ (zoomScale * 100) | number:'1.0-0' }}%</span>
+      </div>
+    </div>
+  </div>
+</div>

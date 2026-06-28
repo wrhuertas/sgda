@@ -1,0 +1,399 @@
+
+<!--begin::Modal content CREATE-->
+<div class="modal-content">
+    <!--begin::Modal header-->
+    <div class="modal-header" id="kt_modal_add_user_header">
+        <!--begin::Modal title-->
+        <h2 class="fw-bolder">Crear Empresa</h2>
+        <!--end::Modal title-->
+        <!--begin::Close-->
+        <div class="btn btn-icon btn-sm btn-active-icon-primary" data-kt-users-modal-action="close" (click)="modal.dismiss()">
+            <!--begin::Svg Icon | path: icons/duotune/arrows/arr061.svg-->
+            <span class="svg-icon svg-icon-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <rect opacity="0.5" x="6" y="17.3137" width="16" height="2" rx="1" transform="rotate(-45 6 17.3137)" fill="currentColor" />
+                    <rect x="7.41422" y="6" width="16" height="2" rx="1" transform="rotate(45 7.41422 6)" fill="currentColor" />
+                </svg>
+            </span>
+            <!--end::Svg Icon-->
+        </div>
+        <!--end::Close-->
+    </div>
+    <!--end::Modal header-->
+
+    <!--begin::Modal body-->
+    <div class="modal-body scroll-y mx-5 my-7">
+        <!--begin::Form-->
+        <form id="kt_modal_add_empresa_form" class="form" action="#">
+            <h4 class="fw-bolder mb-5 text-center text-primary">Datos  de la Empresa</h4>
+            <div class="card p-5">
+                <div class="row">
+
+                <!-- Columna Izquierda -->
+                <div class="col-md-6">
+                    <!-- Logo -->
+                    <div class="fv-row mb-4">
+                    <label class="fw-bold fs-6 mb-2">Logo de la empresa:</label>
+                    <div class="custom-file mb-2">
+                        <input
+                        type="file"
+                        class="custom-file-input"
+                        id="customFile"
+                        accept=".jpeg, .bmp, .jpg, .png, .gif, .webp"
+                        (change)="processFile($event)"
+                        />
+                        <label class="custom-file-label" for="customFile">Seleccionar archivo</label>
+                    </div>
+                    <div *ngIf="LOGO_PREVISUALIZA">
+                        <img [src]="LOGO_PREVISUALIZA" style="height: 100px;" alt="Vista previa del logo" />
+                    </div>
+                    </div>
+
+                    <!-- Nombre -->
+                    <div class="fv-row mb-4">
+                    <label class="required fw-bold fs-6 mb-2">Nombre de la empresa:</label>
+                    <input
+                        type="text"
+                        name="nombre"
+                        class="form-control form-control-solid"
+                        placeholder="Nombre de la empresa"
+                        [(ngModel)]="nombre"
+                        [ngClass]="{
+                            'border-danger': nombreInvalid && !nombre,
+                            'border-success': nombre
+                        }"
+
+                    />
+                    </div>
+
+                    <!-- RUC -->
+                    <div class="fv-row mb-4">
+                    <label class="required fw-bold fs-6 mb-2">RUC:</label>
+                      <input
+                        type="text"
+                        name="ruc"
+                        class="form-control form-control-solid"
+                        placeholder="RUC"
+                        [(ngModel)]="ruc"
+                        (ngModelChange)="rucInvalid = false"
+                        (keypress)="allowOnlyNumbers($event)"
+                        [ngClass]="{
+                            'border-danger': !validateRUC(ruc),
+                            'border-success': validateRUC(ruc)
+                        }"
+                        />
+
+                        <div *ngIf="rucInvalid && !ruc" class="text-danger">
+                        El RUC es requerido.
+                        </div>
+                        <div *ngIf="ruc && !validateRUC(ruc)" class="text-danger">
+                        RUC inválido.
+                        </div>
+                        <div *ngIf="validateRUC(ruc)" class="text-success">
+                        RUC válido.
+                        </div>
+
+
+
+                    </div>
+                </div>
+
+                <!-- Columna Derecha -->
+                <div class="col-md-6">
+                    <!-- Correo -->
+                    <div class="fv-row mb-4">
+                        <label class="fw-bold fs-6 mb-2">Correo:</label>
+                        <input
+                            type="email"
+                            name="correo"
+                            class="form-control form-control-solid"
+                            placeholder="Correo"
+                            [(ngModel)]="correo"
+                            [ngClass]="{
+                            'border-danger': correo && !isValidEmail(correo),
+                            'border-success': correo && isValidEmail(correo)
+                            }"
+                        />
+
+                        <div *ngIf="correo && !isValidEmail(correo)" class="text-danger">
+                            Correo inválido.
+                        </div>
+                        <div *ngIf="correo && isValidEmail(correo)" class="text-success">
+                            Correo válido.
+                        </div>
+                    </div>
+
+
+                    <!-- Teléfono -->
+                    <div class="fv-row mb-4">
+                    <label class="fw-bold fs-6 mb-2">Teléfono:</label>
+                     <input
+                        type="text"
+                        name="telefono"
+                        class="form-control form-control-solid"
+                        placeholder="Teléfono"
+                        [(ngModel)]="telefono"
+                        (keypress)="allowOnlyNumbers($event)"
+                    />
+                    </div>
+
+                    <!-- Dirección -->
+                    <div class="fv-row mb-4">
+                    <label class="fw-bold fs-6 mb-2">Dirección:</label>
+                    <input
+                        type="text"
+                        name="direccion"
+                        class="form-control form-control-solid"
+                        placeholder="Dirección"
+                        [(ngModel)]="direccion"
+                    />
+                    </div>
+                </div>
+
+                </div>
+            </div>
+            <!-- Línea separadora -->
+            <hr class="my-10 border border-primary border-2 opacity-50" />
+
+            <!-- Título -->
+            <h4 class="fw-bolder mb-5 text-center text-primary">Configuración del Usuario Administrador de la Empresa</h4>
+
+            <!-- Card -->
+            <div class="card p-5">
+            <div class="row">
+                <!-- Columna Izquierda -->
+                <div class="col-md-6">
+                <!-- Nombre -->
+                <div class="fv-row mb-4">
+                    <label class="required fw-bold fs-6 mb-2">Nombre:</label>
+                    <input
+                        type="text"
+                        name="admin_nombre"
+                        class="form-control form-control-solid"
+                        placeholder="Nombre"
+                        [(ngModel)]="admin_nombre"
+                        (ngModelChange)="adminNombreInvalid = false"
+                        [ngClass]="{
+                            'border-danger': adminNombreInvalid && !admin_nombre,
+                            'border-success': admin_nombre && !adminNombreInvalid
+                        }"
+                        />
+
+                </div>
+
+                <!-- Apellido -->
+                <div class="fv-row mb-4">
+                    <label class="required fw-bold fs-6 mb-2">Apellido:</label>
+                    <input
+                        type="text"
+                        name="admin_apellido"
+                        class="form-control form-control-solid"
+                        placeholder="Apellido"
+                        [(ngModel)]="admin_apellido"
+                        (ngModelChange)="adminApellidoInvalid = false"
+                        [ngClass]="{
+                            'border-danger': adminApellidoInvalid && !admin_apellido,
+                            'border-success': admin_apellido && !adminApellidoInvalid
+                        }"
+                        />
+
+                </div>
+                </div>
+
+                <!-- Columna Derecha -->
+                <div class="col-md-6">
+                <!-- Correo -->
+                <div class="fv-row mb-4">
+                    <label class="required fw-bold fs-6 mb-2">Correo electrónico:</label>
+                   <input
+                    type="email"
+                    name="admin_correo"
+                    class="form-control form-control-solid"
+                    placeholder="Correo electrónico"
+                    [(ngModel)]="admin_correo"
+                    [ngClass]="{
+                        'border-danger': admin_correo && !isValidEmail(admin_correo),
+                        'border-success': admin_correo && isValidEmail(admin_correo)
+                    }"
+                    />
+
+                    <div *ngIf="adminCorreoInvalid && !admin_correo" class="text-danger">
+                    El correo es requerido.
+                    </div>
+                    <div *ngIf="admin_correo && !isValidEmail(admin_correo)" class="text-danger">
+                    Correo inválido.
+                    </div>
+                    <div *ngIf="admin_correo && isValidEmail(admin_correo)" class="text-success">
+                    Correo válido.
+                    </div>
+
+
+                </div>
+                <!-- Contraseña -->
+                <div class="fv-row mb-4">
+                    <label class="required fw-bold fs-6 mb-2">Contraseña:</label>
+                    <input
+                        type="password"
+                        name="admin_password"
+                        class="form-control form-control-solid"
+                        placeholder="Contraseña"
+                        [(ngModel)]="admin_password"
+                        [ngClass]="{
+                        'border-danger': admin_password && admin_password.length < 6,
+                        'border-success': admin_password && admin_password.length >= 6
+                        }"
+                    />
+
+                    <div *ngIf="adminPasswordInvalid && !admin_password" class="text-danger">
+                        La contraseña es requerida.
+                    </div>
+                    <div *ngIf="adminPasswordInvalid && admin_password && admin_password.length < 6" class="text-danger">
+                        La contraseña debe tener al menos 6 caracteres.
+                    </div>
+                    <div *ngIf="admin_password && admin_password.length >= 6" class="text-success">
+                        Contraseña válida.
+                    </div>
+                </div>
+
+
+                <!-- Confirmar contraseña -->
+                <div class="fv-row mb-4">
+                    <label class="required fw-bold fs-6 mb-2">Confirmar contraseña:</label>
+                    <input
+                        type="password"
+                        name="admin_password_confirm"
+                        class="form-control form-control-solid"
+                        placeholder="Confirmar contraseña"
+                        [(ngModel)]="admin_password_confirm"
+                        [ngClass]="{
+                        'border-danger': admin_password_confirm && admin_password !== admin_password_confirm,
+                        'border-success': admin_password_confirm && admin_password === admin_password_confirm
+                        }"
+                    />
+
+                    <div *ngIf="adminPasswordConfirmInvalid && !admin_password_confirm" class="text-danger">
+                        La confirmación es requerida.
+                    </div>
+                    <div *ngIf="adminPasswordConfirmInvalid && admin_password_confirm && admin_password !== admin_password_confirm" class="text-danger">
+                        Las contraseñas no coinciden.
+                    </div>
+                    <div *ngIf="admin_password_confirm && admin_password === admin_password_confirm" class="text-success">
+                        Contraseña confirmada correctamente.
+                    </div>
+                </div>
+
+
+                </div>
+            </div>
+            </div>
+            <!-- Línea separadora -->
+            <hr class="my-10 border border-primary border-2 opacity-50" />
+
+            <!-- Título 
+            <h4 class="fw-bolder mb-5 text-center text-primary">Configurar Correo de salida de Empresa</h4>-->
+
+            <!-- Línea separadora 
+            <hr class="my-10 border border-primary border-2 opacity-50" />-->
+
+            <!-- Título con click para desplegar -->
+            <h4 
+            class="fw-bolder mb-5 text-center text-primary" 
+            style="cursor: pointer;" 
+            (click)="togglePermisos()">
+            Clic aqui para otorgar los Permisos a la empresa 
+            <span [ngClass]="{'rotate-180': mostrarPermisos}" style="transition: 0.3s;">
+                ▼
+            </span>
+            </h4>
+
+            <!-- Línea separadora -->
+            <hr class="mb-4">
+
+            <!-- Selector global -->
+            <div class="card mb-4" *ngIf="mostrarPermisos">
+              <div class="card-body d-flex align-items-center justify-content-between py-3">
+                <div class="fw-bold text-primary">Seleccionar todos los permisos</div>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="empresa_select_all_permissions"
+                         [checked]="isAllSelected()" (change)="toggleAll($event)">
+                  <label class="form-check-label" for="empresa_select_all_permissions">Todos</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contenido de permisos agrupados -->
+            <div class="fv-row mb-7" *ngIf="mostrarPermisos">
+              <label class="required fw-bold fs-6 mb-4">Selecciona sus permisos: </label>
+
+              <div class="row g-5">
+                <div class="col-12" *ngFor="let grupo of groupedSidebar">
+                  <div class="card border border-2 border-primary-subtle rounded-3 permiso-group-card">
+                    <div class="card-header bg-primary text-white fw-bold d-flex align-items-center justify-content-between">
+                      <span>{{ grupo.title }}</span>
+                      <div class="form-check form-switch">
+                        <input class="form-check-input group-switch" type="checkbox" [id]="'grp_'+grupo.title"
+                               [checked]="isGroupAllSelected(grupo.title)"
+                               (change)="toggleGroup(grupo.title, $event)">
+                        <label class="form-check-label" [for]="'grp_'+grupo.title">Seleccionar grupo</label>
+                      </div>
+                    </div>
+                    <div class="card-body">
+                      <div class="row g-3">
+                        <div class="col-md-4" *ngFor="let PERMISSION of grupo.items">
+                          <div class="card h-100 shadow-sm border border-1 border-gray-300 permiso-item-card" style="font-size: 0.9rem; border-radius: 0.5rem;">
+                            <div class="card-header bg-light fw-bold border-bottom" style="font-size: 0.95rem; padding: 0.5rem 1rem;">
+                              {{ PERMISSION.name }}
+                            </div>
+                            <div class="card-body d-flex flex-column gap-2" style="padding: 0.75rem 1rem; background-color: #f8f9fa;">
+                              <ng-container *ngFor="let permiso of PERMISSION.permisos">
+                                <div class="form-check">
+                                  <input class="form-check-input" type="checkbox"
+                                         id="permiso-{{PERMISSION.name}}-{{permiso.permiso}}"
+                                         [checked]="permisions.includes(permiso.permiso)"
+                                         (change)="addPermission(permiso.permiso)">
+                                  <label class="form-check-label" [for]="'permiso-'+PERMISSION.name+'-'+permiso.permiso" style="margin-left: 0.25rem;">
+                                    {{ permiso.name }}
+                                  </label>
+                                </div>
+                              </ng-container>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+
+
+
+
+
+
+            <hr class="my-10 border border-primary border-2 opacity-50" />
+            <!-- Botones -->
+            <div class="text-center pt-10">
+                <button type="reset" class="btn btn-light me-3" (click)="modal.dismiss()">Cerrar</button>
+                <button
+                type="button"
+                (click)="store()"
+                class="btn btn-primary"
+                data-kt-users-modal-action="submit"
+                >
+                <span class="indicator-label">Guardar</span>
+                <span
+                    class="spinner-border spinner-border-sm align-middle ms-2"
+                    *ngIf="isLoading | async"
+                ></span>
+                </button>
+            </div>
+        </form>
+
+        <!--end::Form-->
+    </div>
+    <!--end::Modal body-->
+</div>
+<!--end::Modal content CREATE-->

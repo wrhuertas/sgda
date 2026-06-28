@@ -1,0 +1,11 @@
+/* Para que la barra de scroll sea más delgada y profesional */
+.table-responsive::-webkit-scrollbar {
+    width: 6px;
+  }
+  .table-responsive::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+  }
+  .table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #999;
+  }

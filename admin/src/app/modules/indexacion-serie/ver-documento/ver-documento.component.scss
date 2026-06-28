@@ -1,0 +1,163 @@
+// Fondo general más amable para el modal
+.pretty-body {
+  background: #f6f7f9;
+}
+
+// Toolbar superior tipo panel
+.toolbar {
+  background: #ffffff;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.toolbar .right {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+// Card contenedor del visor
+.viewer-card {
+  background: #ffffff;
+  border: 1px solid #dee2e6;
+  border-radius: 10px;
+  padding: 10px;
+}
+.viewer-inner {
+  /* reservamos el alto del visor dentro del card */
+}
+
+// Contenedor con scroll para permitir desplazar la imagen cuando el zoom es grande
+.visor-contenedor {
+  max-height: 70vh;
+  height: 70vh;
+  overflow: auto; /* habilita scroll en ambos ejes cuando el contenido lo supera */
+  background: #fafafa;
+  display: block; /* evitar que flex contraiga el contenido y bloquee el scroll horizontal */
+  text-align: center; /* centrar el escenario (inline-block) */
+  overscroll-behavior: contain;
+  user-select: none;
+  position: relative;
+}
+
+// Escenario relativo para overlays (selección de recorte)
+.visor-escenario {
+  position: relative;
+  display: inline-block; /* permite centrar con text-align del contenedor */
+  /* aseguramos que el escenario adopte el tamaño real del contenido y pueda desbordar */
+  min-width: max-content;
+  min-height: max-content;
+}
+
+// Imagen del visor; se centra y se escala con transform
+.visor-imagen {
+  transform-origin: center top;
+  // Permitimos que la imagen crezca más que el ancho del contenedor para habilitar scroll horizontal
+  max-width: none;
+  height: auto;
+  display: block;
+  margin: 0; /* el centrado lo da el inline-block del escenario */
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+// Cursores para arrastre
+.pannable {
+  cursor: grab;
+}
+
+.pannable.dragging {
+  cursor: grabbing;
+}
+
+// Rectángulo de selección para el recorte
+.selection-rect {
+  position: absolute;
+  border: 2px dashed #e74c3c;
+  background: rgba(231, 76, 60, 0.1);
+  display: none; // se muestra al dibujar
+  pointer-events: none; // no bloquear los eventos del mouse
+}
+
+// Capa de parches y cada parche (vista previa blanca)
+.patches { position: absolute; inset: 0; pointer-events: none; }
+.patch {
+  position: absolute;
+  background: #ffffff;
+}
+
+// ---- Separadores como barra debajo del toolbar ----
+.separators-bar {
+  margin-top: 8px;
+  margin-bottom: 8px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.separators-bar .sep-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px; /* pill */
+  background: #f1f3f5;
+  color: #495057;
+  font-size: 12px;
+  line-height: 1;
+  border: 1px solid rgba(0,0,0,0.06);
+  white-space: nowrap;
+}
+.separators-bar .sep-item.active {
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+.separators-bar .sep-item .sep-name { font-weight: 600; }
+.separators-bar .sep-item .sep-range { opacity: 0.85; font-variant-numeric: tabular-nums; }
+
+/* Acciones de cada separador (se muestran al hover en desktop) */
+.separators-bar .sep-item .sep-actions {
+  display: inline-flex;
+  gap: 2px;
+}
+.separators-bar .sep-item .btn-xs {
+  padding: 0 3px; /* aún más pequeño */
+  font-size: 9px;
+  line-height: 1;
+  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.06);
+  background: #ffffff;
+}
+.separators-bar .sep-item .btn-xs i {
+  font-size: 9px; /* reducir tamaño del ícono */
+}
+
+/* Clickable separador */
+.separators-bar .sep-item.clickable { cursor: pointer; }
+.separators-bar .sep-item.clickable:hover { filter: brightness(0.98); }
+
+// Aumentar altura del modal de SweetAlert2 para el formulario de separadores
+:host ::ng-deep .swal2-popup.sw-separadores {
+  min-height: 420px; /* un poco más alto para ver todas las opciones */
+}
+
+// Panel inferior de paginación
+.pagination-panel {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+.pagination-panel .goto { width: 160px; }
+
+.pagination-panel.top {
+  margin-top: 0;
+  margin-bottom: 8px;
+}

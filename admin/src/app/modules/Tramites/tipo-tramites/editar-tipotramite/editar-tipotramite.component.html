@@ -1,0 +1,59 @@
+<div class="modal-content">
+  <div class="modal-header">
+    <h2 class="fw-bolder">Editar Tipo de Trámite</h2>
+    <div class="btn btn-icon btn-sm btn-active-icon-primary" (click)="cerrar()">
+      <app-keenicon name="cross" class="fs-1"></app-keenicon>
+    </div>
+  </div>
+
+  <div class="modal-body scroll-y mx-5 mx-xl-15 my-7">
+    <form class="form" action="#">
+      <div class="d-flex flex-column scroll-y me-n7 pe-7">
+
+        <div class="fv-row mb-7">
+          <label class="required fw-bold fs-6 mb-2">Nombre del Tipo de Trámite</label>
+          <input
+            type="text"
+            name="nombre"
+            class="form-control form-control-solid mb-3 mb-lg-0"
+            [(ngModel)]="nombre"
+          />
+        </div>
+
+        <div class="fv-row mb-7">
+          <label class="fw-bold fs-6 mb-2">Tiempo estimado para completar (en días)</label>
+          <input
+            type="number"
+            name="tiempo_tramite"
+            class="form-control form-control-solid mb-3 mb-lg-0"
+            min="0"
+            [(ngModel)]="tiempo_tramite"
+            onkeypress="return event.charCode >= 48 && event.charCode <= 57"
+          />
+        </div>
+
+        <div class="fv-row mb-7">
+          <label class="required fw-bold fs-6 mb-2">Estado</label>
+          <select class="form-select form-select-solid" name="estado" [(ngModel)]="estado">
+            <option [ngValue]="1">Activo</option>
+            <option [ngValue]="0">Inactivo</option>
+          </select>
+        </div>
+
+      </div>
+
+      <div class="text-center pt-15">
+        <button type="reset" class="btn btn-light me-3" (click)="cerrar()" [disabled]="isLoading">
+          Cancelar
+        </button>
+        <button type="button" class="btn btn-primary" (click)="store()" [disabled]="isLoading || !nombre">
+          <span class="indicator-label" *ngIf="!isLoading">Actualizar</span>
+          <span class="indicator-progress" *ngIf="isLoading">
+            Espere por favor...
+            <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+          </span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

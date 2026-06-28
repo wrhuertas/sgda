@@ -1,0 +1,130 @@
+<div class="d-flex flex-column flex-column-fluid">
+
+  <div class="mb-10">
+    <h1 class="text-dark fw-bold my-1 fs-2">Panel Principal</h1>
+    <span class="text-muted fw-semibold">Bienvenido al sistema de Gestión Documental: <b>{{userRole}}</b></span>
+  </div>
+
+  <div *ngIf="verTarjetas" class="row mb-10">
+    <div class="col-md-6 card shadow-sm p-5 bg-light-primary">Total Compras: {{total_purchase}}</div>
+    <div class="col-md-6 card shadow-sm p-5 bg-light-info">Total Clientes: {{total_clients}}</div>
+  </div>
+
+  <div class="dashboard-gerencial mb-10" *ngIf="verGraficoPastel">
+    <div class="dg-header">
+      <h1>Vision Estrategica de Cumplimiento Legal y Riesgo</h1>
+      <p class="dg-header-sub">Corte informativo: Abril 2026</p>
+    </div>
+
+    <div class="kpi-container">
+      <div class="kpi-card" style="border-top-color: #27ae60;">
+        <div class="kpi-title">Ahorro por Baja Documental</div>
+        <div class="kpi-value">$42,500</div>
+        <div class="kpi-sub">+12% vs año anterior</div>
+      </div>
+      <div class="kpi-card" style="border-top-color: #e74c3c;">
+        <div class="kpi-title">Indice de Orfandad</div>
+        <div class="kpi-value">14.2%</div>
+        <div class="kpi-sub" style="color: #e74c3c;">Riesgo: Moderado</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Metros Lineales Disponibles</div>
+        <div class="kpi-value">1,240m</div>
+        <div class="kpi-sub">Capacidad proyectada: 18 meses</div>
+      </div>
+    </div>
+
+    <div class="main-grid">
+      <div class="chart-card">
+        <h2 style="font-size: 1.1rem; color: #34495e;">Evolucion del Acervo por Ciclo de Vida (TB/m)</h2>
+        <div class="area-chart-sim">
+          <div class="bar-stack">
+            <div class="layer" style="height: 30%; background: #2980b9;" title="Historico"></div>
+            <div class="layer" style="height: 40%; background: #3498db;" title="Central"></div>
+            <div class="layer" style="height: 20%; background: #85c1e9;" title="Gestion"></div>
+          </div>
+          <div class="bar-stack">
+            <div class="layer" style="height: 35%; background: #2980b9;"></div>
+            <div class="layer" style="height: 45%; background: #3498db;"></div>
+            <div class="layer" style="height: 15%; background: #85c1e9;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <h2 style="font-size: 1.1rem; color: #34495e;">Auditoria de Transferencias</h2>
+        <ul class="status-list">
+          <li class="status-item"><span>Dir. Financiera</span> <span><span class="dot" style="background: #27ae60;"></span> Al dia</span></li>
+          <li class="status-item"><span>Recursos Humanos</span> <span><span class="dot" style="background: #e74c3c;"></span> Retraso</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-coordinacion mb-10" *ngIf="verGraficoBarras">
+    <div class="row g-5 g-xl-8 mb-10">
+      <div class="col-xl-6">
+        <div class="card shadow-sm p-5">
+          <h3 class="card-title fw-bold text-gray-800">Rendimiento Mensual</h3>
+          <canvas id="graficoBarras2" style="height: 300px;"></canvas>
+        </div>
+      </div>
+      <div class="col-xl-6">
+        <div class="card shadow-sm p-5">
+          <h3 class="card-title fw-bold text-gray-800">Flujo de Facturacion</h3>
+          <canvas id="graficoLineal2" style="height: 300px;"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="dc-card">
+        <h2>Ocupacion Fisica (Bodega Central)</h2>
+        <div class="shelf-row">
+          <div class="shelf-label">Pasillo A</div>
+          <div class="progress-bar"><div class="fill" style="width: 85%; background: #e74c3c;"></div></div>
+          <div class="shelf-pct">85%</div>
+        </div>
+      </div>
+      <div class="dc-card">
+        <h2>Indicador Cero Papel</h2>
+        <div class="stat-item"><span class="stat-value" style="color: #2ecc71;">65%</span><span class="stat-label">Electronicos</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-operativo mb-10" *ngIf="verTarjetas">
+    <div class="op-grid">
+      <div class="op-card">
+        <h2>Expedientes Administrativos por Cerrar</h2>
+        <div class="task-list">
+          <div class="task-item">
+            <b>EXP-2024-0045: Licitacion Parque Central</b>
+            <div class="alert alert-warning mt-2">Usted tiene tareas pendientes de custodia.</div>
+          </div>
+        </div>
+      </div>
+      <div class="op-card" style="border-left-color: #c0392b;">
+        <h2>Intervencion de Conservacion</h2>
+        <div class="alert-box"><b>Posible Presencia de Hongos</b><span>Caja #55 - Archivo Historico</span></div>
+      </div>
+    </div>
+    
+    <div class="card shadow-sm mt-5 p-5" *ngIf="verGraficoLineal">
+        <h3>Seguimiento Operativo</h3>
+      <canvas id="graficoLineal"></canvas>
+    </div>
+  </div>
+
+  <div class="row g-5 g-xl-8" *ngIf="verGraficoPastel">
+    <div class="col-xl-12">
+      <div class="card shadow-sm p-10 text-center">
+        <h3 class="card-title fw-bold text-gray-800 mb-8">Estado Global de Cartera</h3>
+        <div style="max-width: 500px; margin: 0 auto;">
+          <canvas id="graficoPastel2" style="height: 400px;"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

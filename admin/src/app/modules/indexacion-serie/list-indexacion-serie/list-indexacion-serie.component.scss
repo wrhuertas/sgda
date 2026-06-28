@@ -1,0 +1,20 @@
+// Estilo compacto para el modal de indexación
+:host ::ng-deep .modal.modal-indexacion-compact .modal-dialog {
+  max-width: 72vw; // un poco menos ancho
+  margin-left: auto !important; // alinea a la derecha
+  margin-right: 0.5rem !important; // casi pegado al borde derecho
+}
+
+:host ::ng-deep .modal.modal-indexacion-compact .modal-content {
+  height: 92vh; // más alto fijo
+}
+
+// Evitar que Bootstrap centre horizontalmente con márgenes por defecto
+:host ::ng-deep .modal.modal-indexacion-compact .modal-dialog-centered {
+  margin-right: 0.5rem !important;
+  margin-left: auto !important;
+}
+
+:host ::ng-deep .modal-indexacion-compact .modal-body {
+  overflow: auto;
+}

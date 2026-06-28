@@ -1,0 +1,30 @@
+<div class="modal-header">
+  <h5 class="modal-title">Permisos - {{ tipo }} #{{ id }}</h5>
+  <button type="button" class="btn-close" (click)="activeModal.dismiss()" aria-label="Close"></button>
+</div>
+
+<div class="modal-body">
+  <p><strong>ID Empresa:</strong> {{ id_empresa }}</p>
+  
+  <h6>Usuarios de la empresa:</h6>
+  <ul class="list-group">
+    <li *ngFor="let u of usuarios" class="list-group-item d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center">
+        <img *ngIf="u.avatar" [src]="u.avatar" class="rounded-circle me-2" width="30" height="30" alt="Avatar">
+        <span>{{ u.name }} {{ u.surname }} - {{ u.email }}</span>
+      </div>
+      <div class="d-flex gap-2">
+        <label><input type="checkbox" [(ngModel)]="u.puede_ver"> Ver</label>
+        <label><input type="checkbox" [(ngModel)]="u.puede_subir"> Subir</label>
+        <label><input type="checkbox" [(ngModel)]="u.puede_editar"> Editar</label>
+        <label><input type="checkbox" [(ngModel)]="u.puede_eliminar"> Eliminar</label>
+      </div>
+    </li>
+  </ul>
+
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-primary" (click)="guardarPermisos()">Guardar Permisos</button>
+  <button type="button" class="btn btn-secondary" (click)="activeModal.dismiss()">Cerrar</button>
+</div>

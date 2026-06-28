@@ -1,0 +1,237 @@
+<div *ngIf="tipo === 'etiqueta1'">
+  <div class="p-2 border-bottom border-dark" style="background-color: #d1e7dd;">
+    <div class="d-flex justify-content-center align-items-center mb-1">
+      <img *ngIf="empresa?.imagen_empresa" [src]="buildUrl(empresa.imagen_empresa)" alt="Logo" class="img-fluid" style="max-height: 35px; object-fit: contain;" />
+    </div>
+  </div>
+  <div class="modal-header bg-light py-2 no-print">
+    <h6 class="modal-title fw-bold text-primary">
+      <i class="bi bi-tag-fill me-1"></i> Vista Previa - Etiqueta 1
+    </h6>
+    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('cross')"></button>
+  </div>
+
+  <div class="modal-body p-4 bg-dark-subtle d-flex justify-content-center">
+  <div class="card p-4 bg-white text-dark shadow border-0 text-center style-etiqueta" style="width: 550px; min-height: 250px;">
+    
+    <div class="mb-3">
+      <small class="fw-bold tracking-wider text-uppercase text-muted d-block" style="font-size: 11px; letter-spacing: 1px;">
+        SISTEMA DE GESTIÓN DOCUMENTAL - ETIQUETA 1
+      </small>
+      <div class="border-bottom my-2 border-secondary border-opacity-25"></div>
+    </div>
+
+    <div class="row align-items-stretch">
+      
+      <div class="col-6 border-end border-secondary border-opacity-25 d-flex flex-column text-center border border-2 border-dark rounded-1 p-0 bg-white overflow-hidden">
+        
+        <div class="p-2 border-bottom border-dark" style="background-color: #d1e7dd;">
+          <div class="d-flex justify-content-center align-items-center mb-1">
+            <img *ngIf="empresa?.imagen_empresa" [src]="buildUrl(empresa.imagen_empresa)" alt="Logo" class="img-fluid" style="max-height: 35px; object-fit: contain;" />
+          </div>
+          <div class="border border-dark bg-white py-1 my-1">
+            <small class="fw-bold d-block text-uppercase text-dark" style="font-size: 9px; line-height: 1;">FONDO DOCUMENTAL</small>
+            <span class="fw-bolder d-block text-uppercase text-success px-1" style="font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              {{ empresa?.nombre_empresa || 'GAD MUNICIPAL' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="p-1 border-bottom border-dark" style="background-color: #e2f0d9;">
+          <small class="fw-bold d-block text-uppercase text-secondary" style="font-size: 8px; line-height: 1;">SECCIÓN DOCUMENTAL</small>
+          <span class="fw-bold text-dark text-uppercase d-block" style="font-size: 10px;">
+            {{ seccion?.nombre_seccion || 'N/A' }}
+          </span>
+        </div>
+
+        <div class="p-1 border-bottom border-dark bg-white">
+          <small class="fw-bold d-block text-uppercase text-secondary" style="font-size: 8px; line-height: 1;">SUBSECCIÓN DOCUMENTAL</small>
+          <span class="fw-bolder text-dark text-uppercase d-block my-1" style="font-size: 11px;">
+            {{ seccion?.nombre_unidad_especifica || 'N/A' }}
+          </span>
+        </div>
+
+        <div class="bg-dark text-white p-2 border-bottom border-dark row g-0 align-items-center">
+          <div class="col-8 text-center border-end border-secondary border-opacity-50">
+            <span class="d-block fw-bolder text-uppercase tracking-wide" style="font-size: 14px;">DICIEMBRE</span>
+            <span class="d-block font-monospace fw-bold" style="font-size: 16px; color: #ffca28; line-height: 1;">2021</span>
+          </div>
+          <div class="col-4 text-center">
+            <span class="fw-bolder font-monospace" style="font-size: 20px; color: #ffca28;">##</span>
+          </div>
+        </div>
+
+        <div class="p-2 border-bottom border-dark" style="background-color: #e2f0d9;">
+          <small class="fw-bold d-block text-uppercase text-secondary" style="font-size: 8px; line-height: 1;">SERIE DOCUMENTAL</small>
+          <span class="fw-bold text-dark text-uppercase d-block px-1" style="font-size: 10px; line-height: 1.1;">
+            {{ serie?.nombre_serie || 'N/A' }}
+          </span>
+        </div>
+
+        <div class="p-2 border-bottom border-dark bg-white">
+          <small class="fw-bold d-block text-uppercase text-secondary" style="font-size: 8px; line-height: 1;">SUBSERIE DOCUMENTAL</small>
+          <span class="fw-bold text-uppercase d-block px-1 text-muted" style="font-size: 10px; line-height: 1.1;">
+            {{ serie?.nombre_subserie || 'SIN SUBSERIE ASIGNADA' }}
+          </span>
+        </div>
+
+        <div class="p-3 bg-white">
+          <p class="fw-bold mb-2 text-secondary small" style="font-size: 11px;">IDENTIFICACIÓN QR</p>
+          <div class="d-flex justify-content-center align-items-center mb-2" style="min-height: 140px;">
+            <img *ngIf="qrImagenUrl" [src]="qrImagenUrl" alt="Código QR" class="img-fluid border p-1 bg-white shadow-sm" style="width: 140px; height: 140px;" />
+            <div *ngIf="!qrImagenUrl" class="text-muted small">
+              <span class="spinner-border spinner-border-sm me-1"></span> Cargando QR...
+            </div>
+          </div>
+          <small class="text-muted font-monospace d-block" style="font-size: 10px;">ID Serie: {{ id_serie }}</small>
+        </div>
+
+        <div class="bg-light border-top border-dark font-monospace fw-bold" style="font-size: 9px;">
+          <div class="row g-0 text-center text-muted border-bottom border-dark">
+            <div class="col-6 border-end border-dark">GESTIÓN</div>
+            <div class="col-6">TOTAL DOCS</div>
+          </div>
+          <div class="row g-0 text-center p-1 fs-6">
+            <div class="col-6 border-end border-dark">{{ serie?.detalles?.plazo_gestion ?? 0 }} Años</div>
+            <div class="col-6 text-primary">{{ serie?.total_documentos ?? 0 }}</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="col-6 d-flex flex-column justify-content-start pt-2">
+        <p class="fw-bold mb-2 text-secondary small" style="font-size: 11px;">CÓDIGO DE BARRAS</p>
+        <div class="d-flex justify-content-center align-items-center mb-2" style="min-height: 140px;">
+          <img *ngIf="barraImagenUrl" [src]="barraImagenUrl" alt="Código de Barras" class="img-fluid px-2" style="max-height: 65px; object-fit: contain; width: 100%;" />
+          <div *ngIf="!barraImagenUrl" class="text-muted small">
+            <span class="spinner-border spinner-border-sm me-1"></span> Cargando Barra...
+          </div>
+        </div>
+        <small class="text-muted font-monospace d-block" style="font-size: 10px;">REF-{{ id_serie }}</small>
+      </div>
+
+    </div> 
+  </div> 
+</div>
+
+  <div class="modal-footer bg-light py-2 no-print">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="activeModal.close('cancel')">Cerrar</button>
+    <button type="button" class="btn btn-sm btn-primary d-flex align-items-center gap-1 shadow-sm" (click)="imprimir()">
+      <i class="bi bi-printer"></i> Imprimir Etiqueta Completa
+    </button>
+  </div>
+</div>
+
+
+<div *ngIf="tipo === 'etiqueta2'">
+  <div class="p-2 border-bottom border-dark" style="background-color: #d1e7dd;">
+    <div class="d-flex justify-content-center align-items-center mb-1">
+      <img *ngIf="empresa?.imagen_empresa" [src]="buildUrl(empresa.imagen_empresa)" alt="Logo" class="img-fluid" style="max-height: 35px; object-fit: contain;" />
+    </div>
+  </div>
+  <div class="modal-header bg-light py-2 no-print">
+    <h6 class="modal-title fw-bold text-primary">
+      <i class="bi bi-tag-fill me-1"></i> Vista Previa - Etiqueta 2
+    </h6>
+    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('cross')"></button>
+  </div>
+
+  <div class="modal-body p-4 bg-dark-subtle d-flex justify-content-center">
+    <div class="card p-4 bg-white text-dark shadow border-0 text-center style-etiqueta" style="width: 550px; min-height: 250px;">
+      <div class="mb-3">
+        <small class="fw-bold tracking-wider text-uppercase text-muted d-block" style="font-size: 11px; letter-spacing: 1px;">
+          SISTEMA DE GESTIÓN DOCUMENTAL - ETIQUETA 2
+        </small>
+        <div class="border-bottom my-2 border-secondary border-opacity-25"></div>
+      </div>
+
+      <div class="row align-items-center">
+        <div class="col-6 border-end border-secondary border-opacity-25">
+          <p class="fw-bold mb-2 text-secondary small" style="font-size: 11px;">IDENTIFICACIÓN QR</p>
+          <div class="d-flex justify-content-center align-items-center mb-2" style="min-height: 140px;">
+            <img *ngIf="qrImagenUrl" [src]="qrImagenUrl" alt="Código QR" class="img-fluid border p-1 bg-white shadow-sm" style="width: 140px; height: 140px;" />
+            <div *ngIf="!qrImagenUrl" class="text-muted small">
+              <span class="spinner-border spinner-border-sm me-1"></span> Cargando QR...
+            </div>
+          </div>
+          <small class="text-muted font-monospace d-block" style="font-size: 10px;">ID Serie: {{ id_serie }}</small>
+        </div>
+
+        <div class="col-6">
+          <p class="fw-bold mb-2 text-secondary small" style="font-size: 11px;">CÓDIGO DE BARRAS</p>
+          <div class="d-flex justify-content-center align-items-center mb-2" style="min-height: 140px;">
+            <img *ngIf="barraImagenUrl" [src]="barraImagenUrl" alt="Código de Barras" class="img-fluid px-2" style="max-height: 65px; object-fit: contain; width: 100%;" />
+            <div *ngIf="!barraImagenUrl" class="text-muted small">
+              <span class="spinner-border spinner-border-sm me-1"></span> Cargando Barra...
+            </div>
+          </div>
+          <small class="text-muted font-monospace d-block" style="font-size: 10px;">REF-{{ id_serie }}</small>
+        </div>
+      </div> 
+    </div> 
+  </div>
+
+  <div class="modal-footer bg-light py-2 no-print">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="activeModal.close('cancel')">Cerrar</button>
+    <button type="button" class="btn btn-sm btn-primary d-flex align-items-center gap-1 shadow-sm" (click)="imprimir()">
+      <i class="bi bi-printer"></i> Imprimir Etiqueta Completa
+    </button>
+  </div>
+</div>
+
+
+<div *ngIf="tipo === 'etiqueta3'">
+  <div class="p-2 border-bottom border-dark" style="background-color: #d1e7dd;">
+    <div class="d-flex justify-content-center align-items-center mb-1">
+      <img *ngIf="empresa?.imagen_empresa" [src]="buildUrl(empresa.imagen_empresa)" alt="Logo" class="img-fluid" style="max-height: 35px; object-fit: contain;" />
+    </div>
+  </div>
+  <div class="modal-header bg-light py-2 no-print">
+    <h6 class="modal-title fw-bold text-primary">
+      <i class="bi bi-tag-fill me-1"></i> Vista Previa - Etiqueta 3
+    </h6>
+    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss('cross')"></button>
+  </div>
+
+  <div class="modal-body p-4 bg-dark-subtle d-flex justify-content-center">
+    <div class="card p-4 bg-white text-dark shadow border-0 text-center style-etiqueta" style="width: 550px; min-height: 250px;">
+      <div class="mb-3">
+        <small class="fw-bold tracking-wider text-uppercase text-muted d-block" style="font-size: 11px; letter-spacing: 1px;">
+          SISTEMA DE GESTIÓN DOCUMENTAL - ETIQUETA 3
+        </small>
+        <div class="border-bottom my-2 border-secondary border-opacity-25"></div>
+      </div>
+
+      <div class="row align-items-center">
+        <div class="col-6 border-end border-secondary border-opacity-25">
+          <p class="fw-bold mb-2 text-secondary small" style="font-size: 11px;">IDENTIFICACIÓN QR</p>
+          <div class="d-flex justify-content-center align-items-center mb-2" style="min-height: 140px;">
+            <img *ngIf="qrImagenUrl" [src]="qrImagenUrl" alt="Código QR" class="img-fluid border p-1 bg-white shadow-sm" style="width: 140px; height: 140px;" />
+            <div *ngIf="!qrImagenUrl" class="text-muted small">
+              <span class="spinner-border spinner-border-sm me-1"></span> Cargando QR...
+            </div>
+          </div>
+          <small class="text-muted font-monospace d-block" style="font-size: 10px;">ID Serie: {{ id_serie }}</small>
+        </div>
+
+        <div class="col-6">
+          <p class="fw-bold mb-2 text-secondary small" style="font-size: 11px;">CÓDIGO DE BARRAS</p>
+          <div class="d-flex justify-content-center align-items-center mb-2" style="min-height: 140px;">
+            <img *ngIf="barraImagenUrl" [src]="barraImagenUrl" alt="Código de Barras" class="img-fluid px-2" style="max-height: 65px; object-fit: contain; width: 100%;" />
+            <div *ngIf="!barraImagenUrl" class="text-muted small">
+              <span class="spinner-border spinner-border-sm me-1"></span> Cargando Barra...
+            </div>
+          </div>
+          <small class="text-muted font-monospace d-block" style="font-size: 10px;">REF-{{ id_serie }}</small>
+        </div>
+      </div> 
+    </div> 
+  </div>
+
+  <div class="modal-footer bg-light py-2 no-print">
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="activeModal.close('cancel')">Cerrar</button>
+    <button type="button" class="btn btn-sm btn-primary d-flex align-items-center gap-1 shadow-sm" (click)="imprimir()">
+      <i class="bi bi-printer"></i> Imprimir Etiqueta Completa
+    </button>
+  </div>
+</div>

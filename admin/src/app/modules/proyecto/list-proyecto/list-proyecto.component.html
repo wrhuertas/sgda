@@ -1,0 +1,155 @@
+<div class="card">
+  <!--begin::Card header-->
+  <div class="card-header border-0 pt-6">
+    <div class="card-title">
+      <!--begin::Search-->
+      <div class="d-flex align-items-center position-relative my-1">
+        <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-5">
+          <span class="path1"></span><span class="path2"></span>
+        </i>
+        <input
+          type="text"
+          [(ngModel)]="search"
+          (keyup.enter)="listProyectos()"
+          name="search"
+          class="form-control form-control-solid w-250px ps-12"
+          placeholder="Buscar Sección Documental"
+        />
+      </div>
+      <!--end::Search-->
+    </div>
+
+    <span
+      class="spinner-border spinner-border-sm align-middle ms-2"
+      *ngIf="isLoading$ | async"
+    ></span>
+
+
+    <!--begin::Card toolbar-->
+    <div class="card-toolbar">
+      <button *ngIf="puedeCrearSeccion" type="button" class="btn btn-primary" (click)="createProyecto()">
+        + Agregar Sección Documental
+      </button>
+    </div>
+    <!--end::Card toolbar-->
+  </div>
+  <!--end::Card header-->
+
+  <!--begin::Card body-->
+  <div class="card-body pt-4">
+    <div class="row">
+      <ng-container *ngFor="let PROYECTO of PROYECTOS">
+        <div class="col-md-4 mb-4">
+          <div class="card shadow-sm h-100">
+            <div class="card-body text-center">
+
+              <div class="mb-3">
+              <i class="ki-duotone ki-home fs-3x text-primary">
+                <span class="path1"></span><span class="path2"></span>
+              </i>
+            </div>
+              <!-- Nombre centrado y más grande -->
+              <div class="mb-3">
+              <span class="text-dark fw-bolder d-block fs-3 text-uppercase" style="color: #071437 !important;">
+                Sección:
+              </span>
+              
+              <h4 class="card-title fw-bold text-gray-700 fs-2x mb-0">
+                {{ PROYECTO.nombre }}
+              </h4>
+
+              <div class="mt-2">
+                <span class="text-gray-600 fs-4 fw-bold text-uppercase">
+                  Sigla: 
+                </span>
+                <span class="text-primary fs-3 fw-bolder" style="color: #071437 !important;">
+                  {{ PROYECTO.sigla }}
+                </span>
+              </div>
+            </div>
+
+              <!-- ID Empresa oculto pero presente -->
+              <input type="hidden" [value]="PROYECTO.id_empresa" />
+
+              <!-- Eliminamos empresa visible -->
+              <!-- <p class="mb-1"><strong>Empresa:</strong> {{ PROYECTO.empresa }}</p> -->
+
+              <p class="mb-1">
+                
+                {{ PROYECTO.created_at | date : "dd/MM/yyyy" }}
+              </p>
+
+              
+              <!-- 🚀 Aquí tu botón -->
+            <button
+            class="btn btn-sm btn-light-primary mt-3 border border-primary border-dashed"
+            (click)="createSubSeccion(PROYECTO.id)"
+          >
+            <i class="ki-duotone ki-entrance-right fs-4 me-1">
+              <span class="path1"></span><span class="path2"></span>
+            </i>
+            Ingresar a Sección
+          </button>
+
+            </div>
+
+            <div class="card-footer d-flex justify-content-between align-items-center gap-2">
+              <!-- Botones -->
+              <div class="d-flex gap-2">
+                <button *ngIf="puedeEditarSeccion"
+                  class="btn btn-sm btn-light-primary"
+                  (click)="editProyecto(PROYECTO)">
+                  <i class="ki-duotone ki-pencil"></i> Editar
+                </button>
+                <button *ngIf="puedeEliminarSeccion"
+                  class="btn btn-sm btn-light-danger"
+                  (click)="deleteProyecto(PROYECTO)">
+                  <i class="ki-duotone ki-trash"></i> Eliminar
+                </button>
+              </div>
+            
+              <!-- Estado al lado derecho -->
+              <div class="d-flex align-items-center justify-content-center gap-2">
+                <span class="text-gray-600 fw-bold">Estado:</span>
+                
+                <span
+                  class="badge"
+                  [ngClass]="{
+                    'badge-light-success': PROYECTO.estado == 1,
+                    'badge-light-danger': PROYECTO.estado == 0
+                  }"
+                >
+                  {{ PROYECTO.estado == 1 ? 'Activo' : 'Inactivo' }}
+                </span>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </ng-container>
+
+      <div class="col-12" *ngIf="PROYECTOS.length === 0 && !(isLoading$ | async)">
+          <div class="alert alert-dismissible bg-light-warning d-flex flex-column flex-sm-row p-5 mb-10">
+              <i class="ki-duotone ki-information-5 fs-2hx text-warning me-4 mb-5 mb-sm-0">
+                  <span class="path1"></span><span class="path2"></span><span class="path3"></span>
+              </i>
+              <div class="d-flex flex-column pe-0 pe-sm-10">
+                <h4 class="fw-semibold">Sin información</h4>
+                
+                <span>No tienes secciones asignadas. Por favor, <strong>consulta con el administrador</strong> para habilitar tus accesos.</span>
+            </div>
+          </div>
+      </div>
+    </div>
+
+    <ngb-pagination
+      [collectionSize]="totalPages"
+      [(page)]="currentPage"
+      [pageSize]="25"
+      [rotate]="true"
+      [boundaryLinks]="true"
+      (pageChange)="loadPage($event)"
+    ></ngb-pagination>
+  </div>
+  <!--end::Card body-->
+</div>

@@ -1,0 +1,277 @@
+<div class="modal-content">
+  <div class="modal-header">
+      <h2 class="fw-bold text-uppercase">Editar Acta de Certificación</h2>
+      <div class="btn btn-icon btn-sm btn-active-icon-primary" (click)="activeModal.dismiss()">
+          <i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span class="path2"></span></i>
+      </div>
+  </div>
+
+  <div class="modal-body py-10 px-lg-17">
+      <div class="row g-10">
+          <div class="col-lg-4">
+              <div class="mb-8">
+                  <label class="fs-6 fw-semibold mb-2 text-muted text-uppercase">Número Acta</label>
+                  <input type="text" class="form-control form-control-solid fw-bold fs-3 text-primary" 
+                         [value]="PRESTAMO_SELECTED?.numero_acta || 'PROVISIONAL / BORRADOR'" readonly disabled>
+              </div>
+
+              <div class="mb-8">
+                  <label class="fs-6 fw-semibold mb-2 text-muted text-uppercase">Número de Trámite</label>
+                  <div class="input-group">
+                      <input type="text" class="form-control" 
+                             [(ngModel)]="numero_tramite" 
+                             name="numero_tramite" 
+                             placeholder="Ej: 000123 o DOC-2026-00123" 
+                             (keyup.enter)="buscarTramite()">
+                      <button class="btn btn-outline-primary" type="button" (click)="buscarTramite()">
+                          <i class="ki-duotone ki-search-list fs-4 me-1">
+                              <span class="path1"></span><span class="path2"></span><span class="path3"></span>
+                          </i>
+                          Buscar
+                      </button>
+                  </div>
+                  <div class="mt-2">
+                      <span *ngIf="id_tramite || numero_tramite" class="badge badge-light-success fw-bold text-uppercase">
+                          <i class="ki-duotone ki-check-circle fs-7 me-1 text-success"><span class="path1"></span><span class="path2"></span></i>
+                          Trámite Vinculado: {{ numero_tramite || ('ID: ' + id_tramite) }}
+                      </span>
+                      <span *ngIf="!id_tramite && !numero_tramite" class="badge badge-light-warning fw-bold text-uppercase">
+                          Sin trámite asociado
+                      </span>
+                  </div>
+              </div>
+
+              <div class="card bg-light-primary border-primary border-dashed p-6">
+                  <label class="fs-6 fw-bold mb-2">Usuario Solicitante</label>
+                  <div class="position-relative mb-3">
+                      <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-5 mt-4">
+                          <span class="path1"></span><span class="path2"></span>
+                      </i>
+                      <input type="text" class="form-control form-control-solid ps-12" 
+                             placeholder="Buscar nuevo solicitante..." 
+                             [(ngModel)]="search_user" 
+                             (keyup.enter)="buscarUsuario()">
+                      <div *ngIf="usuarios_list.length > 0" 
+                           class="position-absolute w-100 bg-white shadow-sm rounded border border-gray-300 mt-1 z-index-3" 
+                           style="max-height: 180px; overflow-y: auto;">
+                          <div *ngFor="let u of usuarios_list" 
+                               (click)="seleccionarUsuario(u)"
+                               class="d-flex align-items-center p-3 cursor-pointer border-bottom border-gray-100 bg-hover-light-primary">
+                              <span class="fs-7 fw-bold text-gray-800">{{ u.name }} {{ u.surname }}</span>
+                          </div>
+                      </div>
+                  </div>
+                  <div class="bg-white rounded p-4 border border-gray-300 min-h-125px d-flex align-items-center">
+                      <div *ngIf="usuario_selected" class="d-flex flex-column w-100">
+                          <span class="fw-bold fs-6 text-uppercase text-primary">
+                              {{ usuario_selected.name }} {{ usuario_selected.surname }}
+                          </span>
+                          <div class="separator my-2"></div>
+                          <span class="text-gray-600 fs-7"><strong>ID / Cédula:</strong> {{ usuario_selected.id || usuario_selected.cedula || '-' }}</span>
+                          <span class="text-gray-600 fs-7"><strong>Cargo / Proy:</strong> {{ usuario_selected.nombre_proyecto_asignado || 'Personal General' }}</span>
+                      </div>
+                      <div *ngIf="!usuario_selected" class="text-muted text-center w-100 fs-7">
+                          Ningún usuario seleccionado para esta acta.
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          <div class="col-lg-8">
+              <div class="card card-flush shadow-sm border h-100">
+                  <div class="card-header bg-light-secondary py-3 min-h-auto d-flex align-items-center justify-content-between">
+                      <h3 class="card-title fw-bold text-gray-800 fs-7 text-uppercase m-0">Gestión e Inclusión Documental</h3>
+                  </div>
+                  <div class="card-body pt-4">
+                      <div class="d-flex align-items-center gap-2 mb-4">
+                          <div class="position-relative w-100">
+                              <i class="ki-duotone ki-magnifier fs-3 position-absolute top-50 translate-middle-y ms-4">
+                                  <span class="path1"></span><span class="path2"></span>
+                              </i>
+                              <input type="text" class="form-control form-control-solid ps-12 fs-7" placeholder="Buscar nuevos documentos por nombre o número..." [(ngModel)]="texto" (keyup.enter)="buscarDocumentos()" />
+                          </div>
+                          <button class="btn btn-primary fw-bold fs-7 text-nowrap" type="button" (click)="buscarDocumentos()">
+                              <i class="ki-duotone ki-search-list fs-4 me-1"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
+                              Buscar
+                          </button>
+                      </div>
+                      <div class="table-responsive border rounded mb-4" style="max-height: 180px; overflow-y: auto;">
+                          <table class="table align-middle table-row-dashed fs-6 gy-2 mb-0">
+                              <thead class="sticky-top bg-light" style="z-index: 1;">
+                                  <tr class="text-start text-gray-400 fw-bold fs-8 text-uppercase gs-0">
+                                      <th class="w-40px text-center">Sel</th>
+                                      <th class="ps-2">Resultados de Búsqueda del Servidor</th>
+                                  </tr>
+                              </thead>
+                              <tbody class="fw-semibold text-gray-700">
+                                  <tr *ngFor="let doc of documentos_list">
+                                      <td class="text-center">
+                                          <div class="form-check form-check-sm form-check-custom form-check-solid justify-content-center">
+                                              <input class="form-check-input" type="checkbox" (change)="toggleSeleccion(doc)" [checked]="estaSeleccionado(doc)" />
+                                          </div>
+                                      </td>
+                                      <td>
+                                          <div class="d-flex align-items-center">
+                                              <i class="ki-duotone ki-file fs-2 text-primary me-2"><span class="path1"></span><span class="path2"></span></i>
+                                              <span class="text-gray-800 fs-7">{{ doc.nombre_archivo || doc.text }}</span>
+                                          </div>
+                                      </td>
+                                  </tr>
+                                  <tr *ngIf="documentos_list.length === 0">
+                                      <td colspan="2" class="text-center text-muted fs-8 py-4">Use el buscador superior para encontrar más expedientes en el archivo central.</td>
+                                  </tr>
+                              </tbody>
+                          </table>
+                      </div>
+                      <div class="separator separator-dashed my-4"></div>
+                      <h6 class="fs-8 fw-bold text-gray-800 text-uppercase mb-2">Documentos Vinculados a la Certificación Actual:</h6>
+                      <div class="table-responsive border border-gray-300 rounded" style="max-height: 180px; overflow-y: auto;">
+                          <table class="table align-middle table-row-dashed fs-6 gy-2 mb-0">
+                              <thead class="sticky-top bg-secondary" style="z-index: 1;">
+                                  <tr class="text-start text-gray-500 fw-bold fs-8 text-uppercase gs-0">
+                                      <th class="w-50px text-center">Acción</th>
+                                      <th class="ps-3">Nombre del Archivo Adjunto</th>
+                                  </tr>
+                              </thead>
+                              <tbody class="fw-semibold text-gray-700">
+                                  <tr *ngFor="let doc of documentos_seleccionados">
+                                      <td class="text-center">
+                                          <button type="button" class="btn btn-icon btn-sm btn-light-danger bg-hover-danger w-25px h-25px" (click)="toggleSeleccion(doc)" title="Remover Documento">
+                                              <i class="ki-duotone ki-trash fs-5 p-0"><span class="path1"></span><span class="path2"></span></i>
+                                          </button>
+                                      </td>
+                                      <td class="ps-3">
+                                          <div class="d-flex align-items-center">
+                                              <i class="ki-duotone ki-document fs-3 text-success me-2"><span class="path1"></span><span class="path2"></span></i>
+                                              <span class="text-gray-800 fs-7">{{ doc.nombre_archivo }}</span>
+                                          </div>
+                                      </td>
+                                  </tr>
+                                  <tr *ngIf="documentos_seleccionados.length === 0">
+                                      <td colspan="2" class="text-center text-danger fs-7 py-4 fw-bold">⚠️ Alerta: El acta no tiene ningún archivo asignado. Agregue uno o no podrá guardar.</td>
+                                  </tr>
+                              </tbody>
+                          </table>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <div class="pt-4 mt-10 border-top border-2 border-dashed border-gray-300">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+              <h5 class="text-success fw-bold m-0 fs-7 text-uppercase">2. Resumen Técnico de Expedientes ({{ documentos_seleccionados.length }})</h5>
+              <span class="badge badge-light-success fw-bold fs-8">Listo para procesar</span>
+          </div>
+          <div class="table-responsive border border-success border-opacity-25 rounded bg-light-success bg-opacity-10" style="max-height: 250px; overflow-y: auto;">
+              <table class="table align-middle gs-4 gy-3 mb-0 fs-7">
+                  <thead class="sticky-top bg-white" style="z-index: 1;">
+                      <tr class="fs-8 border-bottom border-gray-200 text-uppercase text-muted fw-bold bg-white">
+                          <th class="min-w-150px">Documento</th>
+                          <th class="min-w-150px">Serie Documental</th>
+                          <th class="text-center">Caja/Carpeta</th>
+                          <th class="text-center">Descripción</th>
+                          <th class="text-center">Fojas</th>
+                          <th class="text-center">Soporte</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      <tr *ngFor="let doc of documentos_seleccionados" class="bg-white">
+                          <td><div class="d-flex align-items-center"><span class="text-gray-800 fw-bold fs-8">{{ doc.nombre_archivo }}</span></div></td>
+                          <td><span class="text-muted fw-semibold fs-9 text-uppercase">{{ doc.serie?.nombre || doc.nombre_serie || 'EXPEDIENTES INTERNOS DE INGRESOS' }}</span></td>
+                          <td class="text-center"><div class="d-flex flex-column"><span class="fw-bold text-gray-800 fs-9">Cj: {{ doc.caja || '-' }}</span><span class="text-muted fs-9">Cp: {{ doc.carpeta || '-' }}</span></div></td>
+                          <td class="text-center"><span class="text-muted fs-9">{{ doc.descripcion || 'Sin descripción guardada' }}</span></td>
+                          <td class="text-center"><span class="badge badge-light fw-bold">{{ doc.fojas || 0 }}</span></td>
+                          <td class="text-center"><span class="text-warning fw-bold fs-9 text-uppercase">ORIGINAL</span></td>
+                      </tr>
+                  </tbody>
+              </table>
+          </div>
+      </div>
+
+      <div class="separator separator-dashed my-10"></div>
+      <div class="row g-9 justify-content-center">
+          <div class="col-md-5">
+              <div class="card border border-gray-300 p-6 bg-light h-100">
+                  <h4 class="text-gray-800 fw-bold mb-4 fs-7 text-uppercase border-bottom pb-2">ENTREGADO POR:</h4>
+                  <div class="d-flex flex-column mb-4">
+                      <div class="fs-7 mb-1 text-uppercase"><strong>NOMBRE:</strong> {{ user?.full_name || 'Usuario Sistema' }}</div>
+                      <div class="fs-7"><strong>CARGO:</strong> {{ user?.cargo || 'Responsable de Archivo' }}</div>
+                  </div>
+                  <div class="border border-dashed border-gray-400 mt-auto min-h-100px d-flex align-items-end justify-content-center pb-3 bg-white">
+                      <span class="text-gray-400 fs-8 fw-bold text-uppercase">Firma Responsable</span>
+                  </div>
+              </div>
+          </div>
+          <div class="col-md-5">
+              <div class="card border border-gray-300 p-6 bg-light h-100">
+                  <h4 class="text-gray-800 fw-bold mb-4 fs-7 text-uppercase border-bottom pb-2">RECIBIDO POR:</h4>
+                  <div class="d-flex flex-column mb-4">
+                      <div class="fs-7 mb-1 text-uppercase"><strong>NOMBRE:</strong> {{ usuario_selected ? (usuario_selected.name + ' ' + usuario_selected.surname) : PRESTAMO_SELECTED?.solicitante_full_name }}</div>
+                      <div class="fs-7"><strong>CARGO:</strong> {{ usuario_selected?.nombre_proyecto_asignado || PRESTAMO_SELECTED?.solicitante?.nombre_proyecto_asignado || 'Personal Interno Asignado' }}</div>
+                  </div>
+                  <div class="border border-dashed border-gray-400 mt-auto min-h-100px d-flex align-items-end justify-content-center pb-3 bg-white">
+                      <span class="text-gray-400 fs-8 fw-bold text-uppercase">Firma Solicitante</span>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <div class="d-flex justify-content-center gap-3 mt-6">
+          <button class="btn btn-success px-6" type="button" (click)="grabarBorrador()" [disabled]="isLoading">
+              <i class="ki-duotone ki-save fs-4 me-2"><span class="path1"></span><span class="path2"></span></i>
+              Grabar Progreso
+          </button>
+          <button class="btn btn-light-primary px-6" type="button" (click)="verDocumentoActual()">
+              <i class="ki-duotone ki-eye fs-4 me-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
+              Vista Documento
+          </button>
+      </div>
+
+      <div class="card border border-primary border-dashed p-6 mt-10">
+          <h3 class="fw-bold text-gray-800 mb-4 fs-6 text-uppercase">Historial e Incidencias del Acta</h3>
+          <div class="row g-9">
+              <div class="col-md-6">
+                      <div class="row mb-4">
+                          <div class="col-6">
+                              <label class="form-label fw-bold fs-8 text-uppercase">Fecha Registro:</label>
+                              <input type="text" class="form-control form-control-solid bg-light" [value]="PRESTAMO_SELECTED?.fecha_solicitud | date:'dd/MM/yyyy':'UTC'" readonly disabled>
+                          </div>
+                          <div class="col-6">
+                              <label class="form-label fw-bold fs-8 text-uppercase">Fecha Límite:</label>
+                              <!-- Editable cuando modo == 0 (borrador), de lo contrario solo lectura -->
+                              <ng-container *ngIf="(+PRESTAMO_SELECTED?.modo) === 0; else soloLecturaFecha">
+                                  <input type="date" class="form-control form-control-solid" [(ngModel)]="fecha_limite_form" [min]="fecha_minima_permitida" name="fecha_limite_cert" />
+                              </ng-container>
+                              <ng-template #soloLecturaFecha>
+                                  <input type="text" class="form-control form-control-solid bg-secondary text-center fw-bold" [value]="fecha_limite_form || 'SIN INFORMACIÓN'" readonly disabled>
+                              </ng-template>
+                          </div>
+                      </div>
+                  <div class="mb-0">
+                      <label class="form-label fw-bold fs-8 text-uppercase">Anotaciones / Notas:</label>
+                      <textarea class="form-control form-control-solid border border-gray-300" rows="4" [(ngModel)]="observacion" placeholder="Escriba aquí los detalles correspondientes a la certificación o estado de la entrega física..."></textarea>
+                  </div>
+              </div>
+              <div class="col-md-6 d-flex flex-column justify-content-between">
+                  <div class="mb-4">
+                      <label class="form-label fw-bold fs-8 text-muted text-uppercase">Operador de Archivo:</label>
+                      <input type="text" class="form-control form-control-solid bg-secondary fw-semibold text-gray-700" [value]="user?.full_name || 'Usuario Sistema'" readonly disabled>
+                  </div>
+                  <div class="mb-0">
+                      <label class="form-label fw-bold fs-8 text-muted text-uppercase">Estado actual:</label>
+                      <input type="text" class="form-control form-control-solid bg-secondary text-center fw-bold" [value]="(+PRESTAMO_SELECTED?.estado_acta) === 1 ? 'PROCESADO' : 'BORRADOR'" readonly disabled>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <div class="modal-footer flex-center">
+      <button type="button" class="btn btn-light me-3" (click)="activeModal.dismiss()" [disabled]="isLoading">Cancelar</button>
+      <button type="button" class="btn btn-primary" (click)="CrearActa()" [disabled]="isLoading || documentos_seleccionados.length === 0">
+          <span class="indicator-label" *ngIf="!isLoading">Firmar y Crear Certificado</span>
+          <span class="indicator-label" *ngIf="isLoading">Guardando cambios... <span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
+      </button>
+  </div>
+</div>

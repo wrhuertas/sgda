@@ -1,0 +1,139 @@
+<div class="d-flex justify-content-center align-items-center" style="min-height: 200px;" *ngIf="cargando && !tramite">
+    <div class="spinner-border text-primary" role="status"></div>
+</div>
+
+<div class="card mb-5 mb-xl-10" *ngIf="tramite">
+
+    <div class="card-header border-0 pt-5">
+        <h3 class="card-title align-items-start flex-column">
+            <span class="card-label fw-bold fs-3 mb-1 text-uppercase">
+                Registro de Trámite
+            </span>
+            <span class="text-muted mt-1 fw-semibold fs-7">
+                Información del trámite registrado
+            </span>
+        </h3>
+    </div>
+
+    <div class="card-body">
+        <div class="row g-7">
+
+            <div class="col-md-6">
+                <div class="card shadow-sm border border-light">
+                    <div class="card-header bg-light-danger min-h-50px">
+                        <h3 class="card-title fw-bold text-danger fs-5">
+                            Datos del Remitente
+                        </h3>
+                    </div>
+
+                    <div class="card-body p-6">
+                        <div class="row g-4">
+
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold">Cédula / RUC</label>
+                                <input type="text"
+                                       class="form-control form-control-solid"
+                                       [value]="tramite.cedula_ruc"
+                                       readonly />
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold">
+                                    Nombre / Razón Social
+                                </label>
+                                <input type="text"
+                                       class="form-control form-control-solid"
+                                       [value]="tramite.cliente_nombre"
+                                       readonly />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Celular</label>
+                                <input type="text"
+                                       class="form-control form-control-solid"
+                                       [value]="tramite.cliente_telefono"
+                                       readonly />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Email</label>
+                                <input type="email"
+                                       class="form-control form-control-solid"
+                                       [value]="tramite.cliente_correo"
+                                       readonly />
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card shadow-sm border border-light">
+                    <div class="card-header bg-light-primary min-h-50px">
+                        <h3 class="card-title fw-bold text-primary fs-5">
+                            Datos del Documento
+                        </h3>
+                    </div>
+
+                    <div class="card-body p-6">
+                        <div class="row g-4">
+
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold">Área Origen</label>
+                                <input type="text"
+                                       class="form-control form-control-solid"
+                                       [value]="tramite.area_origen_nombre"
+                                       readonly />
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold">Tipo Documento</label>
+                                <input type="text"
+                                       class="form-control form-control-solid"
+                                       [value]="tramite.tipo_documento_nombre"
+                                       readonly />
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold">Nº Documento Interno</label>
+                                <input type="text"
+                                       class="form-control form-control-solid"
+                                       [value]="tramite.num_documento_interno"
+                                       readonly />
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold">Asunto</label>
+                                <textarea class="form-control form-control-solid"
+                                          rows="3"
+                                          readonly>{{ tramite.asunto_tramite }}</textarea>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Nº Folios</label>
+                                <input type="number"
+                                       class="form-control form-control-solid"
+                                       [value]="tramite.num_folios"
+                                       readonly />
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer d-flex justify-content-center border-0 pt-5">
+                <button
+                    type="button"
+                    class="btn btn-danger btn-lg px-10"
+                    (click)="cerrar()">
+                    <i class="fas fa-times-circle me-2"></i>
+                    Cerrar
+                </button>
+            </div>
+
+
+        </div>
+    </div>
+</div>

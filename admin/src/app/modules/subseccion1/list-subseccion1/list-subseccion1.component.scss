@@ -1,0 +1,31 @@
+.escalera-seccion {
+  margin-top: 10px;
+}
+
+.nivel-escalera {
+  display: flex;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 14px;
+  font-weight: 500;
+  position: relative;
+}
+
+/* Flecha visual */
+.nivel-escalera::before {
+  content: "›";
+  margin-right: 8px;
+  color: #999;
+  font-size: 16px;
+}
+
+/* Nivel padre */
+.nivel-padre {
+  color: tomato;
+}
+
+/* Nivel hijo con sangría */
+.nivel-hijo {
+  margin-left: 25px;
+  color: #444;
+}

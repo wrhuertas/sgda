@@ -1,0 +1,705 @@
+<!--begin::Modal content CREATE SubSección1-->
+<div class="modal-content">
+
+  <div class="modal-header">
+    <h2 class="fw-bolder">Crear Serie</h2>
+    <div class="btn btn-icon btn-sm btn-active-icon-primary" (click)="cerrar()">
+      <span class="svg-icon svg-icon-1">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+          <rect opacity="0.5" x="6" y="17.3" width="16" height="2" rx="1" transform="rotate(-45 6 17.3)" fill="currentColor" />
+          <rect x="7.4" y="6" width="16" height="2" rx="1" transform="rotate(45 7.4 6)" fill="currentColor" />
+        </svg>
+      </span>
+    </div>
+  </div>
+
+  <div class="modal-body scroll-y mx-5 my-7">
+    <form class="form">
+
+      <div class="card p-5">
+
+        <!-- SubSección -->
+        <div class="fv-row mb-4">
+            <label class="fw-bold fs-6 mb-2 text-muted">Sub Sección Actual:</label>
+            <div class="d-flex align-items-center bg-light-info p-3 rounded">
+                <i class="fas fa-folder me-3 fs-3 text-info"></i> 
+                
+                <span class="fs-5 fw-bolder text-dark">{{ nombreSubseccion }}</span>
+            </div>
+        </div>
+
+        <!-- Nombre Serie y Tipo Documento en la misma fila -->
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <div class="fv-row">
+              <label class="required fw-bold fs-6 mb-2">Nombre Serie Documental:</label>
+              <input type="text" name="nombreSubSeccion1" class="form-control form-control-solid"
+                placeholder="Ej. Documentos Internos" [(ngModel)]="nombre" />
+              <input type="hidden" name="idSubseccion" [value]="idSubseccion" />
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="fv-row">
+              <label class="fw-bold fs-6 mb-2">Tipo Documento:</label>
+              <input type="text" name="tipoDocumento" class="form-control form-control-solid"
+                placeholder="Ej. DIGITAL / ELECTRONICO" [(ngModel)]="tipoDocumento" />
+            </div>
+          </div>
+        </div>
+
+
+          <!-- ==================== TÍTULO INFORMACIÓN DOCUMENTAL ==================== -->
+          <div class="row mb-4">
+            <div class="col-12 text-center">
+              <h3 class="fw-bold text-primary" style="border-bottom: 2px solid #0d6efd; display: inline-block; padding-bottom: 5px;">
+                Información Documental
+              </h3>
+            </div>
+          </div>
+
+        <!-- ==================== TABS ngbNav FUNCIONALES ==================== -->
+        <ul ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="nav nav-pills nav-pills-custom mb-5">
+
+          <li [ngbNavItem]="1">
+            <a ngbNavLink>📁 Cuadro de Clasificación</a>
+            <ng-template ngbNavContent>
+
+              <div class="card card-flush p-4 border">
+                <h5 class="fw-bold mb-4 text-primary">Datos de conservación documental</h5>
+
+                <div class="fv-row mb-4">
+                  <label class="fw-bold fs-6 mb-2">Descripción de Serie Documental:</label>
+                  <textarea class="form-control form-control-solid" rows="3"
+                    placeholder="Ingrese una descripción detallada"
+                    [(ngModel)]="descripcion"
+                    name="descripcion"></textarea>
+                </div>
+
+                <div class="fv-row mb-4">
+                  <label class="fw-bold fs-6 mb-2">Origen de la Documentación:</label>
+                  <select class="form-control form-control-solid" [(ngModel)]="origen" name="origen">
+                    <option value="" disabled>--- Seleccione una opción de Origen Documental ---</option>
+                    <option value="1">Digital</option>
+                    <option value="2">Físico</option>
+                    <option value="3">Físico y/o digital</option>
+                  </select>
+                </div>
+
+                <div class="fv-row mb-4">
+                  <label class="fw-bold fs-6 mb-2">Condiciones de Acceso:</label>
+                  <select class="form-control form-control-solid" [(ngModel)]="acceso" name="acceso">
+                    <option value="" disabled>--- Seleccione una opción Condiciones de Acceso ---</option>
+                    <option value="1">Público</option>
+                    <option value="2">Confidencial</option>
+                  </select>
+                </div>
+
+              </div>
+
+            </ng-template>
+          </li>
+
+          <li [ngbNavItem]="2">
+            <a ngbNavLink>⚖️ Tabla de Plazos</a>
+            <ng-template ngbNavContent>
+                                    <div class="card card-xxl-stretch mb-5">
+                                        <div class="card-header">
+                                            <h3 class="card-title">Temporalidad y Destino Final</h3>
+                                        </div>
+                                       <div class="card-body">
+                                            <div class="row g-5">
+                                                
+                                                <div class="col-12">
+                                                    <h5 class="mt-3 mb-4">Plazos de Conservación Documental (en Años)</h5>
+                                                </div>
+                                                
+                                                <div class="col-md-3">
+                                                    <div class="fv-row mb-5">
+                                                        <label class="form-label required">Gestión</label>
+                                                        <input type="number" class="form-control" [(ngModel)]="plazoGestion" name="plazoGestion" placeholder="Ej: 2" required/>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="col-md-3">
+                                                    <div class="fv-row mb-5">
+                                                        <label class="form-label required">Central</label>
+                                                        <input type="number" class="form-control" [(ngModel)]="plazoCentral" name="plazoCentral" placeholder="Ej: 12" required/>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-3">
+                                                    <div class="fv-row mb-5">
+                                                        <label class="form-label">Intermedio</label>
+                                                        <input type="text" class="form-control"
+                                                            [(ngModel)]="plazoIntermedio"
+                                                            name="plazoIntermedio"
+                                                            placeholder="Ej: -" />
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="col-md-3">
+                                                    <div class="fv-row mb-5">
+                                                        <label class="form-label">Histórico</label>
+                                                       <input type="text" class="form-control"
+                                                            [(ngModel)]="plazoHistorico"
+                                                            name="plazoHistorico"
+                                                            placeholder="Ej: -" />
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <hr class="separator-dashed" />
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <div class="fv-row mb-5">
+                                                        <label class="form-label required">Base Legal</label>
+                                                        <textarea class="form-control" [(ngModel)]="baseLegal" name="baseLegal" rows="3" placeholder="Ej: Artículo 71 de la Ley Orgánica de la Contraloría General del Estado" required></textarea>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12">
+                                                    <hr class="separator-dashed" />
+                                                    <h5 class="mt-3 mb-4">Disposición Final y Técnica de Selección</h5>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <div class="fv-row mb-5">
+                                                        <label class="form-label required">Disposición Final</label>
+                                                        <select class="form-select" [(ngModel)]="disposicionFinal" name="disposicionFinal" required>
+                                                            <option value="ELIMINACION">ELIMINACIÓN</option>
+                                                            <option value="CONSERVACION">CONSERVACIÓN</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <div class="fv-row mb-5">
+                                                        <label class="form-label required">Técnica de Selección</label>
+                                                        <select class="form-select" [(ngModel)]="tecnicaSeleccion" name="tecnicaSeleccion" required>
+                                                            <option value="COMPLETA">COMPLETA</option>
+                                                            <option value="PARCIAL">PARCIAL</option>
+                                                            <option value="N/A">NO APLICA</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ng-template>
+          </li>
+
+          <!-- ✅ NUEVO TAB PARÁMETROS -->
+          <li [ngbNavItem]="3">
+              <a ngbNavLink>⚙️ Parámetros a Indexar</a>
+              <ng-template ngbNavContent>
+
+                  <div class="card card-flush p-4 border">
+                      <h5 class="fw-bold mb-4 text-dark">Parámetros dinámicos a Indexar</h5>
+
+                      <div *ngFor="let parametro of parametros; let i = index" class="fv-row mb-5">
+                          <label class="form-label required">Parámetro {{ i + 1 }}:</label>
+
+                          <div class="d-flex align-items-center mb-2">
+                            <input
+                              type="text"
+                              class="form-control form-control-solid me-2"
+                              [(ngModel)]="parametro.valor"
+                              name="parametroNombre{{i}}"
+                              placeholder="Nombre del parámetro"
+                            />
+                            <button
+                              type="button"
+                              class="btn btn-danger btn-sm"
+                              (click)="eliminarParametro(i)"
+                              [disabled]="parametros.length === 1"> 🗑
+                            </button>
+                          </div>
+
+                          <textarea
+                            class="form-control form-control-solid"
+                            rows="2"
+                            [(ngModel)]="parametro.descripcion"
+                            name="parametroDescripcion{{i}}"
+                            placeholder="Descripción o contenido del parámetro (opcional)"></textarea>
+                      </div>
+
+                      <button
+                          type="button"
+                          class="btn btn-primary btn-sm mt-3 w-100"
+                          (click)="agregarParametro()">
+                          ➕ Agregar nuevo parámetro
+                      </button>
+                  </div>
+
+              </ng-template>
+          </li>
+          <li [ngbNavItem]="4">
+  <a ngbNavLink>Ficha Técnica de Prevaloración</a>
+
+  <ng-template ngbNavContent>
+    <div class="card card-flush p-4 border">
+
+      <h5 class="fw-bold mb-4 text-primary">Ficha Técnica de Prevaloración</h5>
+
+      <!-- Número de expediente -->
+      <div class="mb-3">
+        <label class="form-label fw-bold">Número de Expediente</label>
+        <input type="text" class="form-control"
+               [(ngModel)]="ficha.numeroExpediente"
+               name="numeroExpediente"
+               placeholder="Ingrese número de expediente">
+      </div>
+
+      <!-- Detalle físico -->
+      <div class="mb-3">
+        <label class="form-label fw-bold">Detalle Físico</label>
+        <input type="text" class="form-control"
+               [(ngModel)]="ficha.detalleFisico"
+               name="detalleFisico"
+               placeholder="Ingrese detalle físico">
+      </div>
+
+      <!-- Plazo conservación -->
+      <div class="mb-3">
+        <label class="form-label fw-bold">Plazo de Conservación</label>
+        <input type="text" class="form-control"
+               [(ngModel)]="ficha.plazoConservacion"
+               name="plazoConservacion"
+               placeholder="Ingrese plazo de conservación">
+      </div>
+
+      <!-- Archivos -->
+      <div class="mb-3">
+        <label class="form-label fw-bold">Archivo de Gestión (Transferencia Primaria)</label>
+        <input type="text" class="form-control"
+               [(ngModel)]="ficha.archivoGestion"
+               name="archivoGestion"
+               placeholder="Ingrese información">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-bold">Archivo Central (Transferencia Secundaria)</label>
+        <input type="text" class="form-control"
+               [(ngModel)]="ficha.archivoCentral"
+               name="archivoCentral"
+               placeholder="Ingrese información">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-bold">Archivo Histórico</label>
+        <input type="text" class="form-control"
+               [(ngModel)]="ficha.archivoHistorico"
+               name="archivoHistorico"
+               placeholder="Ingrese información">
+      </div>
+
+      <!-- CRITERIOS -->
+      <div class="mb-3">
+        <label class="form-label fw-bold">Justificación / Criterios de Análisis</label>
+
+        <div class="row fw-bold mb-2 text-center">
+          <div class="col-6 text-start">Criterio</div>
+          <div class="col-3">Sí</div>
+          <div class="col-3">No</div>
+        </div>
+
+        <!-- Criterio 1 -->
+        <div class="row align-items-center mb-2">
+          <div class="col-6">
+            La información mantiene relevancia institucional
+          </div>
+          <div class="col-3 text-center">
+            <input type="radio"
+                   [(ngModel)]="ficha.criterios.criterio1"
+                   name="criterio1"
+                   value="SI">
+          </div>
+          <div class="col-3 text-center">
+            <input type="radio"
+                   [(ngModel)]="ficha.criterios.criterio1"
+                   name="criterio1"
+                   value="NO">
+          </div>
+        </div>
+
+        <!-- Criterio 2 -->
+        <div class="row align-items-center mb-2">
+          <div class="col-6">
+            Contiene datos auditables
+          </div>
+          <div class="col-3 text-center">
+            <input type="radio"
+                   [(ngModel)]="ficha.criterios.criterio2"
+                   name="criterio2"
+                   value="SI">
+          </div>
+          <div class="col-3 text-center">
+            <input type="radio"
+                   [(ngModel)]="ficha.criterios.criterio2"
+                   name="criterio2"
+                   value="NO">
+          </div>
+        </div>
+
+        <!-- Criterio 3 -->
+        <div class="row align-items-center mb-2">
+          <div class="col-6">
+            Describe eventos históricos importantes
+          </div>
+          <div class="col-3 text-center">
+            <input type="radio"
+                   [(ngModel)]="ficha.criterios.criterio3"
+                   name="criterio3"
+                   value="SI">
+          </div>
+          <div class="col-3 text-center">
+            <input type="radio"
+                   [(ngModel)]="ficha.criterios.criterio3"
+                   name="criterio3"
+                   value="NO">
+          </div>
+        </div>
+
+        <!-- Criterio 4 -->
+        <div class="row align-items-center mb-2">
+          <div class="col-6">
+            Vinculado con procesos contables
+          </div>
+          <div class="col-3 text-center">
+            <input type="radio"
+                   [(ngModel)]="ficha.criterios.criterio4"
+                   name="criterio4"
+                   value="SI">
+          </div>
+          <div class="col-3 text-center">
+            <input type="radio"
+                   [(ngModel)]="ficha.criterios.criterio4"
+                   name="criterio4"
+                   value="NO">
+          </div>
+        </div>
+
+        <!-- Criterio 5 -->
+        <div class="row align-items-center mb-2">
+          <div class="col-6">
+            Vinculado con procesos jurídicos
+          </div>
+          <div class="col-3 text-center">
+            <input type="radio"
+                   [(ngModel)]="ficha.criterios.criterio5"
+                   name="criterio5"
+                   value="SI">
+          </div>
+          <div class="col-3 text-center">
+            <input type="radio"
+                   [(ngModel)]="ficha.criterios.criterio5"
+                   name="criterio5"
+                   value="NO">
+          </div>
+        </div>
+
+      </div> <!-- END CRITERIOS -->
+
+    </div>
+  </ng-template>
+</li>
+
+<li [ngbNavItem]="5">
+  <a ngbNavLink>Parámetros de QR</a>
+  <ng-template ngbNavContent>
+    <div class="card card-flush p-4 border">
+      <h5 class="fw-bold mb-3 text-primary text-center">Parámetros de QR</h5>
+
+      <!-- Modales de previsualización -->
+      <ng-template #qrPreviewTpl let-modal>
+        <div class="modal-header">
+          <h5 class="modal-title">Previsualización de QR</h5>
+          <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+        </div>
+        <div class="modal-body">
+          <div class="d-flex justify-content-center py-3">
+            <img [src]="qrUrl" alt="QR" width="240" height="240"/>
+          </div>
+          <div class="small text-muted text-center">Contenido generado a partir de los elementos seleccionados en la columna "Parámetros".</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" (click)="modal.close()">Cerrar</button>
+          <button type="button" class="btn btn-primary" (click)="imprimirQRPreview()">
+            <i class="fas fa-print me-2"></i> Imprimir
+          </button>
+        </div>
+      </ng-template>
+
+      <ng-template #barraPreviewTpl let-modal>
+        <div class="modal-header">
+          <h5 class="modal-title">Previsualización de Código de Barras</h5>
+          <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+        </div>
+        <div class="modal-body">
+          <div class="d-flex justify-content-center py-3">
+            <img [src]="barraUrl" alt="BARCODE" />
+          </div>
+          <div class="small text-muted text-center">Contenido generado a partir de los elementos seleccionados en la sección "Barra".</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" (click)="modal.close()">Cerrar</button>
+          <button type="button" class="btn btn-success" (click)="imprimirBarraPreview()">
+            <i class="fas fa-print me-2"></i> Imprimir
+          </button>
+        </div>
+      </ng-template>
+
+      <div class="text-center mb-4">
+        <div class="d-inline-flex gap-2" role="group">
+          <button type="button" class="btn btn-primary" (click)="generarQR(qrPreviewTpl)">
+            <i class="fas fa-qrcode me-2"></i> Generar QR
+          </button>
+          <button type="button" class="btn btn-success" (click)="generarBarra(barraPreviewTpl)">
+            <i class="fas fa-barcode me-2"></i> Generar Barra
+          </button>
+        </div>
+      </div>
+
+      <div class="row g-5">
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-header py-3">
+              <h6 class="mb-0 fw-bold">Información</h6>
+            </div>
+            <div class="card-body">
+              <!-- Acordeón manual: un panel abierto a la vez -->
+
+              <!-- Panel 1: Cuadro de Clasificación -->
+              <div class="mb-3 border rounded">
+                <div class="p-3 bg-light d-flex justify-content-between align-items-center" (click)="toggleInfoPanel('clasificacion')" style="cursor:pointer;">
+                  <div class="fw-bold">Cuadro de Clasificación</div>
+                  <i class="fas" [ngClass]="activeInfoPanel==='clasificacion' ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                </div>
+                <div class="p-3" *ngIf="activeInfoPanel==='clasificacion'">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="me-3 mb-0">Descripción</label>
+                    <button class="btn btn-sm btn-outline-primary" (click)="addQrItem('descripcion','Descripción', descripcion)">Seleccionar</button>
+                  </div>
+                  <div class="text-muted small mb-3">{{ descripcion || '-' }}</div>
+
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="me-3 mb-0">Origen</label>
+                    <button class="btn btn-sm btn-outline-primary" (click)="addQrItem('origen','Origen', origen)">Seleccionar</button>
+                  </div>
+                  <div class="text-muted small mb-3">{{ origen || '-' }}</div>
+
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="me-3 mb-0">Acceso</label>
+                    <button class="btn btn-sm btn-outline-primary" (click)="addQrItem('acceso','Acceso', acceso)">Seleccionar</button>
+                  </div>
+                  <div class="text-muted small">{{ acceso || '-' }}</div>
+                </div>
+              </div>
+
+              <!-- Panel 2: Tabla de Plazos -->
+              <div class="mb-3 border rounded">
+                <div class="p-3 bg-light d-flex justify-content-between align-items-center" (click)="toggleInfoPanel('plazos')" style="cursor:pointer;">
+                  <div class="fw-bold">Tabla de Plazos</div>
+                  <i class="fas" [ngClass]="activeInfoPanel==='plazos' ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                </div>
+                <div class="p-3" *ngIf="activeInfoPanel==='plazos'">
+                  <div class="row g-3">
+                    <div class="col-12 d-flex justify-content-between align-items-center">
+                      <label class="me-3 mb-0">Gestión</label>
+                      <button class="btn btn-sm btn-outline-primary" (click)="addQrItem('plazoGestion','Gestión', plazoGestion)">Seleccionar</button>
+                    </div>
+                    <div class="col-12 text-muted small">{{ plazoGestion || '-' }}</div>
+
+                    <div class="col-12 d-flex justify-content-between align-items-center">
+                      <label class="me-3 mb-0">Central</label>
+                      <button class="btn btn-sm btn-outline-primary" (click)="addQrItem('plazoCentral','Central', plazoCentral)">Seleccionar</button>
+                    </div>
+                    <div class="col-12 text-muted small">{{ plazoCentral || '-' }}</div>
+
+                    <div class="col-12 d-flex justify-content-between align-items-center">
+                      <label class="me-3 mb-0">Intermedio</label>
+                      <button class="btn btn-sm btn-outline-primary" (click)="addQrItem('plazoIntermedio','Intermedio', plazoIntermedio)">Seleccionar</button>
+                    </div>
+                    <div class="col-12 text-muted small">{{ plazoIntermedio || '-' }}</div>
+
+                    <div class="col-12 d-flex justify-content-between align-items-center">
+                      <label class="me-3 mb-0">Histórico</label>
+                      <button class="btn btn-sm btn-outline-primary" (click)="addQrItem('plazoHistorico','Histórico', plazoHistorico)">Seleccionar</button>
+                    </div>
+                    <div class="col-12 text-muted small">{{ plazoHistorico || '-' }}</div>
+
+                    <div class="col-12 d-flex justify-content-between align-items-center">
+                      <label class="me-3 mb-0">Base Legal</label>
+                      <button class="btn btn-sm btn-outline-primary" (click)="addQrItem('baseLegal','Base Legal', baseLegal)">Seleccionar</button>
+                    </div>
+                    <div class="col-12 text-muted small">{{ baseLegal || '-' }}</div>
+
+                    <div class="col-12 d-flex justify-content-between align-items-center">
+                      <label class="me-3 mb-0">Disposición</label>
+                      <button class="btn btn-sm btn-outline-primary" (click)="addQrItem('disposicionFinal','Disposición', disposicionFinal)">Seleccionar</button>
+                    </div>
+                    <div class="col-12 text-muted small">{{ disposicionFinal || '-' }}</div>
+
+                    <div class="col-12 d-flex justify-content-between align-items-center">
+                      <label class="me-3 mb-0">Técnica</label>
+                      <button class="btn btn-sm btn-outline-primary" (click)="addQrItem('tecnicaSeleccion','Técnica', tecnicaSeleccion)">Seleccionar</button>
+                    </div>
+                    <div class="col-12 text-muted small">{{ tecnicaSeleccion || '-' }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Panel 3: Parámetros de Indexación -->
+              <div class="mb-3 border rounded">
+                <div class="p-3 bg-light d-flex justify-content-between align-items-center" (click)="toggleInfoPanel('parametros')" style="cursor:pointer;">
+                  <div class="fw-bold">Parámetros de Indexación</div>
+                  <i class="fas" [ngClass]="activeInfoPanel==='parametros' ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                </div>
+                <div class="p-3" *ngIf="activeInfoPanel==='parametros'">
+                  <div *ngFor="let p of parametros; let i = index" class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <label class="me-3 mb-0">Parámetro {{ i + 1 }}</label>
+                      <button class="btn btn-sm btn-outline-primary" (click)="addQrItem('param_'+i, 'Parámetro '+(i+1), p?.valor)">Seleccionar</button>
+                    </div>
+                    <div class="text-muted small">{{ p?.valor || '-' }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Panel 4: Ficha Técnica de Prevaloración -->
+              <div class="mb-2 border rounded">
+                <div class="p-3 bg-light d-flex justify-content-between align-items-center" (click)="toggleInfoPanel('ficha')" style="cursor:pointer;">
+                  <div class="fw-bold">Ficha Técnica de Prevaloración</div>
+                  <i class="fas" [ngClass]="activeInfoPanel==='ficha' ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                </div>
+                <div class="p-3" *ngIf="activeInfoPanel==='ficha'">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="me-3 mb-0">N° Expediente</label>
+                    <button class="btn btn-sm btn-outline-primary" (click)="addQrItem('numeroExpediente','N° Expediente', ficha?.numeroExpediente)">Seleccionar</button>
+                  </div>
+                  <div class="text-muted small mb-3">{{ ficha?.numeroExpediente || '-' }}</div>
+
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="me-3 mb-0">Detalle Físico</label>
+                    <button class="btn btn-sm btn-outline-primary" (click)="addQrItem('detalleFisico','Detalle Físico', ficha?.detalleFisico)">Seleccionar</button>
+                  </div>
+                  <div class="text-muted small mb-3">{{ ficha?.detalleFisico || '-' }}</div>
+
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="me-3 mb-0">Plazo Conservación</label>
+                    <button class="btn btn-sm btn-outline-primary" (click)="addQrItem('plazoConservacion','Plazo Conservación', ficha?.plazoConservacion)">Seleccionar</button>
+                  </div>
+                  <div class="text-muted small mb-3">{{ ficha?.plazoConservacion || '-' }}</div>
+
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="me-3 mb-0">Archivo Gestión</label>
+                    <button class="btn btn-sm btn-outline-primary" (click)="addQrItem('archivoGestion','Archivo Gestión', ficha?.archivoGestion)">Seleccionar</button>
+                  </div>
+                  <div class="text-muted small mb-3">{{ ficha?.archivoGestion || '-' }}</div>
+
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="me-3 mb-0">Archivo Central</label>
+                    <button class="btn btn-sm btn-outline-primary" (click)="addQrItem('archivoCentral','Archivo Central', ficha?.archivoCentral)">Seleccionar</button>
+                  </div>
+                  <div class="text-muted small mb-3">{{ ficha?.archivoCentral || '-' }}</div>
+
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="me-3 mb-0">Archivo Histórico</label>
+                    <button class="btn btn-sm btn-outline-primary" (click)="addQrItem('archivoHistorico','Archivo Histórico', ficha?.archivoHistorico)">Seleccionar</button>
+                  </div>
+                  <div class="text-muted small">{{ ficha?.archivoHistorico || '-' }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-header py-3">
+              <h6 class="mb-0 fw-bold">Parámetros</h6>
+            </div>
+            <div class="card-body">
+              <!-- Toggle superior: QR | Barra -->
+              <div class="d-flex justify-content-center gap-2 mb-3">
+                <button type="button" class="btn" [ngClass]="activeParamPanel==='qr' ? 'btn-primary' : 'btn-outline-primary'" (click)="setActiveParamPanel('qr')">QR</button>
+                <button type="button" class="btn" [ngClass]="activeParamPanel==='barra' ? 'btn-primary' : 'btn-outline-primary'" (click)="setActiveParamPanel('barra')">Barra</button>
+              </div>
+
+              <!-- Acordeón de Parámetros: QR -->
+              <div class="mb-3 border rounded" *ngIf="activeParamPanel==='qr'">
+                <div class="p-3 bg-light d-flex justify-content-between align-items-center">
+                  <div class="fw-bold">QR</div>
+                </div>
+                <div class="p-3">
+                  <div *ngIf="selectedQrItemsQR.length === 0" class="text-muted">No hay elementos seleccionados.</div>
+                  <div *ngFor="let item of selectedQrItemsQR" class="border rounded p-2 mb-2 d-flex justify-content-between align-items-start">
+                    <div>
+                      <div class="fw-semibold">{{ item.label }}</div>
+                      <div class="text-muted small">{{ item.value || '-' }}</div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-light-danger" (click)="removeItem(item.key, 'qr')">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Acordeón de Parámetros: Barra -->
+              <div class="mb-3 border rounded" *ngIf="activeParamPanel==='barra'">
+                <div class="p-3 bg-light d-flex justify-content-between align-items-center">
+                  <div class="fw-bold">Barra</div>
+                </div>
+                <div class="p-3">
+                  <div *ngIf="selectedQrItemsBarra.length === 0" class="text-muted">No hay elementos seleccionados.</div>
+                  <div *ngFor="let item of selectedQrItemsBarra" class="border rounded p-2 mb-2 d-flex justify-content-between align-items-start">
+                    <div>
+                      <div class="fw-semibold">{{ item.label }}</div>
+                      <div class="text-muted small">{{ item.value || '-' }}</div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-light-danger" (click)="removeItem(item.key, 'barra')">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+</li>
+
+        </ul>
+
+        <div [ngbNavOutlet]="nav"></div>
+
+
+
+
+      </div>
+
+      <!-- BOTONES -->
+      <div class="text-center pt-10">
+        <button type="button" class="btn btn-light me-3" (click)="cerrar()">Cerrar</button>
+        <button type="button" class="btn btn-primary" (click)="guardarSerie()">
+          Registrar
+          <span class="spinner-border spinner-border-sm align-middle ms-2" *ngIf="isLoading"></span>
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+<!--end::Modal content CREATE SubSección1-->
+
+<!--
+EN TU COMPONENTE TS DEBE EXISTIR:
+
+activeTab = 1;
+
+SI NO EXISTE, LOS TABS NO FUNCIONAN.
+-->
