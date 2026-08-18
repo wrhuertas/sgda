@@ -1,4 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
+import { Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import Swal from 'sweetalert2';
 import { HttpClient, HttpParams } from '@angular/common/http';
@@ -50,13 +51,16 @@ export class RegistroTramiteComponent implements OnInit {
   tipo_tramites: any[] = [];
   tipo_documentos: any[] = [];
 
+  // Track last auto-query length to avoid duplicate automatic queries
+  private lastAutoQueryLen: number = 0;
+
   esCliente = true; // público externo -> se asume cliente
 
   loading = false;
   message = '';
   // Modo de ajuste de archivo: 'acta' muestra solo botón; 'electronico' permite subir
-  // BUSCA ESTA LÍNEA Y CÁMBIALA:
-  modoAjuste: 'acta' | 'electronico' | 'fisico' = 'electronico';
+  // Valor inicial cambiado para abrir en la opción 1 (fisico)
+  modoAjuste: 'acta' | 'electronico' | 'fisico' = 'fisico';
   showActaModal = false;
   actaHtml: string = '';
   actaPdfUrl: SafeResourceUrl | null = null;
@@ -77,7 +81,10 @@ export class RegistroTramiteComponent implements OnInit {
   @ViewChild('inpElec', { static: false }) inpElec!: ElementRef<HTMLInputElement>;
   @ViewChild('inpFis', { static: false }) inpFis!: ElementRef<HTMLInputElement>;
 
-  constructor(private http: HttpClient, private cdr: ChangeDetectorRef, private sanitizer: DomSanitizer) {}
+  constructor(private http: HttpClient, private cdr: ChangeDetectorRef, private sanitizer: DomSanitizer, private router: Router) {}
+
+  // Fecha actual para mostrar en el header
+  today: Date = new Date();
 
   ngOnInit(): void {
     this.cargarTipos();
@@ -531,7 +538,7 @@ export class RegistroTramiteComponent implements OnInit {
       return;
     }
     // Mostrar loading
-    Swal.fire({ title: 'Trayendo datos...', text: 'Espere por favor', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    Swal.fire({ title: 'Consultando datos', text: 'Estamos verificando su información en el sistema', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
     const params = new HttpParams().set('id_empresa', String(this.empresaId));
     // 1) Intentar endpoint de clientes autenticado/privado si está público para esta consulta
     this.http.get(`${this.backendUrl}/cliente/buscar/${encodeURIComponent(nro)}`, { params }).subscribe({
@@ -542,7 +549,7 @@ export class RegistroTramiteComponent implements OnInit {
         try { Swal.close(); } catch {}
         // Forzar render antes de mostrar el swal de éxito
         try { this.cdr.detectChanges(); } catch {}
-        Swal.fire({ title: 'Datos consultados', text: 'Se cargaron los datos del ciudadano', icon: 'success', didClose: () => { try { this.cdr.detectChanges(); } catch {} } });
+        Swal.fire({ title: 'Consulta exitosa', text: 'Se cargaron correctamente sus datos ', icon: 'success', didClose: () => { try { this.cdr.detectChanges(); } catch {} } });
       },
       error: () => {
         // 2) Fallback a ruta pública si existe
@@ -553,10 +560,10 @@ export class RegistroTramiteComponent implements OnInit {
             this.permitirEdicion = true;
             try { Swal.close(); } catch {}
             try { this.cdr.detectChanges(); } catch {}
-            Swal.fire({ title: 'Datos consultados', text: 'Se cargaron los datos del ciudadano', icon: 'success', didClose: () => { try { this.cdr.detectChanges(); } catch {} } });
+            Swal.fire({ title: 'Consulta exitosa', text: 'Se cargaron correctamente sus datos ', icon: 'success', didClose: () => { try { this.cdr.detectChanges(); } catch {} } });
           },
           error: () => {
-            this.message = 'Ciudadano no encontrado en la empresa 2';
+            this.message = 'Datos no Encontrados';
             // Limpiar datos previos del cliente para evitar que queden valores antiguos
             this.limpiarRemitenteConservarDocumento();
             this.clienteNoEncontrado = true;
@@ -564,7 +571,7 @@ export class RegistroTramiteComponent implements OnInit {
             try { Swal.close(); } catch {}
             // Detectar cambios antes y después del cierre del modal
             try { this.cdr.detectChanges(); } catch {}
-            Swal.fire({ title: 'No encontrado', text: 'Ciudadano no encontrado en la empresa 2', icon: 'warning', didClose: () => { try { this.cdr.detectChanges(); } catch {} } });
+            Swal.fire({ title: 'No encontrado', text: 'Datos no encontrados. Vamos a llenar el formulario de registro para continuar con el trámite. ', icon: 'warning', didClose: () => { try { this.cdr.detectChanges(); } catch {} } });
           }
         });
       }
@@ -592,34 +599,40 @@ export class RegistroTramiteComponent implements OnInit {
     try { this.cdr.detectChanges(); } catch {}
   }
 
-  private llenarDesdeCliente(resp: any) {
+   private llenarDesdeCliente(resp: any) {
     const c = resp?.cliente || resp?.data || resp;
     if (!c) { this.message = 'Usuario no encontrado'; return; }
-    // Asignaciones defensivas
+
+    // Mapeo de datos
     this.n_documento = c.cedula_ruc || c.ruc || c.cedula || this.n_documento;
     this.nombre = c.nombre || c.razon_social || this.nombre;
     this.celular = c.telefono || c.celular || this.celular;
     this.email = c.correo || c.email || this.email;
     this.direccion = c.direccion || c.domicilio || this.direccion;
     this.id_cliente = c.id_cliente ?? this.id_cliente;
+    
     this.message = 'Datos del ciudadano cargados';
-    // Forzar actualización de la vista por si el observable llega fuera de zona
-    try { this.cdr.detectChanges(); } catch (_) {}
-    this.actualizarNumeroInterno();
-    // Si backend envía el ÚLTIMO número de trámite, calcular el siguiente en frontend
-    const ultimoTram = resp?.ultimo_numero_tramite || resp?.data?.ultimo_numero_tramite || null;
-    const ced = (this.n_documento || '').trim();
     this.mostrarNumeroTramite = true;
-    if (typeof ultimoTram === 'string' && ultimoTram.length > 0) {
-      const last = parseInt(ultimoTram.slice(-6), 10);
-      const next = isNaN(last) ? 1 : last + 1;
-      const padded = String(next).padStart(6, '0');
-      this.n_tramite_siguiente = `T-${ced}-${padded}`;
-      try { this.cdr.detectChanges(); } catch {}
-    } else {
-      this.actualizarNumeroTramiteSiguiente();
-    }
-  }
+
+    // --- Lógica del número de trámite ---
+    // Usamos 'c' que es el objeto donde vienen los datos
+    const cantidadActual = c.tramites_count || 0; 
+    const proximoNumero = cantidadActual + 1;
+    
+    // Formateo a 6 dígitos
+    const secuencial = proximoNumero.toString().padStart(6, '0');
+    
+    // Generación del código (usando la variable local 'c' para la cédula)
+    const numeroTramiteGenerado = `T-${this.n_documento}-${secuencial}`;
+    
+    // Asignación a tu variable de clase (asumiendo que así la llamas)
+    this.n_tramite_siguiente = numeroTramiteGenerado; 
+
+    // Refrescar vista
+    try { this.cdr.detectChanges(); } catch (_) {}
+    
+    this.actualizarNumeroInterno();
+}
 
   // Recalcula el número interno con formato: LETRA-AÑO-CEDULA-000001
   private actualizarNumeroInterno() {
@@ -636,6 +649,18 @@ export class RegistroTramiteComponent implements OnInit {
   onDocumentoChange() {
     this.actualizarNumeroInterno();
     if (this.mostrarNumeroTramite) this.actualizarNumeroTramiteSiguiente();
+    // Si el usuario completó una cédula (10) o RUC (13), lanzar la consulta automáticamente.
+    try {
+      const len = (this.n_documento || '').toString().trim().length;
+      if ((len === 10 || len === 13) && this.lastAutoQueryLen !== len) {
+        this.lastAutoQueryLen = len;
+        // Llamada automática a la consulta en la empresa
+        this.consultarClienteEmpresa();
+      } else if (len < 10) {
+        // resetear para permitir nueva consulta cuando vuelva a completar
+        this.lastAutoQueryLen = 0;
+      }
+    } catch (e) { /* ignore */ }
   }
 
   async registrarClienteManual() {
@@ -670,6 +695,8 @@ export class RegistroTramiteComponent implements OnInit {
         // Ahora que ya hay cliente, mostrar y calcular el número de trámite siguiente
         this.mostrarNumeroTramite = true;
         this.actualizarNumeroTramiteSiguiente();
+        // Calcular también el Nº Documento Interno (igual que en la consulta)
+        this.fetchSecuencialDocumento();
         try { this.cdr.detectChanges(); } catch {}
         Swal.fire('Éxito', 'Usuario registrado correctamente', 'success');
       },
@@ -883,9 +910,16 @@ export class RegistroTramiteComponent implements OnInit {
         Swal.fire({ icon: 'warning', title: 'Validación', text: 'Ingrese la Ciudad.' });
         return;
       }
+      // Si no hay fecha seleccionada explícitamente, tomar la fecha mostrada en el card (today)
+      // El card muestra this.today; el backend/otros procesos esperan formato YYYY-MM-DD
       if (!this.fecha) {
-        Swal.fire({ icon: 'warning', title: 'Validación', text: 'Seleccione la Fecha.' });
-        return;
+        try {
+          this.fecha = this.today.toISOString().split('T')[0];
+        } catch {
+          // fallback: requerir selección si no se puede obtener la fecha
+          Swal.fire({ icon: 'warning', title: 'Validación', text: 'Seleccione la Fecha.' });
+          return;
+        }
       }
       if (!this.asunto || !this.asunto.trim()) {
         Swal.fire({ icon: 'warning', title: 'Validación', text: 'Ingrese el Asunto del trámite.' });
@@ -960,21 +994,21 @@ export class RegistroTramiteComponent implements OnInit {
             const fechaIngreso = new Date().toLocaleString('es-EC', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
             const ciudadano = (this.nombre || 'Ciudadano').toString();
             const docIdent = (this.n_documento || '').toString();
+            // Asegúrate de tener el email disponible (ya lo mapeaste en this.email)
             const mensajeHtml = `
               <div style="text-align:center; margin-top:6px;">
-                <div style="font-size:22px; font-weight:700; color:#0d6efd; margin-bottom:10px;">${this.escapeHtml(numeroTramiteMostrado)}</div>
+                <div style="font-size:22px; font-weight:700; color:#0d6efd; margin-bottom:10px;">${this.escapeHtml(this.n_tramite_siguiente)}</div>
               </div>
-              <div style="text-align:left; line-height:1.5;">
-                <div><strong>Ciudadano:</strong> ${this.escapeHtml(ciudadano)}</div>
-                <div><strong>Cédula/RUC:</strong> ${this.escapeHtml(docIdent)}</div>
-                <div><strong>Fecha de ingreso:</strong> ${this.escapeHtml(fechaIngreso)}</div>
+              <div style="text-align:left; line-height:1.6; border-top: 1px solid #eee; padding-top: 10px;">
+                <div><strong>Ciudadano:</strong> ${this.escapeHtml(this.nombre)}</div>
+                <div><strong>Cédula/RUC:</strong> ${this.escapeHtml(this.n_documento)}</div>
+                <div style="margin-top: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 5px;">
+                  <i class="fas fa-envelope" style="color: #6c757d; margin-right: 5px;"></i>
+                  Se ha enviado una notificación al correo: <br>
+                  <strong style="color: #212529;">${this.escapeHtml(this.email || 'No registrado')}</strong>
+                </div>
               </div>`;
-            Swal.fire({
-              icon: 'success',
-              title: 'Registro Exitoso',
-              html: mensajeHtml,
-              confirmButtonText: 'Aceptar'
-            });
+
             // Preparar siguiente correlativo de documento interno localmente (backend puede tardar en reflejar)
             const prevTipoDoc = this.tipo_documento;
             const prevNext = this.secuencialDocNext || 1;
@@ -987,6 +1021,25 @@ export class RegistroTramiteComponent implements OnInit {
               this.secuencialDocNext = (prevNext || 1) + 1;
               // n_interno se actualizará al ingresar documento; si ya hay documento, recalcularía aquí
             }
+
+            Swal.fire({
+              icon: 'success',
+              title: 'Registro Exitoso',
+              html: mensajeHtml,
+              showCancelButton: true,
+              confirmButtonText: 'Ver mis trámites',
+              confirmButtonColor: '#0d6efd',
+              cancelButtonText: 'Registrar otro trámite',
+              cancelButtonColor: '#6c757d',
+              reverseButtons: true,
+              allowOutsideClick: false
+            }).then((result) => {
+              if (result.isConfirmed) {
+                // Ir a la ventana de seguimiento
+                this.router.navigate(['/consulta/seguimiento']);
+              }
+              // Si eligió "Registrar otro trámite" se queda en el formulario (ya reseteado)
+            });
           },
           error: (err) => { 
             this.loading = false;

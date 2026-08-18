@@ -1,0 +1,55 @@
+/* Menú "Acciones" de cada expediente */
+.menu-acciones {
+  min-width: 250px;
+  padding: 6px;
+  border: 1px solid #e4e6ef;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+
+  .dropdown-item {
+    display: flex;              // icono y texto siempre alineados
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: #3f4254;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+
+    i {
+      width: 18px;              // ancho fijo: los textos arrancan en la misma columna
+      text-align: center;
+      font-size: 0.95rem;
+      color: #7e8299;
+      transition: color 0.15s ease;
+    }
+
+    &:hover,
+    &:focus {
+      background-color: #009ef7;
+      color: #fff;
+
+      i { color: #fff; }
+    }
+  }
+
+  .dropdown-divider {
+    margin: 6px 4px;
+    border-top-color: #eff2f5;
+  }
+
+  .item-eliminar {
+    color: #f1416c;
+
+    i { color: #f1416c; }
+
+    &:hover,
+    &:focus {
+      background-color: #f1416c;
+      color: #fff;
+
+      i { color: #fff; }
+    }
+  }
+}

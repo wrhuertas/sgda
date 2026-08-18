@@ -26,6 +26,13 @@ export class DespachoService {
         'Authorization': 'Bearer ' + token
       });
     }
+
+  // Trae un anexo (PDF) como base64 a través de la API (evita CORS de /storage)
+  verAnexoBase64(ruta: string): Observable<any> {
+    const headers = this.getHeaders();
+    const URL = URL_SERVICIOS + '/anexos/ver-base64';
+    return this.http.post(URL, { ruta }, { headers });
+  }
       
         
       
@@ -42,7 +49,7 @@ export class DespachoService {
   
           const URL =
             URL_SERVICIOS +
-            "/despacho/index" +
+            "/tramitesdespacho" +
             "?id_empresa=" + id_empresa +
             "&id_usuario=" + id_usuario +
             "&page=" + page +
@@ -192,14 +199,51 @@ export class DespachoService {
     
   
   
-    grabarTramite(data: FormData) {
-      this.isLoadingSubject.next(true);
-      const headers = this.getHeaders();
-      const URL = URL_SERVICIOS + "/despacho/grabartramite";
-      return this.http.post(URL, data, { headers }).pipe(
-        finalize(() => this.isLoadingSubject.next(false))
-      );
-    }
+        grabarTramite(data: FormData) {
+          this.isLoadingSubject.next(true);
+          const headers = this.getHeaders();
+          const URL = URL_SERVICIOS + "/despacho/grabartramite";
+          return this.http.post(URL, data, { headers }).pipe(
+            finalize(() => this.isLoadingSubject.next(false))
+          );
+        }
+
+        // Enviar/traer datos de asignación: recibe id_asignacion_tramite, id_empresa, id_usuario
+        traerDatosAsinacion(payload: { id_asignacion_tramite: number; id_empresa: number; id_usuario: number;id_tramite: number; }) {
+        console.log('[DespachoService] payload recibido:', payload);
+
+        this.isLoadingSubject.next(true);
+        const headers = this.getHeaders();
+        const URL = URL_SERVICIOS + "/despacho/traerDatosAsignacion";
+
+        console.log('[DespachoService] URL:', URL);
+        console.log('[DespachoService] headers:', headers);
+
+        return this.http.post(URL, payload, { headers }).pipe(
+          finalize(() => this.isLoadingSubject.next(false))
+        );
+      }
+
+      // Nuevo: cargarActas - envía ids para traer actas específicas
+      cargarActas(payload: { id_asignacion_tramite?: number; id_empresa: number; id_usuario: number; id_tramite?: number }) {
+        console.log('[DespachoService] cargarActas payload:', payload);
+        this.isLoadingSubject.next(true);
+        const headers = this.getHeaders();
+        const URL = URL_SERVICIOS + "/despacho/cargarActas";
+        return this.http.post(URL, payload, { headers }).pipe(
+          finalize(() => this.isLoadingSubject.next(false))
+        );
+      }
+
+      // Obtener imagen previa de una acta (por página)
+      obtenerImagenActa(payload: { id_acta?: number; id_asignacion_tramite?: number; id_tramite?: number; id_empresa: number; id_usuario: number; page?: number }) {
+        this.isLoadingSubject.next(true);
+        const headers = this.getHeaders();
+        const URL = URL_SERVICIOS + "/despacho/imagenActa";
+        return this.http.post(URL, payload, { headers }).pipe(
+          finalize(() => this.isLoadingSubject.next(false))
+        );
+      }
   
     guardarBorradorDestinatarios(payload: {
       id_tramite: number;
@@ -370,6 +414,15 @@ export class DespachoService {
                 finalize(() => this.isLoadingSubject.next(false))
               );
             }
+
+            getSecuencialMemorandumRecepcion(id_empresa: number, prefijo: string = '') {
+            this.isLoadingSubject.next(true);
+            const headers = this.getHeaders();
+            const URL = URL_SERVICIOS + "/recepcion/get-secuencial-memorandum";
+            return this.http.post(URL, { id_empresa, prefijo }, { headers }).pipe(
+              finalize(() => this.isLoadingSubject.next(false))
+            );
+          }
           
   
   

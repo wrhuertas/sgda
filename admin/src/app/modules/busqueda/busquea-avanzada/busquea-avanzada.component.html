@@ -47,20 +47,33 @@
         <div class="card p-3 border">
           <div class="mb-3">
             <label class="form-label fw-bold">Tipo Documento</label>
-            <select class="form-select" (change)="onTipoDocumentoChange($event)" 
-                    [disabled]="cargandoTipos || !tiposDocumento?.length">
+            <select class="form-select" (change)="onTipoDocumentoChange($event)">
               <option value="">Seleccione...</option>
               <option *ngFor="let t of tiposDocumento" [value]="t.id">
                 {{ t.nombre }}
               </option>
             </select>
+
+            <div class="form-text d-flex align-items-center gap-2" *ngIf="cargandoTipos">
+              <span class="spinner-border spinner-border-sm"></span> Cargando tipos...
+            </div>
+            <div class="form-text text-danger" *ngIf="!cargandoTipos && !tiposDocumento?.length">
+              No hay tipos de documento cargados en las series de la empresa
+            </div>
           </div>
 
           <div *ngIf="parametrosActuales.length > 0" class="mb-3 p-3 border rounded bg-light">
             <h6 class="mb-3">Parámetros del documento:</h6>
             <div *ngFor="let param of parametrosActuales" class="mb-2">
               <label class="form-label small fw-bold">{{ param }}</label>
-              <input type="text" class="form-control" [placeholder]="'Ingrese ' + param">
+              <input type="text" class="form-control"
+                     [(ngModel)]="valoresParametros[param]"
+                     [ngModelOptions]="{ standalone: true }"
+                     (keyup.enter)="buscarPorDocumento()"
+                     [placeholder]="'Ingrese ' + param">
+            </div>
+            <div class="form-text">
+              Llene sólo los parámetros que quiera usar como filtro.
             </div>
           </div>
 

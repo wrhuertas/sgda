@@ -1,0 +1,70 @@
+<div class="modal-header">
+  <h5 class="modal-title">Anexos para Sumillar - Trámite N° {{ numero_tramite }}</h5>
+  <button type="button" class="btn-close-custom" aria-label="Close" (click)="cerrar()">
+    <i class="ki-duotone ki-cross fs-1">
+      <span class="path1"></span>
+      <span class="path2"></span>
+    </i>
+  </button>
+</div>
+
+<div class="modal-body">
+  <div *ngIf="!anexos || anexos.length === 0" class="text-center text-muted py-5">
+    <i class="ki-duotone ki-file-deleted fs-3x text-muted mb-3">
+      <span class="path1"></span>
+      <span class="path2"></span>
+    </i>
+    <div>No hay anexos disponibles para este trámite.</div>
+  </div>
+
+  <div *ngIf="anexos && anexos.length > 0">
+    <h6 class="fw-bold text-dark mb-4">
+      <i class="ki-duotone ki-folder fs-3 text-primary me-2">
+        <span class="path1"></span>
+        <span class="path2"></span>
+      </i>
+      Listado de documentos a sumillar
+    </h6>
+
+    <div class="row g-4">
+      <div class="col-6 col-md-4 col-lg-3" *ngFor="let a of anexos; let i = index">
+        <div class="card h-100 border-0 shadow-sm text-center anexo-card">
+          <div class="card-body d-flex flex-column align-items-center py-6">
+
+            <!-- Badge posición del documento -->
+            <span class="badge badge-light-secondary mb-2 anexo-folio">
+              Documento {{ i + 1 }} de {{ anexos.length }}
+            </span>
+
+            <div class="anexo-icon-wrapper mb-3">
+              <i class="ki-duotone ki-file fs-3x text-primary">
+                <span class="path1"></span>
+                <span class="path2"></span>
+              </i>
+            </div>
+
+            <div class="fw-semibold mb-1 anexo-nombre" [title]="a.nombre_anexo">
+              {{ a.nombre_anexo }}
+            </div>
+
+            <div class="small text-muted mb-2 anexo-tipo" [title]="(a.tipo_documento || a.tipo || 'N/A') + (a.descripcion ? ' - ' + a.descripcion : '')">
+              {{ a.tipo_documento || a.tipo || 'N/A' }}
+              <span *ngIf="a.descripcion"> - {{ a.descripcion }}</span>
+            </div>
+
+            <!-- Badge estado de sumillado -->
+            <span class="badge mb-3" [ngClass]="a.anexo_firmado == 1 ? 'badge-light-success' : 'badge-light-danger'">
+              {{ a.anexo_firmado == 1 ? 'Sumillado' : 'Sin sumillar' }}
+            </span>
+
+            <div class="d-flex gap-2 mt-auto">
+              <button class="btn btn-sm btn-light-primary" (click)="verAnexo(a)">Abrir</button>
+              <button *ngIf="a.anexo_firmado == 1" class="btn btn-sm btn-info" (click)="abrirDocFirmado(a)">Doc. firmado</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

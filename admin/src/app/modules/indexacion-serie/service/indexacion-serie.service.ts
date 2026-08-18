@@ -92,6 +92,13 @@ public _refreshListado = new EventEmitter<void>();
       return this.http.post(URL, data, { headers });
     }
 
+    // Firmar un PDF pasando ruta relativa y id_empresa al endpoint Laravel /firmar-pdf
+    firmarPdfDirecto(payload: { pdfOriginal: string; empresaId: number }) {
+      const headers = new HttpHeaders({ 'Authorization': 'Bearer ' + this.authservice.token });
+      const url = `${URL_SERVICIOS}/firmar-pdf`;
+      return this.http.post(url, payload, { headers });
+    }
+
 
 
 
@@ -183,6 +190,70 @@ public _refreshListado = new EventEmitter<void>();
     return this.http.post(url, body, { headers });
   }
 
+// Guarda el documento editado (limpieza) como una NUEVA versión
+guardarNuevaVersionDocumento(payload: { id_documento: number; paginas: Array<{ pagina: number; imagen: string }>; usuario_id?: number | null }) {
+  const headers = new HttpHeaders({
+    'Authorization': 'Bearer ' + this.authservice.token
+  });
+  const url = `${URL_SERVICIOS}/indexaciones/guardar-nueva-version`;
+  return this.http.post(url, payload, { headers });
+}
+
+// Datos de una empresa (se usa para saber si aplica el renombrado por contenido)
+obtenerEmpresa(idEmpresa: number) {
+  const headers = new HttpHeaders({
+    'Authorization': 'Bearer ' + this.authservice.token
+  });
+  return this.http.get(`${URL_SERVICIOS}/empresas/${idEmpresa}`, { headers });
+}
+
+// Descarga el PDF del expediente. Si está cifrado en el servidor, el backend
+// lo descifra antes de enviarlo: aquí siempre llega un PDF utilizable.
+descargarDocumento(payload: { id_documento: number; usuario_id?: number | null; password: string; intento?: number; max_intentos?: number }) {
+  const headers = new HttpHeaders({
+    'Authorization': 'Bearer ' + this.authservice.token
+  });
+  const url = `${URL_SERVICIOS}/documentos/descargar`;
+  return this.http.post(url, payload, { headers, responseType: 'blob' });
+}
+
+// Inserta una hoja (imagen o PDF) en una página concreta del documento.
+// Devuelve una NUEVA versión con la hoja ya incorporada.
+insertarPaginaDocumento(payload: { id_documento: number; posicion: number; archivo: File; paginas?: string; disposicion?: string; usuario_id?: number | null }) {
+  const headers = new HttpHeaders({
+    'Authorization': 'Bearer ' + this.authservice.token
+    // No pongas Content-Type, Angular lo define automáticamente para FormData
+  });
+
+  const formData = new FormData();
+  formData.append('id_documento', String(payload.id_documento));
+  formData.append('posicion', String(payload.posicion));
+  formData.append('archivo', payload.archivo);
+  if (payload.paginas) { formData.append('paginas', payload.paginas); }
+  if (payload.disposicion) { formData.append('disposicion', payload.disposicion); }
+  if (payload.usuario_id) { formData.append('usuario_id', String(payload.usuario_id)); }
+
+  const url = `${URL_SERVICIOS}/indexaciones/insertar-pagina`;
+  return this.http.post(url, formData, { headers });
+}
+
+// Lista las versiones (V1, V2, V3...) de un documento
+versionesDocumento(idDocumento: number, idEmpresa: any = null) {
+  const headers = new HttpHeaders({
+    'Authorization': 'Bearer ' + this.authservice.token
+  });
+  const url = `${URL_SERVICIOS}/indexaciones/versiones-documento`;
+
+  // Usuario logeado (necesario para la auditoría de la consulta de versiones)
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+  return this.http.post(url, {
+    id_documento: idDocumento,
+    usuario_id: user?.id ?? null,
+    id_empresa: idEmpresa ?? user?.id_empresa ?? null
+  }, { headers });
+}
+
 listarDocumentosOCRPorSerie(payload: any) {
 
   const headers = new HttpHeaders({
@@ -201,6 +272,13 @@ listarAnexos(idDocumento: any) {
   const url = `${URL_SERVICIOS}/indexaciones/listar-anexos/${idDocumento}`;
   const headers = new HttpHeaders({ 'Authorization': 'Bearer ' + this.authservice.token });
   return this.http.get(url, { headers });
+}
+
+// Trae un anexo (PDF) como base64 a través de la API (evita CORS de /storage)
+verAnexoBase64(ruta: string) {
+  const url = `${URL_SERVICIOS}/anexos/ver-base64`;
+  const headers = new HttpHeaders({ 'Authorization': 'Bearer ' + this.authservice.token });
+  return this.http.post(url, { ruta }, { headers });
 }
 
 
@@ -232,6 +310,10 @@ subirExcelMasivo(file: File) {
 
   const formData = new FormData();
   formData.append('file', file); // El nombre 'file' debe coincidir con $request->file('file') en Laravel
+
+  // Usuario logeado (necesario para la auditoría de la indexación por Excel)
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  if (user?.id) { formData.append('usuario_id', String(user.id)); }
 
   const headers = new HttpHeaders({
     'Authorization': 'Bearer ' + this.authservice.token
@@ -270,6 +352,20 @@ obtenerDocumentoFirmadoPorId(payload: { idDocumento: number; idEmpresa: number; 
   const url = `${URL_SERVICIOS}/documentos/obtenerdocumentofirmado`;
   return this.http.post(url, payload, { headers });
 }
+
+  // Convierte un PDF en imágenes (base64) usando el endpoint /enviarPDF
+  convertirPdfAImagenes(archivoUrl: string) {
+    const headers = new HttpHeaders({ 'Authorization': 'Bearer ' + this.authservice.token });
+    const url = `${URL_SERVICIOS}/enviarPDF`;
+    return this.http.post(url, { archivo_url: archivoUrl }, { headers });
+  }
+
+  // Nuevo: obtener imagen de anexo desde controlador de Asignacion (módulo Tramites)
+  obtenerAnexoImagen(payload: { id_anexo?: number; ruta?: string; page?: number }) {
+    const headers = new HttpHeaders({ 'Authorization': 'Bearer ' + this.authservice.token });
+    const url = `${URL_SERVICIOS}/asignacion/obtener-anexo-imagen`;
+    return this.http.post(url, payload, { headers });
+  }
 
 
 getCamposByDocumento(idDocumento: number) {
@@ -329,10 +425,21 @@ getCamposByDocumento(idDocumento: number) {
   }
 
   // Generar link firmado temporal para compartir
-  generarLinkCompartir(payload: { idDocumento: number; minutos?: number }) {
+  generarLinkCompartir(payload: { idDocumento: number; minutos?: number; usuario_id?: any; id_empresa?: any }) {
     const headers = new HttpHeaders({ 'Authorization': 'Bearer ' + this.authservice.token });
     const url = `${URL_SERVICIOS}/compartir/generar`;
     return this.http.post(url, payload, { headers });
+  }
+
+  // Trasladar documentos en lote (ids)
+  trasladarDocumentos(payload: { ids: number[]; destino?: any; ubicacion?: any }) {
+    const headers = new HttpHeaders({ 'Authorization': 'Bearer ' + this.authservice.token });
+    const URL = `${URL_SERVICIOS}/rutadocumento/trasladar-documentos`;
+
+    // Usuario logeado (necesario para la auditoría del traslado)
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    return this.http.post(URL, { ...payload, usuario_id: user?.id ?? null }, { headers });
   }
 
   // Auditoría simple (sin auth): registrar acción/tiempo
@@ -447,17 +554,16 @@ getCamposByDocumento(idDocumento: number) {
 
 
     // En IndexacionSerieService
-    eliminarDocumento(id: number): Observable<any> {
+    eliminarDocumento(id: number, usuario_id: number): Observable<any> {
       this.isLoadingSubject.next(true);
-      
+
       const headers = new HttpHeaders({
         'Authorization': 'Bearer ' + this.authservice.token
       });
 
-      // Ajusta la URL según tu ruta de API en Laravel
       const URL = `${URL_SERVICIOS}/documento/eliminar/${id}`;
 
-      return this.http.put(URL, { headers }).pipe(
+      return this.http.put(URL, { usuario_id }, { headers }).pipe(
         finalize(() => this.isLoadingSubject.next(false))
       );
     }
@@ -518,7 +624,10 @@ getCamposByDocumento(idDocumento: number) {
       // Ajusta la URL según tu ruta de API en Laravel
       const URL = `${URL_SERVICIOS}/anexos/eliminaranexo/${id}`;
 
-      return this.http.put(URL, { headers }).pipe(
+      // Usuario logeado (necesario para la auditoría de la eliminación)
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+      return this.http.put(URL, { usuario_id: user?.id ?? null }, { headers }).pipe(
         finalize(() => this.isLoadingSubject.next(false))
       );
     }
@@ -618,6 +727,23 @@ registrarEdificio(payload: { nombre: string; id_empresa: number | null; usuario_
     const URL = `${URL_SERVICIOS}/rutadocumento/registrar-estanteria`;
 
     // Retornamos la petición POST con el payload corregido
+    return this.http.post(URL, payload, { headers }).pipe(
+      finalize(() => this.isLoadingSubject.next(false))
+    );
+  }
+
+  // Actualizar nombre u otros datos de una estantería existente
+  actualizarEstanteria(payload: { id_estanteria?: number | null; nombre?: string | null; usuario_registro?: number | null }): Observable<any> {
+    // Algunos backends no exponen un endpoint PUT para actualizar estantería.
+    // Para compatibilidad, re-utilizamos el endpoint POST de registrar-estanteria
+    // enviando el id_estanteria cuando exista (el backend debe reconocerlo como update).
+    this.isLoadingSubject.next(true);
+
+    const headers = new HttpHeaders({
+      'Authorization': 'Bearer ' + this.authservice.token
+    });
+
+    const URL = `${URL_SERVICIOS}/rutadocumento/actualizar-estanteria`;
     return this.http.post(URL, payload, { headers }).pipe(
       finalize(() => this.isLoadingSubject.next(false))
     );
@@ -811,8 +937,9 @@ registrarEdificio(payload: { nombre: string; id_empresa: number | null; usuario_
     );
   }
 
-  // Eliminar una relación de lugar (edificio/sala) de una serie
-  eliminarLugarDeSerie(payload: { id_serie: number; id_edificio: number | null; id_sala: number | null }): Observable<any> {
+  // Eliminar una relación de lugar (ahora por id_lugar) de una serie
+  // Payload esperado: { id_lugar: number, id_serie?: number }
+  eliminarLugarDeSerie(payload: { id_lugar: number; id_serie?: number } | any): Observable<any> {
     this.isLoadingSubject.next(true);
 
     const headers = new HttpHeaders({
@@ -869,7 +996,7 @@ registrarEdificio(payload: { nombre: string; id_empresa: number | null; usuario_
   }
 
   // Obtener datos de ruta jerárquica (Serie -> Edificios -> Salas -> Estanterías -> Filas -> Cajas -> Carpetas)
-  obtenerDatosRuta(payload: { idSerie: number | null; id_usuario?: number | null; id_empresa?: number | null; id_edificio?: number | null; id_sala?: number | null; id_lugar?: number | null }): Observable<any> {
+  obtenerDatosRuta(payload: { idSerie: number | null; id_serie_subserie?: number | null; id_usuario?: number | null; id_empresa?: number | null; id_edificio?: number | null; id_sala?: number | null; id_lugar?: number | null }): Observable<any> {
     this.isLoadingSubject.next(true);
 
     const headers = new HttpHeaders({

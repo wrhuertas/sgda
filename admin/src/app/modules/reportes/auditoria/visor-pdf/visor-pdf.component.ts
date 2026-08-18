@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 
@@ -10,6 +11,10 @@ import Swal from 'sweetalert2';
 export class VisorPdfComponent implements OnInit {
   @Input() urlPdf!: string;
   @Input() nombreArchivo!: string;
+
+  // Fallback para mostrar PDF en un iframe cuando pdf.js no puede cargar (CORS, rangos)
+  useIframe: boolean = false;
+  sanitizedUrl: SafeResourceUrl | null = null;
 
   // Estado del visor
   paginaActual = 1;
@@ -27,7 +32,8 @@ export class VisorPdfComponent implements OnInit {
   canvasData: string | null = null;
 
   constructor(
-    public activeModal: NgbActiveModal
+    public activeModal: NgbActiveModal,
+    private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit(): void {
@@ -47,16 +53,31 @@ export class VisorPdfComponent implements OnInit {
       const pdfjsLib = await import('pdfjs-dist');
       pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
-      // Cargar el PDF desde la URL
-      const pdf = await pdfjsLib.getDocument(this.urlPdf).promise;
+      // Cargar el PDF desde la URL.
+      // Usamos el objeto de configuración para poder añadir opciones y evitar problemas con CORS
+      const loadingTask = pdfjsLib.getDocument({ url: this.urlPdf, withCredentials: false });
+      const pdf = await loadingTask.promise;
       this.pdfDocument = pdf;
       this.totalPaginas = pdf.numPages;
       
       // Cargar primera página
       await this.renderizarPagina(this.paginaActual);
     } catch (error: any) {
-      console.error('Error al cargar PDF:', error);
-      Swal.fire('Error', 'No se pudo cargar el PDF: ' + error.message, 'error');
+      console.error('Error al cargar PDF (pdf.js):', error);
+
+      // Primero intentamos el fallback en iframe. Si funciona, no mostramos un error al usuario.
+      try {
+        this.useIframe = true;
+        this.sanitizedUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.urlPdf);
+        this.canvasData = null; // ocultar canvas
+        console.info('Fallback a iframe activado para mostrar el PDF');
+        return;
+      } catch (e) {
+        console.error('No se pudo usar iframe como fallback:', e);
+        // Si tampoco podemos usar iframe, mostramos el error al usuario y como último recurso abrimos en nueva pestaña
+        Swal.fire('Error', 'No se pudo cargar el PDF: ' + (error.message || error), 'error');
+        try { window.open(this.urlPdf, '_blank'); } catch (e2) { console.error('No se pudo abrir en nueva pestaña:', e2); }
+      }
     }
   }
 

@@ -21,6 +21,15 @@ export class ReportesService {
     }
 
 
+    // Trae un documento (PDF) como base64 a través de la API (evita CORS de /storage)
+    verDocumentoBase64(ruta: string): Observable<any> {
+      const headers = new HttpHeaders({
+        'Authorization': 'Bearer ' + this.authservice.token
+      });
+      const URL = URL_SERVICIOS + '/anexos/ver-base64';
+      return this.http.post(URL, { ruta }, { headers });
+    }
+
     SeccionSelect(id_usuario: number) {
       this.isLoadingSubject.next(true);
     
@@ -86,9 +95,24 @@ setUsuarioId(userId: string) {
 }
 
 
-getAuditoriaUsuario(userId: string) {
-  const URL = `${URL_SERVICIOS}/auditoria/usuario`; // Endpoint que crearemos en Laravel
-  return this.http.post(URL, { user_id: userId }, {
+/**
+ * Obtener auditoría de un usuario, opcionalmente filtrada por empresa.
+ * @param userId id del usuario
+ * @param idEmpresa (opcional) id de la empresa para filtrar
+ */
+getAuditoriaUsuario(userId: string, idEmpresa?: any, page: number = 1, buscar: string = '') {
+  const URL = `${URL_SERVICIOS}/auditoria/usuario`;
+
+  const body: any = {
+    user_id: userId,
+    page: page,
+    per_page: 50
+  };
+
+  if (idEmpresa != null) body.id_empresa = idEmpresa;
+  if (buscar) body.buscar = buscar;
+
+  return this.http.post(URL, body, {
     headers: new HttpHeaders({
       'Authorization': 'Bearer ' + this.authservice.token,
       'Content-Type': 'application/json'
@@ -98,11 +122,19 @@ getAuditoriaUsuario(userId: string) {
 
 
 
-getAuditoriaFiltrada(filtros: any) {
+getAuditoriaFiltrada(filtros: any, page: number = 1, buscar: string = '') {
   const URL = `${URL_SERVICIOS}/auditoria/filtrar`; // Tu nuevo endpoint en Laravel
-  
-  // El body incluirá: user_id, actividad_id, fecha_inicio, fecha_fin
-  return this.http.post(URL, filtros, {
+
+  const body: any = {
+    ...filtros,
+    page: page,
+    per_page: 50
+  };
+
+  if (buscar) body.buscar = buscar;
+
+  // El body incluirá: empresa_id, user_id, actividad_id, fecha_inicio, fecha_fin, page, per_page, buscar
+  return this.http.post(URL, body, {
     headers: new HttpHeaders({
       'Authorization': 'Bearer ' + this.authservice.token,
       'Content-Type': 'application/json'
@@ -120,9 +152,28 @@ getAuditoriaPorEmpresa(idEmpresa: any) {
     })
   });
 }
-getActividadesUnicas(userId: any) {
+/**
+ * Tipos de actividad para el combo de filtros.
+ * Con userId trae las de ese usuario; sin él, todas las de la empresa.
+ */
+getActividadesUnicas(userId: any, idEmpresa: any = null) {
   const URL = `${URL_SERVICIOS}/auditoria/actividades-usuario`;
-  return this.http.post(URL, { user_id: userId }, {
+  return this.http.post(URL, { user_id: userId, id_empresa: idEmpresa }, {
+    headers: new HttpHeaders({
+      'Authorization': 'Bearer ' + this.authservice.token,
+      'Content-Type': 'application/json'
+    })
+  });
+}
+
+
+/**
+ * Tipos de documento cargados en las series de la empresa.
+ * Devuelve un objeto donde cada clave es el nombre del tipo de documento.
+ */
+getTiposDocumento(idEmpresa: any) {
+  const URL = `${URL_SERVICIOS}/tipodocumentosrie/${idEmpresa}`;
+  return this.http.post(URL, { id_empresa: idEmpresa }, {
     headers: new HttpHeaders({
       'Authorization': 'Bearer ' + this.authservice.token,
       'Content-Type': 'application/json'

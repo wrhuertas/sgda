@@ -3,6 +3,7 @@ import { Component, Input } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import { IndexacionSerieService } from '../service/indexacion-serie.service';
+import { DocumentoViewerService } from '../ver-documento/documento-viewer.service';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -32,6 +33,7 @@ export class SubirAnexosComponent {
     public activeModal: NgbActiveModal,
     private toast: ToastrService,
     private seccionesService: IndexacionSerieService,
+    private documentoViewer: DocumentoViewerService,
   ) {}
 
 
@@ -132,6 +134,78 @@ export class SubirAnexosComponent {
         this.toast.error('Hubo un error al subir los anexos');
         console.error(err);
       }
+    });
+}
+
+
+// Formatos que el backend rasteriza a imagen (Imagick directo, o pasando
+// antes por PDF en el caso de las hojas de cálculo)
+private extensionesImagen = [
+    'tif', 'tiff', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp',
+    'xlsx', 'xls', 'xlsm', 'csv', 'ods'
+];
+
+private getExtension(anexo: any): string {
+    const ext = (anexo?.extension || '').toString().toLowerCase();
+    if (ext) return ext;
+    return (anexo?.nombre_original || '').toString().split('.').pop()?.toLowerCase() || '';
+}
+
+esPdf(anexo: any): boolean {
+    return this.getExtension(anexo) === 'pdf';
+}
+
+esImagen(anexo: any): boolean {
+    return this.extensionesImagen.includes(this.getExtension(anexo));
+}
+
+// Ver un anexo en el visor predeterminado (DocumentoViewerService).
+// El backend devuelve una imagen por página (como una vista de impresión);
+// los PDF los renderiza pdf.js.
+verAnexo(anexo: any) {
+    // El visor pide cada página al backend por id_anexo
+    if (this.esImagen(anexo)) {
+        this.documentoViewer.abrirVer({
+            idAnexo: anexo?.id_anexo,
+            nombreArchivo: anexo?.nombre_original
+        });
+        return;
+    }
+
+    if (!this.esPdf(anexo)) {
+        Swal.fire(
+            'Formato no soportado',
+            `El visor no previsualiza archivos ${this.getExtension(anexo).toUpperCase()}. "${anexo?.nombre_original}" debe descargarse para abrirlo.`,
+            'info'
+        );
+        return;
+    }
+
+    const ruta = (anexo?.ruta || '').toString().trim();
+    if (!ruta) {
+        this.toast.warning('No se encontró la ruta del anexo');
+        return;
+    }
+
+    Swal.fire({ title: 'Cargando anexo...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    this.seccionesService.verAnexoBase64(ruta).subscribe({
+        next: (resp: any) => {
+            try { Swal.close(); } catch {}
+            if (resp?.success && resp?.base64) {
+                this.documentoViewer.abrirVer({
+                    pdfBase64: resp.base64,
+                    nombreArchivo: anexo?.nombre_original
+                });
+            } else {
+                this.toast.error(resp?.message || 'No se pudo obtener el anexo');
+            }
+        },
+        error: (err) => {
+            try { Swal.close(); } catch {}
+            console.error('Error trayendo anexo:', err);
+            this.toast.error('No se pudo cargar el anexo');
+        }
     });
 }
 

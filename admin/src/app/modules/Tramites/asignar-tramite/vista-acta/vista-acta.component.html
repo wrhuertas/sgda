@@ -1,0 +1,58 @@
+<div class="vista-acta-container">
+  <header class="va-header">
+    <div class="va-header-row">
+      <div>
+        <h3 class="va-title">Acta Sumillar</h3>
+        <p class="va-subtitle">Vista previa de la acta (sumillada)</p>
+        <p *ngIf="textoSumillar" class="va-sumilla">{{ textoSumillar }}</p>
+      </div>
+      <div class="va-header-actions">
+        <button class="btn btn-sm btn-outline-primary me-2" (click)="toggleFixOverlayTopRight()">{{ overlayFixed ? 'Desanclar' : 'Fijar arriba derecha' }}</button>
+        <button class="btn btn-sm btn-outline-secondary" (click)="close()">Cerrar</button>
+      </div>
+    </div>
+  </header>
+
+  <div *ngIf="!actaData || !actaData.data" class="va-empty text-muted">No hay acta disponible para mostrar.</div>
+
+  <div *ngIf="actaData && actaData.data">
+    <div class="va-meta mb-2">
+      <div class="va-name">{{ actaData.data.nombre_acta }}</div>
+      <div class="va-signed" *ngIf="firmado !== null">
+        <span class="va-signed-badge" [class.signed]="firmado">{{ firmado ? 'Firmado' : 'No firmado' }}</span>
+      </div>
+    </div>
+
+    <div *ngIf="imagenes && imagenes.length > 0" class="va-images">
+      <div *ngFor="let img of imagenes; let i = index" class="va-image-card">
+        <div class="va-image-label">Página {{ i + 1 }} / {{ total_paginas || imagenes.length }}</div>
+        <div class="va-image-wrapper" *ngIf="i === 0" style="position:relative">
+          <img #primeraImagen [src]="img" [alt]="'Página ' + (i+1)" class="va-image" />
+          <div class="va-overlay"
+               [ngStyle]="{
+                 left: (overlay.left * 100) + '%',
+                 top: (overlay.top * 100) + '%'
+               }"
+               (pointerdown)="startDrag($event)"
+          >
+            <div class="va-seal">
+              <div class="va-seal-user" *ngIf="nombresDe"><span class="va-seal-label">De:</span> {{ nombresDe }}</div>
+              <div class="va-seal-user" *ngIf="nombresPara"><span class="va-seal-label">Para:</span> {{ nombresPara }}</div>
+              <div class="va-seal-text">{{ textoSumillar || 'SUMILLA' }}</div>
+              <div class="va-seal-date">{{ currentDate }}</div>
+              <div class="va-seal-firma">Sumillado electrónicamente</div>
+            </div>
+          </div>
+        </div>
+        <img *ngIf="i !== 0" [src]="img" [alt]="'Página ' + (i+1)" class="va-image" />
+      </div>
+      
+    </div>
+
+    <hr />
+    <details>
+      <summary>Mostrar datos recibidos (debug)</summary>
+      <pre>{{ actaData | json }}</pre>
+    </details>
+  </div>
+</div>

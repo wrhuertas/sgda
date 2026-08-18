@@ -1,0 +1,48 @@
+<div class="modal-header">
+  <h2 class="fw-bold">Crear Super Usuario</h2>
+  <div class="btn btn-icon btn-sm btn-active-icon-primary" (click)="modal.dismiss()">
+    <i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span class="path2"></span></i>
+  </div>
+</div>
+
+<div class="modal-body">
+  <div class="row g-4">
+    <div class="col-md-6">
+      <label class="required fw-bold fs-6 mb-2">Nombre</label>
+      <input type="text" class="form-control form-control-solid" [(ngModel)]="name" name="name" placeholder="Nombre" />
+    </div>
+    <div class="col-md-6">
+      <label class="fw-bold fs-6 mb-2">Apellido</label>
+      <input type="text" class="form-control form-control-solid" [(ngModel)]="surname" name="surname" placeholder="Apellido" />
+    </div>
+    <div class="col-md-6">
+      <label class="required fw-bold fs-6 mb-2">Correo</label>
+      <input type="email" class="form-control form-control-solid" [(ngModel)]="email" name="email" placeholder="correo@ejemplo.com" />
+    </div>
+    <div class="col-md-6">
+      <label class="required fw-bold fs-6 mb-2">Contraseña</label>
+      <input type="password" class="form-control form-control-solid" [(ngModel)]="password" name="password" placeholder="Contraseña (mínimo 6 caracteres)" />
+    </div>
+    <div class="col-md-6">
+      <label class="required fw-bold fs-6 mb-2">Confirmar contraseña</label>
+      <input type="password" class="form-control form-control-solid" [(ngModel)]="passwordConfirmation" name="passwordConfirmation" placeholder="Repita la contraseña" />
+      <span *ngIf="password && passwordConfirmation && password !== passwordConfirmation" class="text-danger fs-8 mt-1 d-block">
+        Las contraseñas no coinciden
+      </span>
+    </div>
+    <div class="col-md-6">
+      <label class="fw-bold fs-6 mb-2">Estado</label>
+      <select class="form-select form-select-solid" [(ngModel)]="estado" name="estado">
+        <option [ngValue]="1">Activo</option>
+        <option [ngValue]="0">Inactivo</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-light" (click)="modal.dismiss()" [disabled]="guardando">Cancelar</button>
+  <button type="button" class="btn btn-primary" (click)="guardar()" [disabled]="guardando">
+    {{ guardando ? 'Guardando...' : 'Guardar' }}
+  </button>
+</div>

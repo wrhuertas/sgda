@@ -1,0 +1,50 @@
+<div class="modal-header">
+  <h4 class="modal-title">Actas</h4>
+  <button type="button" class="btn btn-sm btn-icon btn-active-light-primary" (click)="activeModal.close()">
+    <i class="ki-duotone ki-cross fs-2"><span class="path1"></span><span class="path2"></span></i>
+  </button>
+</div>
+
+<div class="modal-body pretty-body">
+  <div class="toolbar shadow-sm mb-3 d-flex justify-content-between">
+    <div class="left">
+      <div class="btn-group btn-group-sm" role="group" aria-label="Controles de zoom">
+        <button type="button" class="btn btn-outline-secondary" (click)="zoomMenos()" [disabled]="!paginaMostrada" title="Alejar">
+          <i class="fa fa-search-minus"></i>
+        </button>
+        <button type="button" class="btn btn-outline-secondary" (click)="resetZoom()" [disabled]="!paginaMostrada" title="Restablecer 100%">100%</button>
+        <button type="button" class="btn btn-outline-secondary" (click)="zoomMas()" [disabled]="!paginaMostrada" title="Acercar">
+          <i class="fa fa-search-plus"></i>
+        </button>
+      </div>
+    </div>
+    <div class="right d-flex align-items-center gap-2">
+      <div class="btn-group btn-group-sm" role="group">
+        <button class="btn btn-outline-secondary btn-sm" (click)="paginaAnterior()" [disabled]="currentPage <= 1"> <i class="fa fa-chevron-left"></i> Anterior</button>
+        <button class="btn btn-outline-secondary btn-sm" (click)="siguientePagina()" [disabled]="totalPaginas && currentPage >= totalPaginas">Siguiente <i class="fa fa-chevron-right"></i></button>
+      </div>
+      <div class="small text-muted">Página <strong>{{ currentPage }}</strong> <span *ngIf="totalPaginas">/ {{ totalPaginas }}</span></div>
+      <button class="btn btn-light btn-sm" (click)="activeModal.dismiss()">Cerrar</button>
+    </div>
+  </div>
+
+  <div class="viewer-card shadow-sm">
+    <div class="viewer-inner text-center">
+      <div *ngIf="loading" class="text-primary py-5">
+        <div class="spinner-border text-primary mb-2" role="status"><span class="visually-hidden">Cargando...</span></div>
+        <div class="fw-semibold">Cargando imagen...</div>
+      </div>
+      <div *ngIf="!loading && !paginaMostrada" class="text-muted py-5">No hay vista previa</div>
+      <div *ngIf="!loading && isPdf">
+        <iframe [src]="selectedPdfUrl" style="width:100%;height:80vh;border:0"></iframe>
+      </div>
+      <div *ngIf="!loading && !isPdf && paginaMostrada">
+        <img [src]="paginaMostrada" alt="Vista previa" class="img-fluid" [style.transform]="'scale(' + zoomScale + ')'" style="max-width:100%;" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-light" (click)="activeModal.dismiss()">Cerrar</button>
+</div>

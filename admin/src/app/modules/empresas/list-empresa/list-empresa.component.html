@@ -142,99 +142,137 @@
             <label class="custom-file-label">Elegir archivo</label>
           </div>
 
-          <div *ngIf="IMAGEN_PREVISUALIZA">
+          <ng-container *ngIf="IMAGEN_PREVISUALIZA; else placeholderLogo">
             <img [src]="IMAGEN_PREVISUALIZA" style="height: 100px;" />
-          </div>
+          </ng-container>
+
+          <ng-template #placeholderLogo>
+            <div class="border rounded bg-light d-flex flex-column align-items-center justify-content-center"
+                 style="height:100px; width:100%;">
+              <span class="text-muted">No hay logo cargado</span>
+
+              <small class="text-muted mt-1">
+                Tamaño recomendado: <b>500 x 500 px</b> (Ancho x Alto).
+              </small>
+            </div>
+          </ng-template>
         </div>
 
         <!-- Imagen Cabecera -->
-        <div class="fv-row mb-4">
-          <label class="fw-bold fs-6 mb-2">Imagen Cabecera:</label>
-
-          <div class="custom-file mb-2">
-            <input
-              type="file"
-              class="custom-file-input"
-              accept=".jpeg,.bmp,.jpg,.png,.gif,.webp"
-              (change)="processCabecera($event)"
-            />
-            <label class="custom-file-label">Elegir archivo</label>
+        <div class="fv-row mb-4 card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div>
+              <label class="fw-bold fs-6">Cabecera</label>
+              <div class="text-muted fs-7">Imagen o texto para la cabecera del documento</div>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="switchCabecera" [(ngModel)]="cabeceraUsarTexto" name="cabeceraUsarTexto" />
+              <label class="form-check-label" for="switchCabecera">Usar texto</label>
+            </div>
           </div>
 
-          <div *ngIf="IMAGEN_CABECERA_PREVISUALIZA">
-            <img [src]="IMAGEN_CABECERA_PREVISUALIZA" style="height: 100px;" />
+          <!-- Mostrar archivo e imagen previa cuando NO se usa texto -->
+          <div *ngIf="!cabeceraUsarTexto">
+            <div class="custom-file mb-2">
+              <input
+                type="file"
+                class="custom-file-input"
+                accept=".jpeg,.bmp,.jpg,.png,.gif,.webp"
+                (change)="processCabecera($event)"
+                name="imagen_cabecera"
+              />
+              <label class="custom-file-label">Elegir archivo</label>
+              <small class="text-muted d-block mt-1">
+      Tamaño recomendado: <b>2480 x 350 px</b> (Ancho x Alto).
+    </small>
+            </div>
+
+            <!-- Contenedor de previsualización siempre visible -->
+            <div class="mb-2">
+              <label class="fw-semibold fs-7 mb-1">Previsualización</label>
+              <div>
+                <ng-container *ngIf="IMAGEN_CABECERA_PREVISUALIZA; else placeholderCab">
+                  <img [src]="IMAGEN_CABECERA_PREVISUALIZA" style="height: 100px; object-fit: contain;" />
+                </ng-container>
+                <ng-template #placeholderCab>
+                  <div class="border rounded bg-light d-flex flex-column align-items-center justify-content-center" style="height:100px; width:100%;">
+                    <span class="text-muted">No hay imagen de cabecera</span>
+                    
+                    <small class="text-muted mt-1">
+                      Tamaño recomendado: <b>2480 x 350 px</b> (Ancho x Alto).
+                    </small>
+                  </div>
+                </ng-template>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mostrar textarea cuando se usa texto -->
+          <div *ngIf="cabeceraUsarTexto">
+            <label class="fw-bold fs-7 mb-1">Texto Cabecera</label>
+            <textarea class="form-control form-control-sm" rows="3" placeholder="Texto para cabecera" [(ngModel)]="cabecera_text" name="cabecera_text"></textarea>
           </div>
         </div>
 
         <!-- Imagen Pie de Página -->
         <div class="fv-row mb-4">
-          <label class="fw-bold fs-6 mb-2">Imagen Pie de Página:</label>
+          <div class="fv-row mb-4 card p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div>
+                <label class="fw-bold fs-6">Pie de Página</label>
+                <div class="text-muted fs-7">Imagen o texto para el pie de página</div>
+              </div>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="switchPie" [(ngModel)]="pieUsarTexto" name="pieUsarTexto" />
+                <label class="form-check-label" for="switchPie">Usar texto</label>
+              </div>
+            </div>
 
-          <div class="custom-file mb-2">
-            <input
-              type="file"
-              class="custom-file-input"
-              accept=".jpeg,.bmp,.jpg,.png,.gif,.webp"
-              (change)="processPiePagina($event)"
-            />
-            <label class="custom-file-label">Elegir archivo</label>
-          </div>
+            <!-- Mostrar archivo e imagen previa cuando NO se usa texto -->
+            <div *ngIf="!pieUsarTexto">
+              <div class="custom-file mb-2">
+                <input
+                  type="file"
+                  class="custom-file-input"
+                  accept=".jpeg,.bmp,.jpg,.png,.gif,.webp"
+                  (change)="processPiePagina($event)"
+                  name="imagen_pie_pagina"
+                />
+                <label class="custom-file-label">Elegir archivo</label>
+                <small class="text-muted d-block mt-1">
+                  Tamaño recomendado: <b>2480 x 350 px</b> (Ancho x Alto).
+                </small>
+              </div>
 
-          <div *ngIf="IMAGEN_PIE_PAGINA_PREVISUALIZA">
-            <img [src]="IMAGEN_PIE_PAGINA_PREVISUALIZA" style="height: 100px;" />
-          </div>
-        </div>
+              <!-- Contenedor de previsualización siempre visible -->
+              <div class="mb-2">
+                <label class="fw-semibold fs-7 mb-1">Previsualización</label>
+                <div>
+                  <ng-container *ngIf="IMAGEN_PIE_PAGINA_PREVISUALIZA; else placeholderPie">
+                    <img [src]="IMAGEN_PIE_PAGINA_PREVISUALIZA" style="height: 100px; object-fit: contain;" />
+                  </ng-container>
+                  <ng-template #placeholderPie>
+                    <div class="border rounded bg-light d-flex flex-column align-items-center justify-content-center" style="height:100px; width:100%;">
+                      <span class="text-muted">No hay imagen de pie de página</span>
+                      
+                      <small class="text-muted mt-1">
+                        Tamaño recomendado: <b>2480 x 350 px</b> (Ancho x Alto).
+                      </small>
+                    </div>
+                  </ng-template>
+                </div>
+              </div>
+            </div>
 
-        <!-- Nombre -->
-        <div class="fv-row mb-4">
-          <label class="required fw-bold fs-6 mb-2">Nombre de la empresa:</label>
-          <input
-                        type="text"
-                        name="nombre"
-                        class="form-control form-control-solid"
-                        placeholder="Nombre de la empresa"
-                        [(ngModel)]="nombre"
-                        [ngClass]="{
-                            'border-danger': nombreInvalid && !nombre,
-                            'border-success': nombre
-                        }"
-
-                    />
-        </div>
-
-        <!-- RUC + Siglas en la misma fila -->
-        <div class="row mb-4">
-          <div class="col-md-8 fv-row">
-            <label class="required fw-bold fs-6 mb-2">RUC:</label>
-            <input
-              type="text"
-              name="ruc"
-              class="form-control form-control-solid"
-              placeholder="RUC"
-              [(ngModel)]="ruc"
-              (ngModelChange)="rucInvalid = false"
-              (keypress)="allowOnlyNumbers($event)"
-              [ngClass]="{
-                'border-danger': !validateRUC(ruc),
-                'border-success': validateRUC(ruc)
-              }"
-            />
-            <div *ngIf="rucInvalid && !ruc" class="text-danger">El RUC es requerido.</div>
-            <div *ngIf="ruc && !validateRUC(ruc)" class="text-danger">RUC inválido.</div>
-            <div *ngIf="validateRUC(ruc)" class="text-success">RUC válido.</div>
-          </div>
-          <div class="col-md-4 fv-row">
-            <label class="fw-bold fs-6 mb-2">Siglas:</label>
-            <input
-              type="text"
-              name="sigla_empresa"
-              class="form-control form-control-solid"
-              placeholder="Ej.: GADMCV, DIF, COG"
-              [(ngModel)]="sigla_empresa"
-              maxlength="20"
-            />
+            <!-- Mostrar textarea SOLO cuando se ha seleccionado 'Usar texto' -->
+            <div *ngIf="pieUsarTexto">
+              <label class="fw-bold fs-7 mb-1">Texto Pie de Página</label>
+              <textarea class="form-control form-control-sm" rows="3" placeholder="Texto para pie de página" [(ngModel)]="pie_pagina_text" name="pie_pagina_text"></textarea>
+            </div>
           </div>
         </div>
+
+        <!-- (Nombre, RUC y Siglas movidos debajo de Dirección) -->
 
       </div>
 
@@ -289,14 +327,174 @@
           />
         </div>
 
+        <!-- Ciudad -->
+        <div class="fv-row mb-4">
+          <label class="fw-bold fs-6 mb-2">Ciudad:</label>
+          <input
+            type="text"
+            name="ciudad"
+            class="form-control form-control-solid"
+            placeholder="Ciudad"
+            [(ngModel)]="ciudad"
+          />
+        </div>
+
+        <!-- Campos colocados inmediatamente debajo de Dirección -->
+        <div class="fv-row mb-3">
+          <label class="required fw-bold fs-6 mb-2">Nombre de la empresa:</label>
+          <input
+            type="text"
+            name="nombre"
+            class="form-control form-control-solid"
+            placeholder="Nombre de la empresa"
+            [(ngModel)]="nombre"
+            [ngClass]="{
+              'border-danger': nombreInvalid && !nombre,
+              'border-success': nombre
+            }"
+          />
+        </div>
+
+        <div class="row mb-4">
+          <div class="col-md-8 fv-row">
+            <label class="required fw-bold fs-6 mb-2">RUC:</label>
+            <input
+              type="text"
+              name="ruc"
+              class="form-control form-control-solid"
+              placeholder="RUC"
+              [(ngModel)]="ruc"
+              (ngModelChange)="rucInvalid = false"
+              (keypress)="allowOnlyNumbers($event)"
+              [ngClass]="{
+                'border-danger': !validateRUC(ruc),
+                'border-success': validateRUC(ruc)
+              }"
+            />
+            <div *ngIf="rucInvalid && !ruc" class="text-danger">El RUC es requerido.</div>
+            <div *ngIf="ruc && !validateRUC(ruc)" class="text-danger">RUC inválido.</div>
+            <div *ngIf="validateRUC(ruc)" class="text-success">RUC válido.</div>
+          </div>
+          <div class="col-md-4 fv-row">
+            <label class="fw-bold fs-6 mb-2">Siglas:</label>
+            <input
+              type="text"
+              name="sigla_empresa"
+              class="form-control form-control-solid"
+              placeholder="Ej.: GADMCV, DIF, COG"
+              [(ngModel)]="sigla_empresa"
+              maxlength="20"
+            />
+          </div>
+        </div>
+
       </div>
 
     </div>
   </div>
 
+  <!--begin::Autenticación externa (Active Directory / API)-->
+  <hr class="my-10 border border-primary border-2 opacity-50" />
+
+  <h4
+    class="fw-bolder mb-5 text-center text-primary"
+    style="cursor: pointer;"
+    (click)="toggleDirectorio()">
+    Configurar Active Directory de Empresa
+    <span [ngClass]="{'rotate-180': mostrarDirectorio}" style="transition: 0.3s;">▼</span>
+  </h4>
+
+  <hr class="mb-4">
+
+  <div *ngIf="mostrarDirectorio">
+
+    <div class="alert alert-light-primary d-flex align-items-center mb-6">
+      <i class="ki-duotone ki-information fs-2x text-primary me-4">
+        <span class="path1"></span><span class="path2"></span><span class="path3"></span>
+      </i>
+      <span class="text-gray-700 fs-7">
+        Todos estos campos son opcionales. Completalos sólo si la empresa
+        valida sus usuarios contra un directorio LDAP o una API externa.
+      </span>
+    </div>
+
+    <!--begin::LDAP-->
+    <div class="card mb-6">
+      <div class="card-body d-flex align-items-center justify-content-between py-3">
+        <div class="fw-bold text-primary">Autenticar con Active Directory (LDAP)</div>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="lista_empresa_utiliza_ldap"
+                 name="utiliza_ldap" [(ngModel)]="utiliza_ldap">
+          <label class="form-check-label" for="lista_empresa_utiliza_ldap">Activo</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" *ngIf="utiliza_ldap">
+      <div class="col-md-8 fv-row mb-7">
+        <label class="fw-bold fs-6 mb-2">Servidor (host)</label>
+        <input type="text" name="ldap_host" [(ngModel)]="ldap_host"
+               class="form-control form-control-solid" placeholder="Ej.: 192.168.1.10 o dc.empresa.local" />
+      </div>
+
+      <div class="col-md-4 fv-row mb-7">
+        <label class="fw-bold fs-6 mb-2">Puerto</label>
+        <input type="number" name="ldap_port" [(ngModel)]="ldap_port"
+               class="form-control form-control-solid" placeholder="389" />
+      </div>
+
+      <div class="col-md-12 fv-row mb-7">
+        <label class="fw-bold fs-6 mb-2">Base DN</label>
+        <input type="text" name="ldap_base_dn" [(ngModel)]="ldap_base_dn"
+               class="form-control form-control-solid" placeholder="Ej.: dc=empresa,dc=local" />
+      </div>
+
+      <div class="col-md-6 fv-row mb-7">
+        <label class="fw-bold fs-6 mb-2">Usuario</label>
+        <input type="text" name="ldap_username" [(ngModel)]="ldap_username"
+               class="form-control form-control-solid" placeholder="Usuario de consulta" />
+      </div>
+
+      <div class="col-md-6 fv-row mb-7">
+        <label class="fw-bold fs-6 mb-2">Contraseña</label>
+        <input type="password" name="ldap_password" [(ngModel)]="ldap_password"
+               class="form-control form-control-solid" placeholder="Contraseña del usuario" />
+      </div>
+    </div>
+    <!--end::LDAP-->
+
+    <!--begin::API externa-->
+    <div class="card mb-6">
+      <div class="card-body d-flex align-items-center justify-content-between py-3">
+        <div class="fw-bold text-primary">Autenticar con API externa</div>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="lista_empresa_utiliza_api_auth"
+                 name="utiliza_api_auth" [(ngModel)]="utiliza_api_auth">
+          <label class="form-check-label" for="lista_empresa_utiliza_api_auth">Activo</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" *ngIf="utiliza_api_auth">
+      <div class="col-md-6 fv-row mb-7">
+        <label class="fw-bold fs-6 mb-2">URL de la API</label>
+        <input type="text" name="api_auth_url" [(ngModel)]="api_auth_url"
+               class="form-control form-control-solid" placeholder="https://api.empresa.com/login" />
+      </div>
+
+      <div class="col-md-6 fv-row mb-7">
+        <label class="fw-bold fs-6 mb-2">Token</label>
+        <input type="text" name="api_auth_token" [(ngModel)]="api_auth_token"
+               class="form-control form-control-solid" placeholder="Token de acceso" />
+      </div>
+    </div>
+    <!--end::API externa-->
+  </div>
+  <!--end::Autenticación externa-->
+
   <!-- === BOTONES === -->
   <div class="text-center pt-10">
-   
+
     <button
       type="button"
       class="btn btn-primary"

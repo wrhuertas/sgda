@@ -17,7 +17,9 @@ export class HacerOcrIAComponent {
 
   documentos: any[] = [];
   filtro: string = '';
-  
+  usuario_id: any = null;
+
+
   // Paginación
   paginaActual: number = 1;
   totalRegistros: number = 0;
@@ -43,6 +45,11 @@ export class HacerOcrIAComponent {
     console.log('ID Serie:', this.idSerie);
     console.log('ID SubSerie:', this.idSubSerie);
     console.log('ID Empresa:', this.ID_EMPRESA);
+
+    // Usuario logeado (necesario para la auditoría del OCR con IA)
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    this.usuario_id = user.id ?? null;
+
     // Al iniciar, cargamos la primera página
     this.cargarDocumentosAlInicio();
   }
@@ -320,9 +327,10 @@ async ejecutarProcesoUnoPorUno(lista: any[]) {
       const idSerieDocumento = doc.id_serie_subserie;
       // CONFIGURACIÓN DEL PAYLOAD PARA LARAVEL
       const payload = {
-        id_documento: idReal, 
+        id_documento: idReal,
         idSerie: idSerieDocumento,
         id_empresa: this.ID_EMPRESA,
+        usuario_id: this.usuario_id,
         solo_texto: this.opciones.soloTexto || this.opciones.ambos,
         solo_params: this.opciones.soloParametros || this.opciones.ambos
       };

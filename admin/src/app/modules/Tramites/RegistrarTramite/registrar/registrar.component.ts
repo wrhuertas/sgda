@@ -84,6 +84,8 @@ export class RegistrarComponent implements OnInit {
   // Datos de la empresa
   empresaData: any = null;
 
+usuario_id: number | null = null;
+
   constructor(
     private http: HttpClient,
     private cdr: ChangeDetectorRef,
@@ -101,6 +103,7 @@ export class RegistrarComponent implements OnInit {
    // console.log('Componente Registrar - Usuario:', { id_empresa: this.id_empresa, id_usuario: this.id_usuario });
     
     this.cargarTipos();
+    this.cargarDatosEmpresa();
   }
 
   // Resetea el file input
@@ -574,7 +577,7 @@ export class RegistrarComponent implements OnInit {
         Swal.fire({ title: 'Datos consultados', text: 'Se cargaron los datos del ciudadano', icon: 'success', didClose: () => { try { this.cdr.detectChanges(); } catch {} } });
       },
       error: () => {
-        this.http.get(`${this.backendUrl}/public/cliente/buscar/${encodeURIComponent(nro)}`, { params }).subscribe({
+        this.http.get(`${this.backendUrl}/clienterecepcion/buscar/${encodeURIComponent(nro)}`, { params }).subscribe({
           next: (r2: any) => {
             this.llenarDesdeCliente(r2);
             this.clienteNoEncontrado = false;
@@ -615,28 +618,37 @@ export class RegistrarComponent implements OnInit {
   private llenarDesdeCliente(resp: any) {
     const c = resp?.cliente || resp?.data || resp;
     if (!c) { this.message = 'Usuario no encontrado'; return; }
+
+    // Mapeo de datos
     this.n_documento = c.cedula_ruc || c.ruc || c.cedula || this.n_documento;
     this.nombre = c.nombre || c.razon_social || this.nombre;
     this.celular = c.telefono || c.celular || this.celular;
     this.email = c.correo || c.email || this.email;
     this.direccion = c.direccion || c.domicilio || this.direccion;
     this.id_cliente = c.id_cliente ?? this.id_cliente;
+    
     this.message = 'Datos del ciudadano cargados';
-    try { this.cdr.detectChanges(); } catch (_) {}
-    this.actualizarNumeroInterno();
-    const ultimoTram = resp?.ultimo_numero_tramite || resp?.data?.ultimo_numero_tramite || null;
-    const ced = (this.n_documento || '').trim();
     this.mostrarNumeroTramite = true;
-    if (typeof ultimoTram === 'string' && ultimoTram.length > 0) {
-      const last = parseInt(ultimoTram.slice(-6), 10);
-      const next = isNaN(last) ? 1 : last + 1;
-      const padded = String(next).padStart(6, '0');
-      this.n_tramite_siguiente = `T-${ced}-${padded}`;
-      try { this.cdr.detectChanges(); } catch {}
-    } else {
-      this.actualizarNumeroTramiteSiguiente();
-    }
-  }
+
+    // --- Lógica del número de trámite ---
+    // Usamos 'c' que es el objeto donde vienen los datos
+    const cantidadActual = c.tramites_count || 0; 
+    const proximoNumero = cantidadActual + 1;
+    
+    // Formateo a 6 dígitos
+    const secuencial = proximoNumero.toString().padStart(6, '0');
+    
+    // Generación del código (usando la variable local 'c' para la cédula)
+    const numeroTramiteGenerado = `T-${this.n_documento}-${secuencial}`;
+    
+    // Asignación a tu variable de clase (asumiendo que así la llamas)
+    this.n_tramite_siguiente = numeroTramiteGenerado; 
+
+    // Refrescar vista
+    try { this.cdr.detectChanges(); } catch (_) {}
+    
+    this.actualizarNumeroInterno();
+}
 
   private actualizarNumeroInterno() {
     const year = new Date().getFullYear();
@@ -672,7 +684,9 @@ export class RegistrarComponent implements OnInit {
       correo: this.email.trim(),
       telefono: this.celular.trim(),
       direccion: this.direccion.trim(),
-      id_empresa: this.id_empresa
+      id_empresa: this.id_empresa,
+      // Necesario para registrar en auditoría quién creó el cliente
+      id_usuario: this.id_usuario
     };
 
     this.http.post(`${this.backendUrl}/cliente`, body).subscribe({
@@ -878,7 +892,29 @@ export class RegistrarComponent implements OnInit {
   clearFisico(input?: HTMLInputElement) { this.archivoFisico = null; if (input) try { input.value = '' } catch {}; try { this.cdr.detectChanges(); } catch {} }
 
 
+  cargarDatosEmpresa() {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const idEmpresa = this.id_empresa ?? user?.id_empresa ?? null;
 
+  if (!idEmpresa) {
+    console.warn("No se encontró id_empresa");
+    return;
+  }
+
+  console.log("ID EMPRESA ENVIADO:", idEmpresa);
+
+    this.registrarService.cargarempresaid(Number(idEmpresa)).subscribe({
+    next: (resp: any) => {
+      console.log("Respuesta recibida del servidor:", resp);
+      // Guardar los datos de la empresa para uso en la plantilla
+      this.empresaData = resp || null;
+      this.cdr.detectChanges();
+    },
+    error: (err) => {
+      console.error("Error en la petición de Empresa:", err);
+    }
+  });
+}
 
 
 
@@ -900,12 +936,13 @@ export class RegistrarComponent implements OnInit {
 
   registrarTramite() {
     // Validaciones
-    if (!this.ciudad || !this.ciudad.trim()) {
-      Swal.fire({ icon: 'warning', title: 'Validación', text: 'Ingrese la Ciudad.' });
+  
+    if (!this.tipo_documento) {
+      Swal.fire({ icon: 'warning', title: 'Validación', text: 'Seleccione el Tipo de Documento.' });
       return;
     }
-    if (!this.fecha) {
-      Swal.fire({ icon: 'warning', title: 'Validación', text: 'Seleccione la Fecha.' });
+    if (!this.tipo_tramite) {
+      Swal.fire({ icon: 'warning', title: 'Validación', text: 'Seleccione el Tipo de Trámite.' });
       return;
     }
     if (!this.asunto || !this.asunto.trim()) {
@@ -948,6 +985,12 @@ export class RegistrarComponent implements OnInit {
     fd.append('id_usuario', String(this.id_usuario));
     if (this.n_interno) fd.append('num_documento_interno', this.n_interno);
     if (this.n_tramite_siguiente) fd.append('numero_tramite', this.n_tramite_siguiente);
+    if (this.tipo_documento) {
+      fd.append('id_tipo_documento', String(this.tipo_documento));
+    }
+    if (this.tipo_tramite) {
+      fd.append('id_tipo_tramite', String(this.tipo_tramite));
+    }
 
     const doPost = () => {
       if (this.anexos && this.anexos.length) {
@@ -965,20 +1008,27 @@ export class RegistrarComponent implements OnInit {
           const fechaIngreso = new Date().toLocaleString('es-EC', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
           const ciudadano = (this.nombre || 'Ciudadano').toString();
           const docIdent = (this.n_documento || '').toString();
+         // Asegúrate de tener el email disponible (ya lo mapeaste en this.email)
           const mensajeHtml = `
             <div style="text-align:center; margin-top:6px;">
-              <div style="font-size:22px; font-weight:700; color:#0d6efd; margin-bottom:10px;">${this.escapeHtml(numeroTramiteMostrado)}</div>
+              <div style="font-size:22px; font-weight:700; color:#0d6efd; margin-bottom:10px;">${this.escapeHtml(this.n_tramite_siguiente)}</div>
             </div>
-            <div style="text-align:left; line-height:1.5;">
-              <div><strong>Ciudadano:</strong> ${this.escapeHtml(ciudadano)}</div>
-              <div><strong>Cédula/RUC:</strong> ${this.escapeHtml(docIdent)}</div>
-              <div><strong>Fecha de ingreso:</strong> ${this.escapeHtml(fechaIngreso)}</div>
+            <div style="text-align:left; line-height:1.6; border-top: 1px solid #eee; padding-top: 10px;">
+              <div><strong>Ciudadano:</strong> ${this.escapeHtml(this.nombre)}</div>
+              <div><strong>Cédula/RUC:</strong> ${this.escapeHtml(this.n_documento)}</div>
+              <div style="margin-top: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 5px;">
+                <i class="fas fa-envelope" style="color: #6c757d; margin-right: 5px;"></i>
+                Se ha enviado una notificación al correo: <br>
+                <strong style="color: #212529;">${this.escapeHtml(this.email || 'No registrado')}</strong>
+              </div>
             </div>`;
+
           Swal.fire({
             icon: 'success',
             title: 'Registro Exitoso',
             html: mensajeHtml,
-            confirmButtonText: 'Aceptar'
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#0d6efd'
           });
           const prevTipoDoc = this.tipo_documento;
           const prevNext = this.secuencialDocNext || 1;
@@ -1029,6 +1079,26 @@ export class RegistrarComponent implements OnInit {
         Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo generar el Acta en PDF para enviar.' });
       }
     }
+  }
+
+  // Devuelve la URL del logo de la empresa o un fallback local si no existe
+  getEmpresaLogoUrl(): string {
+    const fallback = 'assets/logo_cotopaxi.png';
+    const e = this.empresaData;
+    if (!e) return fallback;
+    // Preferir imagen_empresa (logo), si existe y es URL absoluta, usarla
+    const img = String(e.imagen_empresa || e.imagen_cabecera || '').trim();
+    if (!img) return fallback;
+    if (/^https?:\/\//i.test(img)) return img;
+    // Si viene una ruta relativa (p.ej. 'empresas/cabecera/xxx.png'), resolverla contra el backend
+    const base = String(this.backendUrl || '').replace(/\/+$/, '');
+    // Algunas rutas ya pueden incluir 'storage/', otras no
+    const candidate = img.replace(/^\/+/, '');
+    return `${base}/storage/${candidate}`;
+  }
+
+  onLogoError(ev: any) {
+    try { ev.target.src = 'assets/logo_cotopaxi.png'; } catch {}
   }
 
   resetFormulario() {

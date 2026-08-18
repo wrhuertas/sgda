@@ -1,176 +1,229 @@
 <!-- FILTROS SUPERIORES -->
 <div class="row mb-4 g-3 align-items-end">
 
-  <!-- Fecha Inicio -->
   <div class="col-md-2">
     <label class="form-label fw-bold"><i class="bi bi-calendar-event me-1"></i>Fecha Inicio</label>
     <input type="date" [(ngModel)]="fechaInicio" class="form-control" />
   </div>
 
-  <!-- Fecha Fin -->
   <div class="col-md-2">
     <label class="form-label fw-bold"><i class="bi bi-calendar-event me-1"></i>Fecha Fin</label>
     <input type="date" [(ngModel)]="fechaFin" class="form-control" />
   </div>
 
-  <!-- Select Usuario -->
   <div class="col-md-4">
-  <label class="form-label fw-bold"><i class="bi bi-person-fill me-1"></i>Usuario</label>
+    <label class="form-label fw-bold"><i class="bi bi-person-fill me-1"></i>Usuario</label>
  <select [(ngModel)]="usuarioFiltro" (change)="onUsuarioChange()" class="form-select">
   <option [ngValue]="null">Todos</option>
-  <option *ngFor="let user of usuarios" [ngValue]="user.id">
-    {{ user.nombre }}
-  </option>
-</select>
-</div>
-
-  <!-- Select Actividad -->
-  <div class="col-md-4">
-    <label class="form-label fw-bold"><i class="bi bi-list-task me-1"></i>Actividad</label>
-    <select [(ngModel)]="actividadFiltro" class="form-select">
-  <option [ngValue]="null">Todas</option>
-  <option *ngFor="let act of actividadesTipos" [ngValue]="act.nombre">
-    {{ act.nombre }}
+  <option *ngFor="let user of leftUsuarios" [ngValue]="user.id">
+    {{ user.nombre ? user.nombre : (user.name + ' ' + (user.surname || '')) }}
   </option>
 </select>
   </div>
 
+  <div class="col-md-2">
+    <label class="form-label fw-bold"><i class="bi bi-list-task me-1"></i>Actividad</label>
+    <select [(ngModel)]="actividadFiltro" class="form-select">
+      <option [ngValue]="null">Todas</option>
+      <option *ngFor="let act of actividadesTipos" [ngValue]="act.nombre">
+        {{ act.nombre }}
+      </option>
+    </select>
+  </div>
+
+  <div class="col-md-2">
+    <label class="form-label fw-bold"><i class="bi bi-file-earmark-text me-1"></i>Tipo Documento</label>
+    <select [(ngModel)]="tipoDocumentoFiltro" class="form-select">
+      <option [ngValue]="null">Todos</option>
+      <option *ngFor="let tipo of tiposDocumento" [ngValue]="tipo">
+        {{ tipo }}
+      </option>
+    </select>
+  </div>
+
 </div>
 
-<!-- BOTÓN APLICAR FILTROS -->
 <div class="row mb-4">
-  <div class="col text-end">
-    
-  <button 
-      *ngIf="actividadesFiltradas.length > 0" 
-      class="btn btn-danger me-2" 
-      (click)="descargarReporte('pdf')">
-      <i class="bi bi-file-earmark-pdf-fill me-1"></i> Descargar PDF
+  <!-- Descargas a la izquierda -->
+  <div class="col-4 text-start">
+    <button *ngIf="actividadesFiltradas.length > 0" class="btn btn-danger me-2" (click)="descargarReporte('pdf')">
+      <i class="bi bi-file-earmark-pdf-fill me-1"></i> PDF
     </button>
-
-    <button 
-      *ngIf="actividadesFiltradas.length > 0" 
-      class="btn btn-success" 
-      (click)="descargarReporte('excel')">
-      <i class="bi bi-file-earmark-excel-fill me-1"></i> Descargar Excel
+    <button *ngIf="actividadesFiltradas.length > 0" class="btn btn-success" (click)="descargarReporte('excel')">
+      <i class="bi bi-file-earmark-excel-fill me-1"></i> EXCEL
     </button>
+  </div>
 
+  <!-- Filtro centrado -->
+  <div class="col-4 text-center">
     <button class="btn btn-primary" (click)="aplicarFiltros()">
       <i class="bi bi-funnel-fill me-1"></i> Aplicar Filtros
     </button>
-
   </div>
+
+  <div class="col-4"></div>
 </div>
 
-<!-- CARDS DE USUARIOS Y ACTIVIDADES -->
 <div class="row g-4">
 
-  <!-- Card 1: Usuarios -->
- <div class="col-md-4">
-  <div class="card shadow-sm">
-    <!-- Card Header -->
-    <div 
-      class="card-header bg-primary text-white d-flex justify-content-center align-items-center" 
-      style="height: 60px; font-size: 1.25rem; font-weight: 600; border-bottom: 2px solid rgba(255,255,255,0.3);"
-    >
-      Usuarios
-    </div>
+  <!-- Card 1: Usuarios (oculta: el usuario se elige desde el filtro superior) -->
+  <div class="col-md-4" *ngIf="false">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white d-flex justify-content-center align-items-center"
+           style="height: 60px; font-size: 1.25rem; font-weight: 600; border-bottom: 2px solid rgba(255,255,255,0.3);">
+        Usuarios
+      </div>
+      <div class="card-body">
+        <input type="text" placeholder="Buscar usuario" [(ngModel)]="searchUser" class="form-control mb-3" />
 
-    <!-- Card Body -->
-    <div class="card-body">
-      <input 
-        type="text" 
-        placeholder="Buscar usuario" 
-        [(ngModel)]="searchUser" 
-        class="form-control mb-3"
-      />
+        <ul class="list-group list-group-flush overflow-auto" style="max-height: 400px;">
+          <li *ngFor="let user of usuariosVisibles"
+              (click)="seleccionarUsuario(user)"
+              [class.active]="user.id === usuarioSeleccionado?.id"
+              class="list-group-item d-flex align-items-center"
+              style="cursor:pointer; border-radius: 0.25rem; margin-bottom: 0.25rem;">
 
-      <ul class="list-group list-group-flush overflow-auto" style="max-height: 400px;">
-        <li *ngFor="let user of usuariosFiltrados" 
-            (click)="seleccionarUsuario(user)" 
-            [class.active]="user.id === usuarioSeleccionado?.id"
-            class="list-group-item d-flex align-items-center"
-            style="cursor:pointer; border-radius: 0.25rem; margin-bottom: 0.25rem;">
-            
-            <img src="assets/media/avatars/blank.png" 
-                alt="Avatar" 
-                class="rounded-circle me-2" 
-                style="width: 40px; height: 40px; object-fit: cover;"/>
+            <img src="assets/media/avatars/blank.png"
+                 alt="Avatar"
+                 class="rounded-circle me-2"
+                 style="width: 40px; height: 40px; object-fit: cover;"/>
 
             <div>
-                <strong>{{ user.nombre }}</strong>
-                <div class="text-muted small">{{ user.correo }}</div>
+              <strong>{{ user.nombre }}</strong>
+              <div class="text-muted small">{{ user.correo }}</div>
             </div>
-        </li>
-
-
-      </ul>
-    </div>
-  </div>
-</div>
-
-
-
-  <!-- Card 2: Actividades -->
- <!-- Card: Actividades del usuario -->
-<!-- Card: Actividades del usuario -->
-<div class="col-md-8">
-  <div class="card shadow-sm">
-    <!-- Card Header -->
-    <div 
-      class="card-header bg-success text-white d-flex justify-content-center align-items-center"
-      style="height: 60px; font-size: 1.25rem; font-weight: 600; border-bottom: 2px solid rgba(255,255,255,0.3);"
-    >
-      Actividades 
-      <span *ngIf="usuarioSeleccionado">de {{ usuarioSeleccionado.nombre }}</span>
-    </div>
-
-    <!-- Card Body -->
-    <div class="card-body p-3">
-      <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-        <table class="table table-hover table-striped m-0">
-          <thead class="table-light sticky-top">
-            <tr>
-              <th>#</th>
-              <th>Actividad</th>
-              <th>Detalle</th>
-              <th>Detalle 2</th>
-              <th>Documentos</th>
-              <th>Fecha / Hora</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let act of actividadesFiltradas; let i = index">
-              <td>{{ i + 1 }}</td>
-              <td>{{ act.nombre }}</td>
-              <td>{{ act.detalle }}</td>
-              <td>{{ act.detalle2 }}</td>
-               <td>
-                 <span *ngIf="act.documentos; else noDocs">
-                   <a *ngFor="let doc of (act.documentos | json | slice:1:-1).split('|'); let last = last" 
-                      [href]="'javascript:void(0)'" 
-                      class="badge badge-light-primary me-1"
-                      (click)="abrirVisorPDF(act, doc)"
-                      title="{{ doc }}"
-                      style="cursor: pointer;">
-                     <i class="bi bi-file-pdf"></i> {{ doc | slice:0:30 }}{{ doc.length > 30 ? '...' : '' }}
-                   </a>
-                 </span>
-                 <ng-template #noDocs>—</ng-template>
-               </td>
-              <td>{{ act.fecha | date:'dd/MM/yyyy HH:mm:ss' }}</td>
-            </tr>
-            <tr *ngIf="actividadesFiltradas.length === 0">
-              <td colspan="6" class="text-center text-muted py-3">
-                Seleccione un usuario para ver sus actividades
-              </td>
-            </tr>
-          </tbody>
-        </table>
+          </li>
+        </ul>
       </div>
     </div>
-
   </div>
-</div>
+
+  <!-- Card 2: Actividades (ocupa todo el ancho al no mostrarse Usuarios) -->
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header bg-success text-white d-flex justify-content-between align-items-center"
+           style="height: 60px; font-size: 1.25rem; font-weight: 600; border-bottom: 2px solid rgba(255,255,255,0.3);">
+        <span>
+          Actividades
+          <span *ngIf="usuarioSeleccionado" class="fw-normal fs-6">de {{ usuarioSeleccionado.nombre }}</span>
+        </span>
+        <span class="badge bg-light text-dark" *ngIf="totalRegistros">
+          {{ totalRegistros | number }} registros
+        </span>
+      </div>
+
+      <div class="card-body p-3">
+
+        <!-- 🔎 Buscador -->
+        <div class="mb-3">
+          <div class="input-group">
+            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+            <input type="text"
+                   class="form-control"
+                   placeholder="Buscar en actividad, detalle o documento..."
+                   [(ngModel)]="textoBusqueda"
+                   (input)="onBuscarChange(textoBusqueda)" />
+          </div>
+        </div>
+
+        <div class="table-responsive" style="max-height: 750px; overflow-y: auto;">
+          <table class="table table-hover table-striped align-middle m-0">
+            <thead class="table-light sticky-top">
+              <tr>
+                <th style="width: 40px;">#</th>
+                <th style="width: 180px;">Usuario</th>
+                <th>Actividad</th>
+                <th>Detalle</th>
+                <th>Detalle 2</th>
+                <th>Documentos</th>
+                <th style="width: 160px;">Fecha / Hora</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let act of actividadesFiltradas; let i = index">
+                <td>{{ (paginaActual - 1) * porPagina + i + 1 }}</td>
+                <td class="fw-semibold text-gray-800">{{ act.usuarioColumna }}</td>
+                <td>
+                  <span class="badge"
+                        [ngClass]="{
+                          'bg-danger-subtle text-danger': act.nombre.includes('ELIMINACION'),
+                          'bg-success-subtle text-success': act.nombre.includes('SUBIDA'),
+                          'bg-primary-subtle text-primary': !act.nombre.includes('ELIMINACION') && !act.nombre.includes('SUBIDA')
+                        }">
+                    {{ act.nombre }}
+                  </span>
+                </td>
+                <td>
+                  <div *ngFor="let linea of act.lineasDetalle"
+                       [class.ps-3]="linea.sub"
+                       [class.text-muted]="linea.sub">
+                    <span *ngIf="linea.sub" class="me-1">•</span>{{ linea.texto }}
+                  </div>
+                </td>
+                <td class="text-muted small">
+                  <div *ngIf="act.nombreUsuario">
+                    Usuario: <strong class="text-gray-800">{{ act.nombreUsuario }}</strong>
+                  </div>
+                  <div *ngFor="let linea of act.lineasDetalle2"
+                       [class.ps-3]="linea.sub">
+                    <span *ngIf="linea.sub" class="me-1">•</span>{{ linea.texto }}
+                    <span *ngIf="linea.valor"
+                          class="almacenamiento"
+                          [class.almacenamiento-encriptado]="linea.resalte === 'encriptado'"
+                          [class.almacenamiento-normal]="linea.resalte === 'normal'">
+                      {{ linea.valor }}
+                    </span>
+                  </div>
+                </td>
+                <td>
+                  <span *ngIf="act.documentos; else noDocs">
+                    <a *ngFor="let doc of (act.documentos | json | slice:1:-1).split('|'); let last = last"
+                       [href]="'javascript:void(0)'"
+                       class="badge badge-light-primary me-1"
+                       (click)="abrirVisorPDF(act, doc)"
+                       title="{{ doc }}"
+                       style="cursor: pointer;">
+                      <i class="bi bi-file-pdf"></i> {{ soloNombre(doc) | slice:0:30 }}{{ soloNombre(doc).length > 30 ? '...' : '' }}
+                    </a>
+                  </span>
+                  <ng-template #noDocs>—</ng-template>
+                </td>
+                <td class="small">{{ act.fecha | date:'dd/MM/yyyy HH:mm:ss' }}</td>
+              </tr>
+              <tr *ngIf="actividadesFiltradas.length === 0">
+                <td colspan="7" class="text-center text-muted py-6">
+                  <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                  Sin resultados
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 🔹 Paginación -->
+        <nav *ngIf="totalPaginas > 1" class="d-flex justify-content-between align-items-center mt-3">
+          <small class="text-muted">Página {{ paginaActual }} de {{ totalPaginas }}</small>
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item" [class.disabled]="paginaActual === 1">
+              <a class="page-link" (click)="cambiarPagina(1)" style="cursor:pointer;">«</a>
+            </li>
+            <li class="page-item" [class.disabled]="paginaActual === 1">
+              <a class="page-link" (click)="cambiarPagina(paginaActual - 1)" style="cursor:pointer;">‹</a>
+            </li>
+            <li class="page-item disabled">
+              <span class="page-link">{{ paginaActual }}</span>
+            </li>
+            <li class="page-item" [class.disabled]="paginaActual === totalPaginas">
+              <a class="page-link" (click)="cambiarPagina(paginaActual + 1)" style="cursor:pointer;">›</a>
+            </li>
+            <li class="page-item" [class.disabled]="paginaActual === totalPaginas">
+              <a class="page-link" (click)="cambiarPagina(totalPaginas)" style="cursor:pointer;">»</a>
+            </li>
+          </ul>
+        </nav>
+
+      </div>
+    </div>
+  </div>
 
 </div>

@@ -43,7 +43,7 @@ export class RegistrarService {
           const headers = this.getHeaders();
           
           // Ajusta la ruta "/cliente/buscar/" según como esté en tu API de Laravel/Backend
-          const URL = URL_SERVICIOS + "/cliente/buscar/" + n_documento;
+          const URL = URL_SERVICIOS + "/clienterecepcion/buscar/" + n_documento;
           
           return this.http.get(URL, { headers }).pipe(
             finalize(() => this.isLoadingSubject.next(false))
@@ -168,4 +168,15 @@ export class RegistrarService {
     
         return this.http.post(URL, data, { headers: headers });
       }
+      
+      cargarempresaid(idEmpresa: number) {
+            this.isLoadingSubject.next(true);
+            const headers = this.getHeaders();
+        
+            const URL = `${URL_SERVICIOS}/empresaid/${idEmpresa}`;
+        
+            return this.http.get(URL, { headers }).pipe(
+              finalize(() => this.isLoadingSubject.next(false))
+            );
+          }
 }

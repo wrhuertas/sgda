@@ -27,6 +27,7 @@ export class BusqueaAvanzadaComponent implements OnInit {
 tiposDocumento: any[] = [];
 tiposConParametros: any = {}; // Para guardar el objeto completo { "FACTURA": "param1, param2" }
 parametrosActuales: string[] = []; // Los campos para los inputs dinámicos
+valoresParametros: { [nombre: string]: string } = {}; // Lo escrito en cada input
 cargandoTipos: boolean = false;
 
   
@@ -161,6 +162,12 @@ cargarTiposDocumento() {
 // Esta función se llama desde el HTML cuando el select cambia
 onTipoDocumentoChange(event: any) {
   const tipoSeleccionado = event.target.value;
+  this.tipoDocumentoFiltro = tipoSeleccionado;
+
+  // Cada tipo tiene sus propios parámetros, así que se descarta lo escrito
+  // para el tipo anterior y no se manden filtros que ya no corresponden
+  this.valoresParametros = {};
+
   const paramString = this.tiposConParametros[tipoSeleccionado];
 
   if (paramString) {
@@ -178,18 +185,35 @@ onTipoDocumentoChange(event: any) {
 }
 
 
+/**
+ * Cierra el modal devolviendo el tipo de documento y los parámetros escritos.
+ * La búsqueda y el pintado en la tabla los hace el componente de la lista,
+ * igual que con la búsqueda por ruta.
+ */
 buscarPorDocumento() {
-  this.isLoading = true;
-  console.log('Iniciando búsqueda por documento...');
-  
-  // Si necesitas capturar los valores de los inputs dinámicos, 
-  // asegúrate de tener una forma de acceder a ellos.
-  // Por ahora, solo tenemos la lógica de carga:
-  
-  // Ejemplo:
-  // this.busquedaService.buscarDocumento(...).subscribe({
-  //   next: (res) => { ... },
-  //   complete: () => this.isLoading = false
-  // });
+  if (!this.tipoDocumentoFiltro) {
+    this.toast.warning('Seleccione un tipo de documento');
+    return;
+  }
+
+  // Sólo viajan los parámetros con algo escrito: los vacíos no filtran
+  const parametros: { [nombre: string]: string } = {};
+
+  this.parametrosActuales.forEach((nombre) => {
+    const valor = (this.valoresParametros[nombre] || '').trim();
+    if (valor !== '') {
+      parametros[nombre] = valor;
+    }
+  });
+
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+  this.activeModal.close({
+    ids_ruta: {},
+    busqueda: '',
+    id_empresa: user.id_empresa || null,
+    tipo_documento: this.tipoDocumentoFiltro,
+    parametros
+  });
 }
 }

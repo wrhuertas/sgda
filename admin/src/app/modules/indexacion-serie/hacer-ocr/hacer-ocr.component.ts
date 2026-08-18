@@ -14,10 +14,13 @@ export class HacerOcrComponent implements OnInit {
   @Input() idSerie: any;       // Recibimos el ID de la Serie
   @Input() idSubSerie: any;    // Recibimos el ID de la Subserie (opcional)
   @Input() ID_EMPRESA: any;
+  @Input() idNivel: any;
+  @Input() rutaCompleta: any;
 
   documentos: any[] = [];
   filtro: string = '';
-  
+  usuario_id: any = null;
+
   // Paginación
   paginaActual: number = 1;
   totalRegistros: number = 0;
@@ -43,48 +46,68 @@ export class HacerOcrComponent implements OnInit {
     console.log('ID Serie:', this.idSerie);
     console.log('ID SubSerie:', this.idSubSerie);
     console.log('ID Empresa:', this.ID_EMPRESA);
+
+    // Usuario logeado (necesario para la auditoría del OCR)
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    this.usuario_id = user.id ?? null;
+
     // Al iniciar, cargamos la primera página
     this.cargarDocumentosAlInicio();
   }
 
   cargarDocumentosAlInicio(page: number = 1) {
-    this.paginaActual = page;
-  
-    // 1. Identificamos qué serie/subserie listar (Tu lógica)
-    const idAEnviar = this.idSubSerie || this.idSerie;
-    const parametro = this.idSubSerie ? 'idSubserie' : 'idSerie';
-  
-    // 2. Preparamos el paquete de datos para tu servicio de Laravel
-    const payload = { 
-      [parametro]: idAEnviar,
-      id_empresa: this.ID_EMPRESA,
-      page: this.paginaActual 
-    };
-  
-    // 3. LLAMADA AL SERVICIO (Aquí es donde ocurre la magia del listado)
-    this.seccionesService.listarDocumentosOCRPorSerie(payload).subscribe({
-      next: (resp: any) => {
-        console.log('Estructura de un documento:', resp.documentos[0]);
-        // 4. EL LISTADO: Aquí guardamos los PDFs que devuelve la base de datos
-        this.documentos = (resp.documentos || []).map((doc: any) => {
-          return {
-            ...doc,
-            seleccionado: false,
-            peso_bytes: Number(doc.tamano_archivo || doc.size || 0),
-            // Si hay CUALQUIER cosa en datos_ocr (incluso el error), está indexado para el sistema
-            ocr_status: (doc.datos_ocr && doc.datos_ocr.toString().trim() !== '') ? 'INDEXADO' : 'NO INDEXADO',
-            // Si hay CUALQUIER cosa en parametros_indexados_values, está indexado
-            param_status: (doc.parametros_indexados_values && doc.parametros_indexados_values !== null) ? 'INDEXADO' : 'NO INDEXADO'
-            
-          };
-        });
-  
-        // Guardamos datos de paginación por si hay muchos PDFs
-        this.totalRegistros = resp.total;
-        this.ultimaPagina = resp.last_page;
-      }
-    });
+  this.paginaActual = page;
+
+  // 1. Identificamos qué serie/subserie listar
+  const idAEnviar = this.idSubSerie || this.idSerie;
+  const parametro = this.idSubSerie ? 'idSubserie' : 'idSerie';
+
+  // 2. Preparamos el paquete de datos
+  const payload: any = { 
+    [parametro]: idAEnviar,
+    id_empresa: this.ID_EMPRESA,
+    page: this.paginaActual
+  };
+
+  // Asignamos SOLO el último nivel disponible
+  if (this.rutaCompleta?.carpeta?.id) {
+    payload.id_carpeta = this.rutaCompleta.carpeta.id;
+  } else if (this.rutaCompleta?.caja?.id) {
+    payload.id_caja = this.rutaCompleta.caja.id;
+  } else if (this.rutaCompleta?.fila?.id) {
+    payload.id_fila = this.rutaCompleta.fila.id;
+  } else if (this.rutaCompleta?.estanteria?.id) {
+    payload.id_estanteria = this.rutaCompleta.estanteria.id;
+  } else if (this.rutaCompleta?.sala?.id) {
+    payload.id_sala = this.rutaCompleta.sala.id;
+  } else if (this.rutaCompleta?.edificio?.id) {
+    payload.id_edificio = this.rutaCompleta.edificio.id;
   }
+
+  // 3. LLAMADA AL SERVICIO (El procesamiento de la respuesta está intacto como pediste)
+  this.seccionesService.listarDocumentosOCRPorSerie(payload).subscribe({
+   next: (resp: any) => {
+  // Ahora tomamos los datos de 'resp.data' (por el paginate de Laravel)
+  const lista = resp.data || []; 
+  
+  console.log('Documentos recibidos:', lista);
+
+  this.documentos = lista.map((doc: any) => {
+    return {
+      ...doc,
+      seleccionado: false,
+      peso_bytes: Number(doc.tamano_archivo || doc.size || 0),
+      ocr_status: (doc.datos_ocr && doc.datos_ocr.toString().trim() !== '') ? 'INDEXADO' : 'NO INDEXADO',
+      param_status: (doc.parametros_indexados_values !== null) ? 'INDEXADO' : 'NO INDEXADO'
+    };
+  });
+
+  // Ajustamos también la paginación a la estructura estándar de Laravel
+  this.totalRegistros = resp.total || 0;
+  this.ultimaPagina = resp.last_page || 1;
+}
+  });
+}
 
   // Agrega esta función en tu componente
 get documentosFiltrados() {
@@ -307,9 +330,10 @@ async ejecutarProcesoUnoPorUno(lista: any[]) {
 
       // CONFIGURACIÓN DEL PAYLOAD PARA LARAVEL
       const payload = {
-        id_documento: idReal, 
+        id_documento: idReal,
         idSerie: this.idSerie,
         id_empresa: this.ID_EMPRESA,
+        usuario_id: this.usuario_id,
         solo_texto: this.opciones.soloTexto || this.opciones.ambos,
         solo_params: this.opciones.soloParametros || this.opciones.ambos
       };

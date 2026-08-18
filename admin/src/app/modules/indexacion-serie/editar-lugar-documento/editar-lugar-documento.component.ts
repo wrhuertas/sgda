@@ -1,7 +1,8 @@
-import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core'; 
+import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
+import Swal from 'sweetalert2';
 import { IndexacionSerieService } from '../service/indexacion-serie.service';
 
 @Component({
@@ -346,12 +347,20 @@ export class EditarLugarDocumentoComponent implements OnInit {
     this.seccionesService.listarEstanteriasPorSala(payload).subscribe({
       next: (res: any) => {
         const lista = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
-        this.estanteriasLista = lista.map((e: any) => ({
+    this.estanteriasLista = lista.map((e: any) => ({
           id: e.id || e.id_estanteria || null,
           nombre: e.nombre || e.codigo || e.descripcion || '',
           cantidad_filas: e.cantidad_filas ?? null,
           guardado: !!e.cantidad_filas
         }));
+        // Orden natural por id o número en el nombre
+        this.estanteriasLista.sort((a: any, b: any) => {
+          const extractNum = (v: any) => { const m = String(v || '').match(/-?\d+/); return m ? Number(m[0]) : NaN; };
+          const na = !isNaN(Number(a.id)) ? Number(a.id) : extractNum(a.nombre);
+          const nb = !isNaN(Number(b.id)) ? Number(b.id) : extractNum(b.nombre);
+          if (!isNaN(na) && !isNaN(nb)) return na - nb;
+          return String(a.nombre || '').localeCompare(String(b.nombre || ''));
+        });
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -368,6 +377,48 @@ export class EditarLugarDocumentoComponent implements OnInit {
     this.cargarFilasPorEstanteria();
   }
 
+  // --- Edición inline: Estantería ---
+  startEditNombreEstanteria(estanteria: any, event?: Event) {
+    if (event) { try { event.preventDefault(); } catch {} }
+    // Seleccionar para cargar filas
+    this.seleccionarEstanteria(estanteria);
+    estanteria._originalName = estanteria._originalName ?? estanteria.nombre;
+    this.estanteriasLista.forEach((e: any) => { if (e !== estanteria) e.isEditingName = false; });
+    estanteria.isEditingName = true;
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      const inp = document.querySelector(`[data-est-id="${estanteria.id}"]`) as HTMLInputElement | null;
+      if (inp) { inp.focus(); inp.select(); }
+    }, 50);
+  }
+
+  guardarNombreEstanteria(estanteria: any) {
+    if (!estanteria) return;
+    const nuevo = String(estanteria.nombre || '').trim();
+    if (nuevo === '') { this.toast.error('El nombre no puede quedar vacío', 'Error'); return; }
+    if (estanteria._originalName === nuevo) { estanteria.isEditingName = false; return; }
+
+    const payload: any = { id_estanteria: estanteria.id, nombre: nuevo, usuario_registro: this.usuario_id };
+    this.seccionesService.actualizarEstanteria(payload).subscribe({
+      next: (resp: any) => {
+        this.toast.success('Nombre de estantería actualizado', 'Éxito');
+        estanteria.isEditingName = false;
+        this.listarEstanterias();
+      },
+      error: (err: any) => {
+        console.error('Error actualizando estantería:', err);
+        this.toast.error('No se pudo actualizar el nombre', 'Error');
+        estanteria.nombre = estanteria._originalName ?? estanteria.nombre;
+        estanteria.isEditingName = false;
+      }
+    });
+  }
+
+  cancelarEditNombreEstanteria(estanteria: any) {
+    estanteria.nombre = estanteria._originalName ?? estanteria.nombre;
+    estanteria.isEditingName = false;
+  }
+
   private cargarFilasPorEstanteria() {
     if (!this.selectedEstanteria?.id) { return; }
     this.selectedFila = null;
@@ -380,6 +431,14 @@ export class EditarLugarDocumentoComponent implements OnInit {
           nombre: f.nombre || f.codigo || f.descripcion || `Fila ${i + 1}`,
           cantidad_cajas: (f.cantidad_cajas != null ? f.cantidad_cajas : 0)
         }));
+        // Orden natural por id o número en el nombre
+        this.filasLista.sort((a: any, b: any) => {
+          const extractNum = (v: any) => { const m = String(v || '').match(/-?\d+/); return m ? Number(m[0]) : NaN; };
+          const na = !isNaN(Number(a.id)) ? Number(a.id) : extractNum(a.nombre);
+          const nb = !isNaN(Number(b.id)) ? Number(b.id) : extractNum(b.nombre);
+          if (!isNaN(na) && !isNaN(nb)) return na - nb;
+          return String(a.nombre || '').localeCompare(String(b.nombre || ''));
+        });
         if (this.selectedEstanteria?.cantidad_filas != null) {
           this.cantidadFilasEstanteria = this.selectedEstanteria.cantidad_filas;
         } else {
@@ -400,6 +459,48 @@ export class EditarLugarDocumentoComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
+  // --- Edición inline: Fila ---
+  startEditNombreFila(fila: any, event?: Event) {
+    if (event) { try { event.preventDefault(); } catch {} }
+    this.seleccionarFila(fila);
+    fila._originalName = fila._originalName ?? fila.nombre;
+    this.filasLista.forEach((r: any) => { if (r !== fila) r.isEditingName = false; });
+    fila.isEditingName = true;
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      const inp = document.querySelector(`[data-f-id="${fila.id}"]`) as HTMLInputElement | null;
+      if (inp) { inp.focus(); inp.select(); }
+    }, 50);
+  }
+
+  guardarNombreFila(fila: any) {
+    if (!fila) return;
+    const nuevo = String(fila.nombre || '').trim();
+    if (nuevo === '') { this.toast.error('El nombre no puede quedar vacío', 'Error'); return; }
+    if (fila._originalName === nuevo) { fila.isEditingName = false; return; }
+
+    const payload: any = { id_fila: fila.id, cantidad_cajas: fila.cantidad_cajas ?? 0, usuario_registro: this.usuario_id, nombre: nuevo };
+    this.seccionesService.actualizarFila(payload).subscribe({
+      next: (resp: any) => {
+        this.toast.success('Nombre de fila actualizado', 'Éxito');
+        fila.isEditingName = false;
+        this.cargarCajasPorFila();
+        this.cargarFilasPorEstanteria();
+      },
+      error: (err: any) => {
+        console.error('Error actualizando fila:', err);
+        this.toast.error('No se pudo actualizar el nombre', 'Error');
+        fila.nombre = fila._originalName ?? fila.nombre;
+        fila.isEditingName = false;
+      }
+    });
+  }
+
+  cancelarEditNombreFila(fila: any) {
+    fila.nombre = fila._originalName ?? fila.nombre;
+    fila.isEditingName = false;
+  }
+
   private cargarCajasPorFila() {
     if (!this.selectedFila?.id) { this.cajasLista = []; return; }
     const payload = { id_fila: this.selectedFila.id };
@@ -412,6 +513,14 @@ export class EditarLugarDocumentoComponent implements OnInit {
           numero_caja: c.numero_caja || (i + 1),
           cantidad_carpetas: (c.cantidad_carpetas != null ? c.cantidad_carpetas : 0)
         }));
+        // Orden natural por numero_caja o id
+        this.cajasLista.sort((a: any, b: any) => {
+          const na = Number(a.numero_caja ?? a.id ?? NaN);
+          const nb = Number(b.numero_caja ?? b.id ?? NaN);
+          if (!isNaN(na) && !isNaN(nb)) return na - nb;
+          if (a.id && b.id) return Number(a.id) - Number(b.id);
+          return String(a.nombre).localeCompare(String(b.nombre));
+        });
         this.cantidadCajasFila = this.cajasLista.length || 0;
         this.cdr.detectChanges();
       },
@@ -428,6 +537,48 @@ export class EditarLugarDocumentoComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
+  // --- Edición inline: Caja ---
+  startEditNombreCaja(caja: any, event?: Event) {
+    if (event) { try { event.preventDefault(); } catch {} }
+    this.seleccionarCaja(caja);
+    caja._originalName = caja._originalName ?? caja.nombre;
+    this.cajasLista.forEach((r: any) => { if (r !== caja) r.isEditingName = false; });
+    caja.isEditingName = true;
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      const inp = document.querySelector(`[data-c-id="${caja.id}"]`) as HTMLInputElement | null;
+      if (inp) { inp.focus(); inp.select(); }
+    }, 50);
+  }
+
+  guardarNombreCaja(caja: any) {
+    if (!caja) return;
+    const nuevo = String(caja.nombre || '').trim();
+    if (nuevo === '') { this.toast.error('El nombre no puede quedar vacío', 'Error'); return; }
+    if (caja._originalName === nuevo) { caja.isEditingName = false; return; }
+
+    const payload: any = { id_caja: caja.id, cantidad_carpetas: caja.cantidad_carpetas ?? 0, usuario_registro: this.usuario_id, nombre: nuevo };
+    this.seccionesService.actualizarCaja(payload).subscribe({
+      next: (resp: any) => {
+        this.toast.success('Nombre de caja actualizado', 'Éxito');
+        caja.isEditingName = false;
+        this.cargarCarpetasPorCaja();
+        this.cargarCajasPorFila();
+      },
+      error: (err: any) => {
+        console.error('Error actualizando caja:', err);
+        this.toast.error('No se pudo actualizar el nombre', 'Error');
+        caja.nombre = caja._originalName ?? caja.nombre;
+        caja.isEditingName = false;
+      }
+    });
+  }
+
+  cancelarEditNombreCaja(caja: any) {
+    caja.nombre = caja._originalName ?? caja.nombre;
+    caja.isEditingName = false;
+  }
+
   private cargarCarpetasPorCaja() {
     if (!this.selectedCaja?.id) { this.carpetasLista = []; return; }
     const payload = { id_caja: this.selectedCaja.id };
@@ -439,12 +590,189 @@ export class EditarLugarDocumentoComponent implements OnInit {
           nombre: k.nombre || `Carpeta ${i + 1}`,
           numero_documentos: (k.numero_documentos != null ? k.numero_documentos : 0)
         }));
+        // Orden natural por id o número en el nombre
+        this.carpetasLista.sort((a: any, b: any) => {
+          const extractNum = (v: any) => { const m = String(v || '').match(/-?\d+/); return m ? Number(m[0]) : NaN; };
+          const na = !isNaN(Number(a.id)) ? Number(a.id) : extractNum(a.nombre);
+          const nb = !isNaN(Number(b.id)) ? Number(b.id) : extractNum(b.nombre);
+          if (!isNaN(na) && !isNaN(nb)) return na - nb;
+          return String(a.nombre || '').localeCompare(String(b.nombre || ''));
+        });
         this.cdr.detectChanges();
       },
       error: (err) => {
         this.toast.error('No se pudieron cargar las carpetas de la caja.', 'Error');
         console.error('Error listando carpetas:', err);
       }
+    });
+  }
+
+  // --- Edición inline: Carpeta ---
+  startEditNombreCarpeta(carpeta: any, event?: Event) {
+    if (event) { try { event.preventDefault(); } catch {} }
+    carpeta._originalName = carpeta._originalName ?? carpeta.nombre;
+    this.carpetasLista.forEach((r: any) => { if (r !== carpeta) r.isEditingName = false; });
+    carpeta.isEditingName = true;
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      const inp = document.querySelector(`[data-ca-id="${carpeta.id}"]`) as HTMLInputElement | null;
+      if (inp) { inp.focus(); inp.select(); }
+    }, 50);
+  }
+
+  guardarNombreCarpeta(carpeta: any) {
+    if (!carpeta) return;
+    const nuevo = String(carpeta.nombre || '').trim();
+    if (nuevo === '') { this.toast.error('El nombre no puede quedar vacío', 'Error'); return; }
+    if (carpeta._originalName === nuevo) { carpeta.isEditingName = false; return; }
+
+    const payload: any = { id_carpeta: carpeta.id, numero_documentos: carpeta.numero_documentos ?? 0, usuario_registro: this.usuario_id, nombre: nuevo };
+    this.seccionesService.actualizarCarpeta(payload).subscribe({
+      next: (resp: any) => {
+        this.toast.success('Nombre de carpeta actualizado', 'Éxito');
+        carpeta.isEditingName = false;
+        this.cargarCarpetasPorCaja();
+      },
+      error: (err: any) => {
+        console.error('Error actualizando carpeta:', err);
+        this.toast.error('No se pudo actualizar el nombre', 'Error');
+        carpeta.nombre = carpeta._originalName ?? carpeta.nombre;
+        carpeta.isEditingName = false;
+      }
+    });
+  }
+
+  cancelarEditNombreCarpeta(carpeta: any) {
+    carpeta.nombre = carpeta._originalName ?? carpeta.nombre;
+    carpeta.isEditingName = false;
+  }
+
+  // =========================================================================
+  // GUARDAR CANTIDADES POR NIVEL
+  // =========================================================================
+
+  // Estantería: guarda la cantidad de filas (crea/ajusta las filas)
+  guardarCantidadEstanteria(estanteria: any) {
+    if (!estanteria?.id) { return; }
+    const cantidad = Number(estanteria.cantidad_filas);
+    if (isNaN(cantidad) || cantidad < 1) {
+      this.toast.error('Ingrese una cantidad válida de filas (mínimo 1)', 'Error');
+      return;
+    }
+    const payload = { estanteria_id: estanteria.id, cantidad: cantidad, usuario_registro: this.usuario_id };
+    this.seccionesService.registrarFilas(payload).subscribe({
+      next: () => {
+        this.toast.success('Filas actualizadas correctamente', 'Éxito');
+        estanteria.guardado = true;
+        if (this.selectedEstanteria?.id === estanteria.id) { this.cargarFilasPorEstanteria(); }
+        this.listarEstanterias();
+      },
+      error: (err: any) => {
+        console.error('Error guardando cantidad de filas:', err);
+        this.toast.error('No se pudieron actualizar las filas', 'Error');
+      }
+    });
+  }
+
+  // Fila: guarda la cantidad de cajas (crea/ajusta los registros de cajas)
+  guardarCantidadFila(fila: any) {
+    if (!fila?.id) { return; }
+    const cantidad = Number(fila.cantidad_cajas);
+    if (isNaN(cantidad) || cantidad < 0) {
+      this.toast.error('Ingrese una cantidad válida de cajas', 'Error');
+      return;
+    }
+    const payload = { fila_id: fila.id, cantidad: cantidad, usuario_registro: this.usuario_id };
+    this.seccionesService.registrarCajas(payload).subscribe({
+      next: () => {
+        this.toast.success('Cajas actualizadas correctamente', 'Éxito');
+        // Seleccionar la fila para ver sus cajas y recargarlas
+        this.seleccionarFila(fila);
+        this.cargarFilasPorEstanteria();
+      },
+      error: (err: any) => {
+        console.error('Error guardando cantidad de cajas:', err);
+        this.toast.error('No se pudieron actualizar las cajas', 'Error');
+      }
+    });
+  }
+
+  // Caja: guarda la cantidad de carpetas (crea/ajusta los registros de carpetas)
+  guardarCantidadCaja(caja: any) {
+    if (!caja?.id) { return; }
+    const cantidad = Number(caja.cantidad_carpetas);
+    if (isNaN(cantidad) || cantidad < 0) {
+      this.toast.error('Ingrese una cantidad válida de carpetas', 'Error');
+      return;
+    }
+    const payload = { caja_id: caja.id, cantidad: cantidad, usuario_registro: this.usuario_id };
+    this.seccionesService.registrarCarpetas(payload).subscribe({
+      next: () => {
+        this.toast.success('Carpetas actualizadas correctamente', 'Éxito');
+        // Seleccionar la caja para ver sus carpetas y recargarlas
+        this.seleccionarCaja(caja);
+        this.cargarCajasPorFila();
+      },
+      error: (err: any) => {
+        console.error('Error guardando cantidad de carpetas:', err);
+        this.toast.error('No se pudieron actualizar las carpetas', 'Error');
+      }
+    });
+  }
+
+  // Carpeta: guarda el número de documentos
+  guardarCantidadCarpeta(carpeta: any) {
+    if (!carpeta?.id) { return; }
+    const cantidad = Number(carpeta.numero_documentos);
+    if (isNaN(cantidad) || cantidad < 0) {
+      this.toast.error('Ingrese un número válido de documentos', 'Error');
+      return;
+    }
+    const payload = { id_carpeta: carpeta.id, numero_documentos: cantidad };
+    this.seccionesService.actualizarCarpeta(payload).subscribe({
+      next: () => {
+        this.toast.success('Documentos actualizados correctamente', 'Éxito');
+        this.cargarCarpetasPorCaja();
+      },
+      error: (err: any) => {
+        console.error('Error guardando número de documentos:', err);
+        this.toast.error('No se pudieron actualizar los documentos', 'Error');
+      }
+    });
+  }
+
+  // Eliminar (desactivar) una estantería
+  eliminarEstanteria(estanteria: any) {
+    if (!estanteria?.id) { return; }
+    Swal.fire({
+      title: '¿Eliminar estantería?',
+      html: `Se eliminará la estantería <strong>${estanteria.nombre || ''}</strong> y su contenido.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#d33'
+    }).then(result => {
+      if (!result.isConfirmed) { return; }
+      this.seccionesService.desactivarEstanteria({ id_estanteria: estanteria.id, usuario_registro: this.usuario_id }).subscribe({
+        next: () => {
+          this.toast.success('Estantería eliminada correctamente', 'Éxito');
+          // Limpiar selección si era la eliminada
+          if (this.selectedEstanteria?.id === estanteria.id) {
+            this.selectedEstanteria = null;
+            this.filasLista = [];
+            this.selectedFila = null;
+            this.cajasLista = [];
+            this.selectedCaja = null;
+            this.carpetasLista = [];
+          }
+          this.listarEstanterias();
+        },
+        error: (err: any) => {
+          console.error('Error eliminando estantería:', err);
+          this.toast.error('No se pudo eliminar la estantería', 'Error');
+        }
+      });
     });
   }
 

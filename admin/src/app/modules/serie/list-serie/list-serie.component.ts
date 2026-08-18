@@ -20,6 +20,10 @@ export class ListSerieComponent {
   nombreSubSeccion!: string;
   search: string = '';
   SUBSECCIONES: any[] = [];
+  // Lista tal como llegó del servidor, antes de filtrar por permisos.
+  // Se conserva porque los permisos pueden llegar después que la lista.
+  seriesSinFiltrar: any[] = [];
+  totalSinFiltrar = 0;
   totalPages: number = 0;
   currentPage: number = 1;
   pageSize: number = 25;
@@ -129,6 +133,30 @@ isDataLoaded: boolean = false;
     );
   }
 
+  /**
+   * Deja en pantalla solo las series que el usuario puede ver.
+   *
+   * Se llama tanto cuando llega la lista como cuando llegan los permisos,
+   * porque son dos peticiones independientes y no hay forma de saber cuál
+   * responde primero. Antes, si los permisos llegaban después, la lista se
+   * filtraba contra un mapa vacío y salía "Sin registros disponibles".
+   */
+  aplicarFiltroPermisos() {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    if (this.isAdminUser(user)) {
+      this.SUBSECCIONES = this.seriesSinFiltrar;
+    } else {
+      this.SUBSECCIONES = this.seriesSinFiltrar.filter((serie: any) => {
+        const permiso = this.permisosPorSerie[serie.id_serie];
+        return permiso?.ver === true || permiso?.ver === 1;
+      });
+    }
+
+    this.totalPages = this.totalSinFiltrar || this.SUBSECCIONES.length;
+    this.cdr.detectChanges();
+  }
+
 
   loadSubsecciones(page: number = 1) {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -147,40 +175,15 @@ isDataLoaded: boolean = false;
       .listSubsecciones(this.idSubseccion, page, this.search)
       .subscribe({
         next: (res: any) => {
-          const seriesOriginales = res.data || [];
-          console.log('Series originales:', seriesOriginales);
-  
-          // 🔥 ADMIN / SUPER ADMIN → VE TODAS LAS SERIES
-          if (this.isAdminUser(user)) {
-            this.SUBSECCIONES = seriesOriginales;
-            console.log('ADMIN → todas las series visibles:', this.SUBSECCIONES);
-            
-            this.totalPages = res.total || this.SUBSECCIONES.length;
-            this.currentPage = page;
-            
-            Swal.close(); // ✅ CERRAR SWAL
-            this.cdr.detectChanges();
-            return; 
-          }
-  
-          // 👇 USUARIO NORMAL → FILTRAR POR PERMISO "ver"
-          this.SUBSECCIONES = seriesOriginales.filter((serie: any) => {
-            const permiso = this.permisosPorSerie[serie.id_serie];
-            const puedeVer = permiso?.ver === true;
-  
-            console.log(
-              `Serie ${serie.id_serie} - ${serie.nombre}:`,
-              puedeVer ? 'SI puede ver' : 'NO puede ver'
-            );
-  
-            return puedeVer;
-          });
-  
-          console.log('Series filtradas (solo ver=true):', this.SUBSECCIONES);
-  
-          this.totalPages = res.total || this.SUBSECCIONES.length;
+          // Se guarda sin filtrar: los permisos son otra petición y pueden
+          // llegar después que esta lista
+          this.seriesSinFiltrar = res.data || [];
+          this.totalSinFiltrar = res.total || this.seriesSinFiltrar.length;
           this.currentPage = page;
-  
+          console.log('Series originales:', this.seriesSinFiltrar);
+
+          this.aplicarFiltroPermisos();
+
           Swal.close(); // ✅ CERRAR SWAL
           this.cdr.detectChanges();
         },
@@ -335,6 +338,10 @@ isDataLoaded: boolean = false;
       }, {} as { [id_serie: number]: any });
 
       console.log('Permisos por Serie:', this.permisosPorSerie);
+
+      // Si la lista ya había llegado, se vuelve a filtrar ahora que sí hay
+      // permisos. Sin esto quedaba vacía hasta recargar la página.
+      this.aplicarFiltroPermisos();
 
       // Evaluar permisos globales para Serie
       this.puedeCrearSerie = this.permisosDocumentales.some(p =>

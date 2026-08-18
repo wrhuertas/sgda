@@ -1,0 +1,110 @@
+<div class="modal-header">
+  <h4 class="modal-title fw-bold">Ingresar observación de la ubicación topográfica</h4>
+  <button type="button" class="btn btn-sm btn-icon btn-active-light-primary" (click)="activeModal.dismiss()">
+    <i class="ki-duotone ki-cross fs-2"><span class="path1"></span><span class="path2"></span></i>
+  </button>
+</div>
+
+<div class="modal-body">
+  <div class="alert alert-light-primary d-flex align-items-center mb-4">
+    <i class="ki-duotone ki-geolocation fs-2 text-primary me-3">
+      <span class="path1"></span><span class="path2"></span>
+    </i>
+    <span>Seleccione la ubicación topográfica empezando desde la estantería</span>
+  </div>
+
+  <!-- Edificio / Sala: tomados de la fila seleccionada (fijos) -->
+    <div *ngIf="desdeFila" class="row g-3 mb-3">
+      <div class="col-6">
+        <label class="form-label fw-semibold">Edificio</label>
+        <input type="text" class="form-control form-control-solid" [value]="nombreEdificio || ('#' + idEdificio)" readonly />
+      </div>
+      <div class="col-6">
+        <label class="form-label fw-semibold">Sala</label>
+        <input type="text" class="form-control form-control-solid" [value]="nombreSala || ('#' + idSala)" readonly />
+      </div>
+    </div>
+
+    <!-- Si la fila no trae edificio/sala: permitir seleccionarlos -->
+    <ng-container *ngIf="!desdeFila">
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Edificio</label>
+        <select class="form-select form-select-solid" [(ngModel)]="idEdificio" name="idEdificio" (ngModelChange)="onEdificioChange()">
+          <option [ngValue]="null">Seleccione edificio</option>
+          <option *ngFor="let e of edificios" [ngValue]="e.id">{{ e.nombre }}</option>
+        </select>
+      </div>
+      <div class="mb-3" *ngIf="idEdificio">
+        <label class="form-label fw-semibold">Sala</label>
+        <select class="form-select form-select-solid" [(ngModel)]="idSala" name="idSala" (ngModelChange)="onSalaChange()">
+          <option [ngValue]="null">Seleccione sala</option>
+          <option *ngFor="let s of salas" [ngValue]="s.id">{{ s.nombre }}</option>
+        </select>
+      </div>
+    </ng-container>
+
+    <!-- Estantería -->
+    <div class="mb-3" *ngIf="idSala">
+      <label class="form-label fw-semibold">Estantería</label>
+      <div class="input-group">
+        <select class="form-select form-select-solid" [(ngModel)]="idEstanteria" name="idEstanteria" (ngModelChange)="onEstanteriaChange()">
+          <option [ngValue]="null">Seleccione estantería</option>
+          <option *ngFor="let e of estanterias" [ngValue]="e.id">{{ e.nombre }}</option>
+        </select>
+        <button class="btn btn-light-primary" type="button" [disabled]="!idEstanteria" title="Generar etiqueta" (click)="generarEtiquetaNivel('estanteria', idEstanteria)">
+          <i *ngIf="tipoEtiqueta === 'qr'" class="fa fa-qrcode"></i>
+          <i *ngIf="tipoEtiqueta === 'barras'" class="fa fa-barcode"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Fila -->
+    <div class="mb-3" *ngIf="idEstanteria">
+      <label class="form-label fw-semibold">Fila</label>
+      <div class="input-group">
+        <select class="form-select form-select-solid" [(ngModel)]="idFila" name="idFila" (ngModelChange)="onFilaChange()">
+          <option [ngValue]="null">Seleccione fila</option>
+          <option *ngFor="let f of filas" [ngValue]="f.id">{{ f.nombre }}</option>
+        </select>
+        <button class="btn btn-light-primary" type="button" [disabled]="!idFila" title="Generar etiqueta" (click)="generarEtiquetaNivel('fila', idFila)">
+          <i *ngIf="tipoEtiqueta === 'qr'" class="fa fa-qrcode"></i>
+          <i *ngIf="tipoEtiqueta === 'barras'" class="fa fa-barcode"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Caja -->
+    <div class="mb-3" *ngIf="idFila">
+      <label class="form-label fw-semibold">Caja</label>
+      <div class="input-group">
+        <select class="form-select form-select-solid" [(ngModel)]="idCaja" name="idCaja" (ngModelChange)="onCajaChange()">
+          <option [ngValue]="null">Seleccione caja</option>
+          <option *ngFor="let c of cajas" [ngValue]="c.id">{{ c.nombre }}</option>
+        </select>
+        <button class="btn btn-light-primary" type="button" [disabled]="!idCaja" title="Generar etiqueta" (click)="generarEtiquetaNivel('caja', idCaja)">
+          <i *ngIf="tipoEtiqueta === 'qr'" class="fa fa-qrcode"></i>
+          <i *ngIf="tipoEtiqueta === 'barras'" class="fa fa-barcode"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Carpeta -->
+    <div class="mb-3" *ngIf="idCaja">
+      <label class="form-label fw-semibold">Carpeta</label>
+      <div class="input-group">
+        <select class="form-select form-select-solid" [(ngModel)]="idCarpeta" name="idCarpeta">
+          <option [ngValue]="null">Seleccione carpeta</option>
+          <option *ngFor="let c of carpetas" [ngValue]="c.id">{{ c.nombre }}</option>
+        </select>
+        <button class="btn btn-light-primary" type="button" [disabled]="!idCarpeta" title="Generar etiqueta" (click)="generarEtiquetaNivel('carpeta', idCarpeta)">
+          <i *ngIf="tipoEtiqueta === 'qr'" class="fa fa-qrcode"></i>
+          <i *ngIf="tipoEtiqueta === 'barras'" class="fa fa-barcode"></i>
+        </button>
+      </div>
+    </div>
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-light" (click)="activeModal.dismiss()">Cerrar</button>
+  <button type="button" class="btn btn-primary" (click)="generar()">Generar</button>
+</div>

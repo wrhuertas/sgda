@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { BusquedaService } from '../service/busqueda.service';
-import { VerDocumentoComponent } from '../ver-documento/ver-documento.component';
+import { DocumentoViewerService } from '../../indexacion-serie/ver-documento/documento-viewer.service';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 import { ToastrService } from 'ngx-toastr';
@@ -30,8 +30,11 @@ mostrarModalInfo: boolean = false;
   proyectos: any[] = [];
   
   idSubSerie: number | null = null;
-  viewActual: 'tabla' | 'grafo_sin' | 'grafo_con' = 'tabla'; 
+  viewActual: 'tabla' | 'grafo_sin' | 'grafo_con' = 'tabla';
   busquedaRealizada: boolean = false;
+
+  /** Documento sobre el que se arma el grafo; null = panorama de la búsqueda */
+  documentoGrafo: any = null;
 
   
   paginaActual: number = 1; // Si prefieres mantener la tilde, cámbiala abajo
@@ -41,10 +44,11 @@ Math = Math;
 criterioBusqueda: string = '';
 
   constructor(
-    private busquedaService: BusquedaService,  
+    private busquedaService: BusquedaService,
     private cdr: ChangeDetectorRef,
     public modalService: NgbModal,
      private toast: ToastrService,
+    private documentoViewer: DocumentoViewerService,
   ) {}
 
   ngAfterViewInit() {
@@ -90,15 +94,239 @@ criterioBusqueda: string = '';
 
 // 2. Método de actualización que reemplaza a los borrados
 actualizarVistas() {
-  if (this.viewActual === 'grafo_sin') {
-    if (this.grafoContainer) {
-      setTimeout(() => this.renderizarGrafoDinamico(this.grafoContainer, this.resultados), 100);
-    }
+  const contenedor = this.contenedorActivo();
+  if (!contenedor) { return; }
+
+  setTimeout(() => this.dibujarGrafo(contenedor), 100);
+}
+
+/** El canvas de la vista que se está mostrando */
+private contenedorActivo(): ElementRef | null {
+  return this.viewActual === 'grafo_sin'
+    ? (this.grafoContainer || null)
+    : (this.grafoContextoContainer || null);
+}
+
+/**
+ * Dibuja el grafo del documento elegido; si todavía no se eligió ninguno,
+ * muestra el panorama general de la búsqueda.
+ */
+private dibujarGrafo(contenedor: ElementRef) {
+  if (this.documentoGrafo) {
+    this.renderizarGrafoDocumento(contenedor, this.documentoGrafo);
   } else {
-    if (this.grafoContextoContainer) {
-      setTimeout(() => this.renderizarGrafoDinamico(this.grafoContextoContainer, this.resultados), 100);
+    this.renderizarGrafoDinamico(contenedor, this.resultados);
+  }
+}
+
+/**
+ * Arma el grafo alrededor de un documento: de dónde cuelga, con qué datos
+ * está indexado y qué otros documentos de la búsqueda comparten esos datos.
+ */
+renderizarGrafoDocumento(elemento: ElementRef, doc: any) {
+  if (!elemento || !doc) { return; }
+
+  const elementos: any[] = [];
+  const puestos = new Set<string>();
+
+  const nodo = (id: string, label: string, color: string, tipo: string) => {
+    if (puestos.has(id)) { return; }
+    puestos.add(id);
+    elementos.push({ data: { id, label, color, tipo } });
+  };
+
+  const arista = (origen: string, destino: string, etiqueta: string = '') => {
+    const id = `e_${origen}__${destino}`;
+    if (puestos.has(id)) { return; }
+    puestos.add(id);
+    elementos.push({ data: { id, source: origen, target: destino, label: etiqueta } });
+  };
+
+  // 🔸 El documento elegido, en el centro
+  const docId = `doc_${doc.id_documento}`;
+  nodo(docId, this.recortar(doc.nombre_archivo, 24), '#ffc107', 'principal');
+
+  // 🔸 De dónde cuelga. Todo se cuelga del documento, que es el eje: si se
+  // encadenara sección › subsección › serie, la serie terminaría siendo el
+  // nodo fuerte del dibujo y el documento quedaría de costado.
+  const serie = doc.serie;
+  const subseccion = serie?.proyecto;
+  const seccion = subseccion?.parent;
+
+  if (seccion?.nombre) {
+    const id = `sec_${seccion.id_proyecto ?? seccion.nombre}`;
+    nodo(id, this.recortar(seccion.nombre, 22), '#6610f2', 'funcion');
+    arista(docId, id, 'sección');
+  }
+
+  if (subseccion?.nombre) {
+    const id = `sub_${subseccion.id_proyecto ?? subseccion.nombre}`;
+    nodo(id, this.recortar(subseccion.nombre, 22), '#6610f2', 'funcion');
+    arista(docId, id, 'subsección');
+  }
+
+  if (serie?.nombre) {
+    const id = `ser_${serie.id_serie ?? serie.nombre}`;
+    nodo(id, this.recortar(serie.nombre, 22), '#0d6efd', 'serie');
+    arista(docId, id, 'serie');
+  }
+
+  // 🔸 Ubicación física, si la tiene
+  if (doc.nro_caja) {
+    const id = `caja_${doc.nro_caja}`;
+    nodo(id, `Caja ${doc.nro_caja}`, '#fd7e14', 'ubicacion');
+    arista(docId, id, 'ubicado en');
+  }
+
+  // 🔸 Datos con los que está indexado
+  const metadatos = this.metadatosDe(doc);
+
+  metadatos.forEach((m) => {
+    const id = this.idValor(m.nombre, m.valor);
+    nodo(id, `${m.nombre}: ${this.recortar(m.valor, 18)}`, '#20c997', 'agente');
+    arista(docId, id, m.nombre);
+  });
+
+  // 🔸 Otros documentos de la búsqueda que comparten algo con este
+  const relacionados = this.documentosRelacionados(doc, metadatos);
+
+  relacionados.forEach(({ otro, motivo }) => {
+    const otroId = `doc_${otro.id_documento}`;
+    nodo(otroId, this.recortar(otro.nombre_archivo, 20), '#adb5bd', 'documento');
+
+    // La arista sale del documento elegido: lo que se quiere leer es "este
+    // documento se relaciona con aquel, y por qué"
+    arista(docId, otroId, motivo);
+  });
+
+  const grafo = cytoscape({
+    container: elemento.nativeElement,
+    elements: elementos,
+    style: this.obtenerEstiloGrafo(),
+    // Concéntrico y no 'cose' para que el documento quede fijo en el medio y
+    // todo lo demás se acomode a su alrededor
+    layout: {
+      name: 'concentric',
+      concentric: (nodo: any) => (nodo.data('tipo') === 'principal' ? 10 : 1),
+      levelWidth: () => 1,
+      minNodeSpacing: 70,
+      animate: true,
+      padding: 40
+    }
+  });
+
+  // Al tocar otro documento el grafo se rearma alrededor de ese
+  grafo.on('tap', 'node', (evento: any) => {
+    const id = evento.target.id();
+    if (!id.startsWith('doc_') || id === docId) { return; }
+
+    const elegido = this.resultados.find(
+      (r) => `doc_${r.id_documento}` === id
+    );
+
+    if (elegido) { this.seleccionarDocumentoGrafo(elegido); }
+  });
+}
+
+/**
+ * Busca en los resultados otros documentos que compartan la serie o alguno
+ * de los valores indexados del documento elegido.
+ */
+private documentosRelacionados(doc: any, metadatos: { nombre: string, valor: string }[]) {
+  const porDato: { otro: any, motivo: string }[] = [];
+  const porSerie: { otro: any, motivo: string }[] = [];
+
+  const idSerie = doc.serie?.id_serie ?? doc.id_serie_subserie;
+
+  // Mapa clave -> nombre del parámetro, para poder decir por cuál coinciden
+  const clavesPropias = new Map<string, string>();
+  metadatos.forEach((m) => clavesPropias.set(this.idValor(m.nombre, m.valor), m.nombre));
+
+  this.resultados.forEach((otro) => {
+    if (!otro || otro.id_documento === doc.id_documento) { return; }
+
+    const compartidos: string[] = [];
+
+    this.metadatosDe(otro).forEach((m) => {
+      const nombre = clavesPropias.get(this.idValor(m.nombre, m.valor));
+      if (nombre && !compartidos.includes(nombre)) {
+        compartidos.push(nombre);
+      }
+    });
+
+    if (compartidos.length > 0) {
+      porDato.push({ otro, motivo: 'comparte ' + compartidos.join(', ') });
+      return;
+    }
+
+    // Si no comparten datos, al menos estar en la misma serie los relaciona
+    const serieOtro = otro.serie?.id_serie ?? otro.id_serie_subserie;
+    if (idSerie && serieOtro === idSerie) {
+      porSerie.push({ otro, motivo: 'misma serie' });
+    }
+  });
+
+  // Los que comparten datos indexados importan más que los simples vecinos
+  // de serie. Se acota el total porque con demasiados no se lee nada.
+  return [...porDato, ...porSerie].slice(0, 12);
+}
+
+/** Elige el documento sobre el que se arma el grafo */
+seleccionarDocumentoGrafo(doc: any) {
+  this.documentoGrafo = doc;
+
+  const contenedor = this.contenedorActivo();
+  if (!contenedor) { return; }
+
+  this.cdr.detectChanges();
+  setTimeout(() => this.renderizarGrafoDocumento(contenedor, doc), 50);
+}
+
+/** Vuelve al grafo general de la búsqueda */
+limpiarDocumentoGrafo() {
+  this.documentoGrafo = null;
+
+  const contenedor = this.contenedorActivo();
+  if (!contenedor) { return; }
+
+  this.cdr.detectChanges();
+  setTimeout(() => this.renderizarGrafoDinamico(contenedor, this.resultados), 50);
+}
+
+/**
+ * Devuelve los parámetros indexados que tienen valor.
+ * El campo puede venir como arreglo o como texto JSON codificado más de una
+ * vez, según cómo se haya guardado.
+ */
+metadatosDe(doc: any): { nombre: string, valor: string }[] {
+  let lista: any = doc?.metadatos ?? doc?.parametros_indexados_values;
+
+  for (let i = 0; i < 3 && typeof lista === 'string'; i++) {
+    try {
+      lista = JSON.parse(lista);
+    } catch (e) {
+      return [];
     }
   }
+
+  if (!Array.isArray(lista)) { return []; }
+
+  return lista
+    .filter((p: any) => p && p.nombre && p.valor !== null && String(p.valor).trim() !== '')
+    .map((p: any) => ({
+      nombre: String(p.nombre).trim(),
+      valor: String(p.valor).trim()
+    }));
+}
+
+/** Clave común para un par nombre/valor, así dos documentos caen en el mismo nodo */
+private idValor(nombre: string, valor: string): string {
+  return `val_${nombre.toUpperCase()}_${valor.toUpperCase()}`;
+}
+
+private recortar(texto: any, largo: number): string {
+  const limpio = String(texto ?? '').trim();
+  return limpio.length > largo ? limpio.substring(0, largo) + '…' : limpio;
 }
 
 // 3. El nuevo motor del grafo (Asegúrate de que el nombre sea este)
@@ -114,26 +342,26 @@ renderizarGrafoDinamico(elemento: ElementRef, datos: any[]) {
 
   datos.forEach(doc => {
     const docId = `doc_${doc.id_documento}`;
-    
+
     // Nodo del Documento (RECORD)
     nodosYRelaciones.push({
-      data: { id: docId, label: doc.nombre_archivo.substring(0, 15), color: '#ffc107' }
+      data: { id: docId, label: this.recortar(doc.nombre_archivo, 15), color: '#ffc107', tipo: 'documento' }
     });
     nodosYRelaciones.push({ data: { source: 'root', target: docId } });
 
-    // Extraer beneficiarios (Agentes) de los metadatos de VALENCIA GAD o SOLMO
-    if (doc.parametros_indexados_values) {
-      doc.parametros_indexados_values.forEach((m: any) => {
-        const nombre = m['BENEFICIARIO'] || m['Beneficiario'];
-        if (nombre) {
-          const agId = `ag_${nombre}`;
-          if (!nodosYRelaciones.find(n => n.data.id === agId)) {
-            nodosYRelaciones.push({ data: { id: agId, label: nombre, color: '#20c997' } });
-          }
-          nodosYRelaciones.push({ data: { source: docId, target: agId } });
-        }
-      });
-    }
+    // Los valores indexados se comparten entre documentos: si dos coinciden
+    // caen en el mismo nodo y ahí se ve la relación
+    this.metadatosDe(doc).forEach((m) => {
+      const agId = this.idValor(m.nombre, m.valor);
+
+      if (!nodosYRelaciones.find(n => n.data.id === agId)) {
+        nodosYRelaciones.push({
+          data: { id: agId, label: this.recortar(m.valor, 18), color: '#20c997', tipo: 'agente' }
+        });
+      }
+
+      nodosYRelaciones.push({ data: { source: docId, target: agId } });
+    });
   });
 
   cytoscape({
@@ -170,13 +398,43 @@ obtenerEstiloGrafo(): any[] {
         'font-size': '10px',
         'text-valign': 'bottom',
         'text-margin-y': 6,
+        'text-wrap': 'wrap',
+        'text-max-width': '120px',
         'width': 20,
         'height': 20
       }
     },
+    // El documento elegido se destaca del resto
+    {
+      selector: 'node[tipo = "principal"]',
+      style: {
+        'width': 44,
+        'height': 44,
+        'font-size': '13px',
+        'font-weight': 'bold',
+        'border-width': 3,
+        'border-color': '#fff'
+      }
+    },
+    {
+      selector: 'node[tipo = "serie"], node[tipo = "funcion"]',
+      style: { 'width': 26, 'height': 26, 'shape': 'round-rectangle' }
+    },
+    {
+      selector: 'node[tipo = "ubicacion"]',
+      style: { 'shape': 'diamond', 'width': 24, 'height': 24 }
+    },
     {
       selector: 'edge',
-      style: { 'width': 1, 'line-color': '#444', 'curve-style': 'bezier' }
+      style: {
+        'width': 1,
+        'line-color': '#444',
+        'curve-style': 'bezier',
+        'label': 'data(label)',
+        'font-size': '8px',
+        'color': '#8c9199',
+        'text-rotation': 'autorotate'
+      }
     }
   ];
 }
@@ -406,12 +664,13 @@ private crearSnippetLimpio(texto: string, busqueda: string): string {
 // Cambia el nombre de la función para que el HTML la encuentre
 cambiarVista(vista: 'tabla' | 'grafo_sin' | 'grafo_con') {
   this.viewActual = vista;
-  
+
   // Ejecutamos la lógica de los grafos si no es la vista de tabla
-  if (this.viewActual === 'grafo_sin') {
-    setTimeout(() => this.renderizarGrafoDinamico(this.grafoContainer, this.resultados), 100);
-  } else if (this.viewActual === 'grafo_con') {
-    setTimeout(() => this.renderizarGrafoDinamico(this.grafoContextoContainer, this.resultados), 100);
+  if (this.viewActual !== 'tabla') {
+    setTimeout(() => {
+      const contenedor = this.contenedorActivo();
+      if (contenedor) { this.dibujarGrafo(contenedor); }
+    }, 100);
   }
 }
 
@@ -428,6 +687,8 @@ cambiarVista(vista: 'tabla' | 'grafo_sin' | 'grafo_con') {
     this.total = 0;
     this.busquedaRealizada = false;
     this.criterioBusqueda = ''; // <-- Limpiar también
+    // El documento del grafo ya no está entre los resultados nuevos
+    this.documentoGrafo = null;
   }
 
   buscarAvanzado() {
@@ -445,7 +706,10 @@ cambiarVista(vista: 'tabla' | 'grafo_sin' | 'grafo_con') {
         if (!dataBusqueda) return;
         this.limpiarEstadoBusqueda();
         this.texto = '';
-        this.criterioBusqueda = dataBusqueda.busqueda ? dataBusqueda.busqueda : 'Filtros Avanzados';
+        // Se muestra el tipo de documento cuando la búsqueda vino de esa pestaña
+        this.criterioBusqueda = dataBusqueda.busqueda
+          ? dataBusqueda.busqueda
+          : (dataBusqueda.tipo_documento || 'Filtros Avanzados');
         // 1. Mostrar el mismo Swal de carga que la búsqueda normal
         Swal.fire({
           title: 'Cargando documentos...',
@@ -535,52 +799,19 @@ verInfo(doc: any) {
 
 
 
+/**
+ * Abre el mismo visor del expediente (el de indexación), pero en modo
+ * consulta: se puede ver, navegar y hacer zoom, sin las acciones que
+ * modifican el documento.
+ */
 verDocumento(doc: any) {
-  const payload = {
+  this.documentoViewer.abrirVer({
     idDocumento: doc.id_documento,
     idEmpresa: this.id_empresa,
-    idSerieSubserie: this.idSubSerie
-  };
-
-  Swal.fire({
-    title: 'Cargando documento',
-    text: 'Por favor espere mientras se procesa el archivo...',
-    allowOutsideClick: false,
-    didOpen: () => {
-      Swal.showLoading();
-    }
-  });
-
-  this.busquedaService.obtenerDocumentoPorId(payload).subscribe({
-    next: (blob: Blob) => {
-      // 1. CERRAR EL SWAL AQUÍ (Ya encontró el archivo)
-      Swal.close();
-
-      if (blob.size === 0) {
-        this.toast.error('El archivo está vacío.');
-        return;
-      }
-
-      const urlBlob = URL.createObjectURL(blob);
-
-      // 2. Abrir el visor después de cerrar la carga
-      const modalRef = this.modalService.open(VerDocumentoComponent, {
-        size: 'xl',
-        centered: true
-      });
-
-      modalRef.componentInstance.rutaDocumento = urlBlob;
-
-      modalRef.result.finally(() => {
-        URL.revokeObjectURL(urlBlob);
-      });
-    },
-    error: (err) => {
-      // 3. CERRAR TAMBIÉN EN CASO DE ERROR
-      Swal.close();
-      console.error('Error al descargar:', err);
-      this.toast.error('Error al obtener el documento.');
-    }
+    idSerieSubserie: doc.id_serie_subserie ?? this.idSubSerie ?? null,
+    nombreArchivo: doc.nombre_archivo ?? null,
+    soloLectura: true,
+    permitirImprimir: false
   });
 }
 

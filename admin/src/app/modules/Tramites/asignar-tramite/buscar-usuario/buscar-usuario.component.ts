@@ -18,6 +18,11 @@ export class BuscarUsuarioComponent implements OnInit {
   @Input() personasIniciales: any[] | null = null; // Lista que llega desde el padre (para/cc/de)
 
   public filtro_usuario: string = '';
+  // Tipo de persona a buscar: 'servidor' (usuarios internos) o 'ciudadano' (clientes)
+  public tipo_busqueda: string = 'servidor';
+  // Los subdirectores sólo pueden buscar servidores públicos: el envío a
+  // ciudadanos está reservado al director.
+  public esSubdirector: boolean = false;
   public cargando: boolean = false;
   public usuarios_encontrados: any[] = [];
 
@@ -38,6 +43,30 @@ export class BuscarUsuarioComponent implements OnInit {
     console.log("ID Empresa:", this.id_empresa);
     console.log("Tipo Doc:", this.id_tipo_documento);
     console.log("========================================");
+
+    // Si el usuario logueado es subdirector, queda fijo en "Servidor Público".
+    // Se consulta al backend porque el usuario guardado en localStorage puede
+    // ser de una sesión anterior y no traer el campo.
+    const usuarioLogueado = JSON.parse(localStorage.getItem('user') || '{}');
+    const idLogueado = this.id_usuario ?? usuarioLogueado?.id ?? null;
+
+    this.esSubdirector = Number(usuarioLogueado?.subdirector) === 1;
+    if (this.esSubdirector) {
+      this.tipo_busqueda = 'servidor';
+    }
+
+    if (idLogueado) {
+      this.AsignartramiteService.datosLogeado(Number(idLogueado)).subscribe({
+        next: (resp: any) => {
+          this.esSubdirector = Number(resp?.subdirector) === 1;
+          if (this.esSubdirector) {
+            this.tipo_busqueda = 'servidor';
+          }
+          this.cdr.detectChanges();
+        },
+        error: (err) => console.error('No se pudo validar el rol del usuario:', err)
+      });
+    }
 
     // Si llegan personas iniciales desde el padre, las usamos como base
     if (Array.isArray(this.personasIniciales) && this.personasIniciales.length > 0) {
@@ -167,16 +196,19 @@ export class BuscarUsuarioComponent implements OnInit {
     this.usuarios_encontrados = [];
   
     this.AsignartramiteService.buscarUsuariosSistema(
-      this.filtro_usuario.trim(), 
-      this.id_empresa, 
-      this.id_usuario
+      this.filtro_usuario.trim(),
+      this.id_empresa,
+      this.id_usuario,
+      this.tipo_busqueda
     ).subscribe({
       next: (resp: any) => {
         this.usuarios_encontrados = resp.usuarios || [];
         this.cargando = false;
-        
+
         if (this.usuarios_encontrados.length === 0) {
-          this.toast.info('No se encontraron usuarios con ese criterio');
+          this.toast.info(this.tipo_busqueda === 'ciudadano'
+            ? 'No se encontraron ciudadanos con ese criterio'
+            : 'No se encontraron usuarios con ese criterio');
         }
   
         this.cdr.detectChanges();
@@ -191,8 +223,19 @@ export class BuscarUsuarioComponent implements OnInit {
 
 
   agregarALaTabla(user: any) {
+    // Al elegir un ciudadano se avisa si tiene o no correo, porque de eso
+    // depende que reciba la notificación del trámite.
+    if (user?.es_cliente) {
+      const correo = String(user?.email || '').trim();
+      if (correo) {
+        this.toast.success(correo, 'Correo del ciudadano');
+      } else {
+        this.toast.warning('Este ciudadano no tiene correo registrado, no recibirá la notificación', 'Sin correo');
+      }
+    }
+
     const existe = this.personas_en_lista.find(u => u.id === user.id);
-    
+
     if (!existe) {
         const logged = JSON.parse(localStorage.getItem('user') || '{}');
         const loggedId = this.id_usuario ?? logged?.id ?? null;

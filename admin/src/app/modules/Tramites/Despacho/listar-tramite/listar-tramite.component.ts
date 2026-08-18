@@ -8,6 +8,7 @@ import { VerDatosComponent } from '../ver-datos/ver-datos.component';
 import { SeguimientoComponent } from '../seguimiento/seguimiento.component';
 import { NuevoTramiteComponent } from '../nuevo-tramite/nuevo-tramite.component';
 import Swal from 'sweetalert2';
+import { DocumentoViewerService } from 'src/app/modules/indexacion-serie/ver-documento/documento-viewer.service';
 
 @Component({
   selector: 'app-listar-tramite',
@@ -36,8 +37,9 @@ export class ListarTramiteComponent {
 
   // Modal de anexos
   showAnexosModal = false;
-  anexosSeleccionados: any[] = [];
   tituloAnexos = '';
+  // Anexos agrupados por el documento (oficio / memorándum) al que pertenecen
+  gruposAnexos: { titulo: string; anexos: any[] }[] = [];
 
   constructor(
       
@@ -46,7 +48,32 @@ export class ListarTramiteComponent {
         public toast: ToastrService,
         private cdr: ChangeDetectorRef,
         public authService: AuthService,
+        private documentoViewer: DocumentoViewerService,
       ) { }
+
+    // Ver un anexo en el modal-plantilla (VerDocumentoComponent).
+    // Se trae el PDF como base64 vía API para evitar problemas de CORS con /storage.
+    verAnexo(a: any) {
+      const ruta = (a?.ruta || '').toString().trim();
+      if (!ruta) { this.toast.warning('No se encontró la ruta del anexo'); return; }
+
+      Swal.fire({ title: 'Cargando anexo...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      this.DespachoService.verAnexoBase64(ruta).subscribe({
+        next: (resp: any) => {
+          try { Swal.close(); } catch {}
+          if (resp?.success && resp?.base64) {
+            this.documentoViewer.abrirVer({ pdfBase64: resp.base64 });
+          } else {
+            this.toast.error(resp?.message || 'No se pudo obtener el anexo');
+          }
+        },
+        error: (err) => {
+          try { Swal.close(); } catch {}
+          console.error('Error trayendo anexo:', err);
+          this.toast.error('No se pudo cargar el anexo');
+        }
+      });
+    }
   
       ngOnInit(): void {
        
@@ -284,40 +311,76 @@ export class ListarTramiteComponent {
       });
     }
 
-    // Abrir modal local para ver anexos y actas
+    // Abrir modal local para ver únicamente los anexos del trámite
     abrirAnexos(tramite: any) {
-      // Combinar actas y anexos en un solo array
-      const actas = Array.isArray(tramite?.actas) ? tramite.actas : [];
       const anexos = Array.isArray(tramite?.anexos) ? tramite.anexos : [];
-      
-      // Mapear actas al formato esperado
-      const actasFormateadas = actas.map((acta: any) => ({
-        nombre_anexo: acta.nombre_acta || acta.nombre_original || 'Acta sin nombre',
-        tipo_documento: acta.tipo_documento || 'ACTA',
-        ruta: acta.ruta || acta.ruta_archivo,
-        descripcion: `Acta - Estado: ${acta.estado}`,
-        tipo: 'acta',
-        documento_firmado: acta.documento_firmado
-      }));
-      
-      // Mapear anexos al formato esperado
+
+      // Mapear anexos al formato esperado. Conservamos ids útiles para firmar (id_anexo / id_documento)
       const anexosFormateados = anexos.map((anexo: any) => ({
         nombre_anexo: anexo.nombre_original || anexo.nombre_archivo || 'Anexo sin nombre',
         tipo_documento: anexo.extension?.toUpperCase() || 'ARCHIVO',
         ruta: anexo.ruta_archivo,
-        descripcion: `Tamaño: ${(anexo.tamanio / 1024).toFixed(2)} KB`,
-        tipo: 'anexo'
+        // Los anexos que vienen del inicio del trámite no guardan tamaño,
+        // en ese caso mostramos su descripción y de dónde salieron.
+        descripcion: this.getDescripcionAnexo(anexo),
+        tipo: 'anexo',
+        // ids que el modal de vista/firmado pueda necesitar
+        id_anexo: anexo.id_anexo ?? anexo.id_anexo_tramite ?? anexo.id ?? null,
+        id_documento: anexo.id_documento ?? anexo.id_documento_tramite ?? tramite.asignacion?.id_documento ?? null,
+        // Documento (oficio / memorándum) al que pertenece el anexo
+        documento_tipo: anexo.documento_tipo || '',
+        documento_numero: anexo.documento_numero || '',
+        // mantener referencia al objeto original por si se necesita más info
+        _raw: anexo
       }));
-      
-      this.anexosSeleccionados = [...actasFormateadas, ...anexosFormateados];
-      this.tituloAnexos = `Documentos del Trámite ${tramite?.numero_tramite || ''}`.trim();
+
+      this.gruposAnexos = this.agruparAnexosPorDocumento(anexosFormateados);
+      const numeroTramite = tramite?.tramite?.numero_tramite || tramite?.asignacion?.numero_tramite || '';
+      this.tituloAnexos = `Anexos del Trámite ${numeroTramite}`.trim();
       this.showAnexosModal = true;
       try { this.cdr.detectChanges(); } catch {}
     }
 
+    // Agrupa los anexos bajo el documento al que pertenecen:
+    // "Anexos de Oficio: XXX", "Anexos de Memorando: YYY"
+    private agruparAnexosPorDocumento(anexos: any[]): { titulo: string; anexos: any[] }[] {
+      const grupos = new Map<string, { titulo: string; anexos: any[] }>();
+
+      (anexos || []).forEach(anexo => {
+        const tipo = String(anexo?.documento_tipo || '').trim();
+        const numero = String(anexo?.documento_numero || '').trim();
+        const clave = `${tipo}||${numero}`;
+
+        if (!grupos.has(clave)) {
+          const etiqueta = tipo ? `Anexos de ${tipo}` : 'Anexos del trámite';
+          grupos.set(clave, {
+            titulo: `${etiqueta}: ${numero || 'S/N'}`,
+            anexos: []
+          });
+        }
+
+        grupos.get(clave)!.anexos.push(anexo);
+      });
+
+      return Array.from(grupos.values());
+    }
+
+    // Descripción del anexo: tamaño cuando existe, si no la descripción guardada
+    private getDescripcionAnexo(anexo: any): string {
+      const tamanio = Number(anexo?.tamanio);
+      if (Number.isFinite(tamanio) && tamanio > 0) {
+        return `Tamaño: ${(tamanio / 1024).toFixed(2)} KB`;
+      }
+
+      const descripcion = String(anexo?.descripcion || '').trim();
+      if (descripcion) return descripcion;
+
+      return anexo?.origen === 'tramite' ? 'Anexo del trámite' : '';
+    }
+
     cerrarAnexos() {
       this.showAnexosModal = false;
-      this.anexosSeleccionados = [];
+      this.gruposAnexos = [];
       this.tituloAnexos = '';
       try { this.cdr.detectChanges(); } catch {}
     }

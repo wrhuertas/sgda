@@ -447,7 +447,7 @@ inicializarFechasControles() {
   
       // 2. Alerta de confirmación con SweetAlert2 antes de firmar
       Swal.fire({
-          title: '¿Está seguro de firmar y crear el acta?',
+          title: '¿Está seguro de firmar y crear el memorandum?',
           text: 'Una vez firmado electrónicamente, este proceso es irreversible y no se podrá dar marcha atrás.',
           icon: 'warning',
           showCancelButton: true,
@@ -471,8 +471,8 @@ inicializarFechasControles() {
                       if (resp.status === 200) {
                           // 4. Mensaje de ÉXITO rotundo con SweetAlert2
                           Swal.fire({
-                              title: '¡Acta Firmada!',
-                              text: resp.message || 'El acta ha sido generada y firmada digitalmente de forma correcta.',
+                              title: '¡Memorandum Firmado!',
+                              text: resp.message || 'El memorandum ha sido generado y firmado digitalmente de forma correcta.',
                               icon: 'success',
                               confirmButtonColor: '#1a365d',
                               heightAuto: false
@@ -486,7 +486,7 @@ inicializarFechasControles() {
                           // Errores de validación controlados devueltos por el backend (ej: firma caducada)
                           Swal.fire({
                               title: 'No se pudo firmar',
-                              text: resp.message || 'Error al procesar el acta',
+                              text: resp.message || 'Error al procesar el memorandum',
                               icon: 'error',
                               confirmButtonColor: '#e53e3e',
                               heightAuto: false

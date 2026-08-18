@@ -25,7 +25,6 @@
               <option value="" disabled selected>Seleccionar criterio de búsqueda</option>
               <option value="dni">Cédula / RUC</option>
               <option value="tramite">Número de trámite</option>
-              <option value="ambos">Ambos</option>
             </select>
           </div>
         </div>
@@ -33,12 +32,12 @@
         <div class="row" *ngIf="criterioBusqueda">
           <div class="col-5" *ngIf="criterioBusqueda === 'tramite' || criterioBusqueda === 'ambos'">
             <label>Número de trámite</label>
-            <input type="text" class="form-control" [(ngModel)]="numeroTramite">
+            <input type="text" class="form-control" [(ngModel)]="numeroTramite" (keyup.enter)="esValidoBusqueda() && buscarTramite()">
           </div>
 
           <div class="col-5" *ngIf="criterioBusqueda === 'dni' || criterioBusqueda === 'ambos'">
             <label>Cédula / RUC</label>
-            <input type="text" class="form-control" [(ngModel)]="dni">
+            <input type="text" class="form-control" [(ngModel)]="dni" (keyup.enter)="esValidoBusqueda() && buscarTramite()">
           </div>
 
           <div class="col-2 d-flex align-items-end">
@@ -97,7 +96,7 @@
                             <strong>{{ tramite.numero_tramite || tramite.num_documento_interno }}</strong>
                             <small class="text-muted ms-3">{{ tramite.created_at | date:'dd/MM/yyyy HH:mm' }}</small>
                           </div>
-                          <span class="badge badge-light-success ms-auto">{{ tramite.estado || 'Activo' }}</span>
+                          <span class="badge badge-light-primary ms-auto">{{ getUbicacionTramite(tramite) }}</span>
                         </div>
                       </button>
                     </h2>
@@ -109,21 +108,17 @@
                             <thead class="table-light">
                               <tr>
                                 <th>Nº Trámite</th>
-                                <th>Nº Documento</th>
-                                <th>Nº Referido</th>
                                 <th>Fecha Ingreso</th>
                                 <th>Asunto</th>
-                                <th>Estado</th>
+                                <th>Ubicación</th>
                               </tr>
                             </thead>
                             <tbody>
                               <tr>
                                 <td><strong>{{ tramite.numero_tramite || '-' }}</strong></td>
-                                <td>{{ tramite.num_documento_interno || '-' }}</td>
-                                <td>{{ tramite.numero_referido || '-' }}</td>
                                 <td><small>{{ tramite.created_at | date:'dd/MM/yyyy HH:mm' }}</small></td>
                                 <td>{{ tramite.asunto_tramite || tramite.asunto || '-' }}</td>
-                                <td><span class="badge badge-light-success">{{ tramite.estado_borrador ? 'Borrador' : 'Oficial' }}</span></td>
+                                <td><span class="badge badge-light-primary">{{ getUbicacionTramite(tramite) }}</span></td>
                               </tr>
                             </tbody>
                           </table>
@@ -132,53 +127,28 @@
                          <!-- Historial de Asignaciones/Derivaciones del Trámite - ESCALERA -->
                          <h6 class="mb-3"><strong>Historial de Derivaciones</strong></h6>
                          <div *ngIf="(getAsignacionesParaTramite(tramite) || []).length > 0; else sinAsignaciones">
-                           <div style="position: relative; padding: 20px 0;">
-                             <div *ngFor="let asignacion of getAsignacionesParaTramite(tramite); let i = index" 
-                                  style="margin-bottom: 30px; margin-left: {{ i * 30 }}px;">
-                               <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                                           color: white; 
-                                           padding: 15px; 
-                                           border-radius: 8px;
-                                           box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                                           position: relative;">
-                                 <!-- Flecha hacia la siguiente asignación -->
-                                 <div *ngIf="i < (getAsignacionesParaTramite(tramite).length - 1)" 
-                                      style="position: absolute; 
-                                              bottom: -25px; 
-                                              left: 15px; 
-                                              width: 30px; 
-                                              height: 25px;">
-                                   <svg viewBox="0 0 30 30" style="width: 100%; height: 100%;">
-                                     <path d="M 15 0 Q 15 15, 30 25" stroke="#667eea" stroke-width="2" fill="none" stroke-linecap="round"/>
-                                     <polygon points="30,25 26,18 32,20" fill="#667eea"/>
-                                   </svg>
+                           <div style="position: relative; padding: 10px 0 10px 34px; border-left: 2px solid #e5e7eb; margin-left: 12px;">
+                             <div *ngFor="let asignacion of getAsignacionesParaTramite(tramite); let i = index"
+                                  style="position: relative; margin-bottom: 20px;">
+                               <!-- Ícono sobre la línea -->
+                               <span style="position:absolute; left:-46px; top:2px; width:28px; height:28px; border-radius:50%; background:#0d6efd; color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 4px #fff;">
+                                 <i class="fa fa-envelope" style="font-size:12px;"></i>
+                               </span>
+
+                               <div style="background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:12px 14px;">
+                                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                                   <div class="fw-bold text-primary">
+                                     El documento fue {{ i === 0 ? 'derivado' : 'asignado' }} a
+                                     <span class="text-primary">{{ asignacion.destino_seccion || 'Sin sección' }}</span>
+                                     <span class="text-dark" *ngIf="i === 0"> - Ubicación: Despacho</span>
+                                     <span class="text-dark" *ngIf="i > 0"> - Movimiento: Asignado</span>
+                                   </div>
+                                   <div class="text-muted small">
+                                     <i class="fa fa-clock me-1"></i>{{ asignacion.created_at | date:'yyyy-MM-dd HH:mm:ss' }}
+                                   </div>
                                  </div>
-                                 
-                                 <div class="d-flex align-items-start gap-3">
-                                   <div style="min-width: 40px; font-size: 24px; font-weight: bold;">
-                                     {{ i + 1 }}
-                                   </div>
-                                   <div style="flex: 1;">
-                                     <div><strong>{{ asignacion.area_destino?.nombre_area || asignacion.area_destino || '-' }}</strong></div>
-                                     <div style="font-size: 12px; margin-top: 5px; opacity: 0.9;">
-                                       👤 {{ asignacion.usuario_destino?.nombre_completo || asignacion.usuario_destino || '-' }}
-                                     </div>
-                                     <div style="font-size: 11px; margin-top: 8px; opacity: 0.85;">
-                                       📅 {{ asignacion.created_at | date:'dd/MM/yyyy HH:mm' }}
-                                     </div>
-                                     <div style="margin-top: 8px;">
-                                       <span class="badge" [ngClass]="{
-                                         'badge-light-success': asignacion.estado_tramite === 'FINALIZAR',
-                                         'badge-light-danger': asignacion.estado_tramite === 'RECHAZAR',
-                                         'badge-light-info': asignacion.estado_tramite === 'DERIVAR' || !asignacion.estado_tramite
-                                       }">
-                                         {{ asignacion.estado_tramite || 'DERIVAR' }}
-                                       </span>
-                                     </div>
-                                     <div *ngIf="asignacion.asunto_asignar || asignacion.observacion" style="margin-top: 10px; font-size: 12px; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 4px;">
-                                       {{ asignacion.asunto_asignar || asignacion.observacion || '-' }}
-                                     </div>
-                                   </div>
+                                 <div *ngIf="asignacion.asunto_asignar" class="text-gray-700 mt-1">
+                                   {{ asignacion.asunto_asignar }}
                                  </div>
                                </div>
                              </div>

@@ -183,7 +183,7 @@ isAdminUser(user: any): boolean {
   modalRef.componentInstance.PROYECTO_SELECTED = PROYECTO;
 
   modalRef.componentInstance.ProyectoE.subscribe((proyectoActualizado: any) => {
-    const INDEX = this.PROYECTOS.findIndex((p: any) => p.id_proyecto === proyectoActualizado.id_proyecto);
+    const INDEX = this.PROYECTOS.findIndex((p: any) => p.id === proyectoActualizado.id);
    if (INDEX !== -1) {
       proyectoActualizado.estado = Number(proyectoActualizado.estado);
 

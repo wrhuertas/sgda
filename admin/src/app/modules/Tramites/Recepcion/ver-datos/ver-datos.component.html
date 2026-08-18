@@ -12,8 +12,8 @@
           <span class="text-muted mt-1 fw-semibold fs-7">Información del trámite</span>
         </h3>
         <div class="ms-3">
-          <img src="assets/logo_cotopaxi.png" alt="Logo Cotopaxi" style="height:32px; width:auto;" />
-            </div>
+       <!--  <img src="assets/logo_cotopaxi.png" alt="Logo Cotopaxi" style="height:32px; width:auto;" />-->
+         </div>
             
             
            </div>
@@ -68,9 +68,9 @@
                           <span class="badge bg-light text-gray-700 ms-2">{{ a.tipo_documento }}</span>
                           <div class="small text-muted" *ngIf="a.descripcion">{{ a.descripcion }}</div>
                         </div>
-                        <a class="btn btn-sm btn-light-primary" [href]="construirUrlArchivo(a.ruta)" target="_blank" rel="noopener">
+                        <button type="button" class="btn btn-sm btn-light-primary" (click)="verArchivo(a.ruta)">
                           <i class="fa fa-eye"></i> Ver
-                        </a>
+                        </button>
                       </li>
                     </ul>
                   </div>
@@ -137,9 +137,9 @@
                         <div class="fw-semibold">{{ tramite.documento_principal.nombre }}</div>
                         <div class="text-muted fs-8">{{ tramite.documento_principal.tipo_documento | uppercase }} <span *ngIf="tramite.documento_principal.firmado">• Firmado</span></div>
                       </div>
-                      <a class="btn btn-sm btn-light-primary" [href]="construirUrlArchivo(tramite.documento_principal.ruta)" target="_blank" rel="noopener">
+                      <button type="button" class="btn btn-sm btn-light-primary" (click)="verArchivo(tramite.documento_principal.ruta)">
                          <i class="fa fa-eye"></i> Ver
-                       </a>
+                       </button>
                     </div>
                   </div>
 

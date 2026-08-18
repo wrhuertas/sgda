@@ -48,12 +48,16 @@
       </div>
 
       <!-- Contenedor de imagen -->
-      <div class="image-container" *ngIf="canvasData">
+      <div *ngIf="useIframe" class="iframe-container">
+        <iframe [src]="sanitizedUrl" width="100%" height="600px" style="border:0"></iframe>
+      </div>
+
+      <div class="image-container" *ngIf="!useIframe && canvasData">
         <img [src]="canvasData" alt="Página {{ paginaActual }}" class="page-image" />
       </div>
 
       <!-- Cargando -->
-      <div *ngIf="!canvasData" class="text-center py-5">
+      <div *ngIf="!useIframe && !canvasData" class="text-center py-5">
         <div class="spinner-border" role="status">
           <span class="visually-hidden">Cargando...</span>
         </div>

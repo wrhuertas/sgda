@@ -53,9 +53,9 @@
                         <label class="required fw-bold fs-6 mb-2">Apellido</label>
                         <input
                             type="text"
-                            name="name"
+                            name="surname"
                             class="form-control form-control-solid"
-                            placeholder="Apelli del Usuario"
+                            placeholder="Apellido del Usuario"
                             [(ngModel)]="surname"
                             [ngClass]="{
                                 'border-danger': apellidoInvalid && !surname,
@@ -160,6 +160,39 @@
                             name="address"
                             placeholder="Dirección domiciliaria...">
                         </textarea>
+
+                        <!-- Foto del usuario -->
+                        <div class="mt-4">
+                            <label class="fw-bold fs-6 mb-2">Imagen</label>
+                            <input
+                                type="file"
+                                class="form-control form-control-solid"
+                                accept=".jpeg,.jpg,.png,.webp"
+                                (change)="processFile($event)" />
+
+                            <div class="mt-3 d-flex flex-column align-items-center">
+                                <ng-container *ngIf="imagen_previzualiza; else placeholderFoto">
+                                    <img
+                                        [src]="imagen_previzualiza"
+                                        class="rounded-circle"
+                                        style="height:110px; width:110px; object-fit:cover; border:1px solid #eee;"
+                                        alt="Imagen del usuario" />
+                                </ng-container>
+
+                                <ng-template #placeholderFoto>
+                                    <div class="rounded-circle bg-light border border-gray-300 d-flex align-items-center justify-content-center"
+                                         style="height:110px; width:110px;">
+                                        <i class="ki-duotone ki-user fs-3x text-gray-400">
+                                            <span class="path1"></span><span class="path2"></span>
+                                        </i>
+                                    </div>
+                                </ng-template>
+
+                                <small class="text-muted mt-2" *ngIf="!imagen_previzualiza">
+                                    Tamaño recomendado: <b>300 x 300 px</b>
+                                </small>
+                            </div>
+                        </div>
                     </div>
                     <div class="col-md-6">
                         <label class="fw-bold fs-6 mb-2">Teléfono</label>
@@ -197,20 +230,6 @@
                             name="titulo"
                             maxlength="100" />
                           <small class="text-muted">Opcional. Se usa en pie de firma o datos del usuario.</small>
-                        </div>
-                    </div>
-                    <div class="col-md-6" *ngIf="false">
-                        <label class="fw-bold fs-6 mb-2">Avatar</label>
-                        <input
-                            type="file"
-                            class="form-control form-control-solid form-control-sm"
-                            accept=".jpeg,.jpg,.png,.webp"
-                            (change)="processFile($event)" />
-
-                        <div *ngIf="imagen_previzualiza" class="mt-2 text-center">
-                            <img
-                                [src]="imagen_previzualiza"
-                                style="height: 60px; border-radius: 8px; border: 1px solid #eee; object-fit: cover;" />
                         </div>
                     </div>
                 </div>
@@ -277,6 +296,7 @@
                                 {{ item.nombre }}
                             </option>
                         </select>
+                        <span *ngIf="id_proyecto_seleccionado" class="badge badge-light-primary mt-2">Director</span>
                     </div>
 
                     <!-- SUBSECCIÓN -->
@@ -293,6 +313,7 @@
                                 {{ item.nombre }}
                             </option>
                         </select>
+                        <span *ngIf="id_subseccion_seleccionada" class="badge badge-light-primary mt-2">Subdirector</span>
                     </div>
 
                     <!-- SUB-SUBSECCIÓN -->
@@ -534,7 +555,7 @@
                     <div class="card-body bg-gray-100">
                         <div class="row">
                             <ng-container *ngFor="let item of availablePermissions">
-                                <div class="col-md-4 mb-5" *ngIf="['Sección Docuemntal', 'Busqueda de documentos', 'Reporte', 'Prestamo Expediente', 'Certifiados Expediente'].includes(item.name)">
+                                <div class="col-md-4 mb-5" *ngIf="['Sección Docuemntal', 'Busqueda de documentos', 'Reporte', 'Prestamo Expediente', 'Certifiados Expediente', 'Scan', 'Etiquetas'].includes(item.name)">
                                     <div class="card card-dashed p-4 h-100 shadow-none">
                                         <h6 class="fw-bold mb-3 border-bottom pb-2 text-uppercase fs-7 text-gray-700">{{ item.name }}</h6>
                                         <div class="form-check mb-2" *ngFor="let permiso of item.permisos">

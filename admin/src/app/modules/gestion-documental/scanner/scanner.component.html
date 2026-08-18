@@ -1,0 +1,175 @@
+<div class="card">
+  <div class="card-header border-0 pt-6">
+    <div class="card-title">
+      <h2 class="fw-bold m-0">
+        <i class="ki-duotone ki-focus fs-1 text-primary me-3">
+          <span class="path1"></span><span class="path2"></span>
+        </i>
+        Escanear documento
+      </h2>
+    </div>
+  </div>
+
+  <div class="card-body pt-6">
+    <div class="row g-6">
+
+      <!--begin::Clasificación-->
+      <div class="col-md-6 border-end">
+        <h4 class="fw-bold text-primary mb-4">
+          <span class="badge badge-circle badge-primary me-2">1</span> Clasificación
+        </h4>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Sección <span class="text-danger">*</span></label>
+          <select class="form-select form-select-solid" [(ngModel)]="seccionId" (ngModelChange)="onSeccionChange()">
+            <option value="">-- SELECCIONE SECCIÓN --</option>
+            <option *ngFor="let sec of secciones" [value]="sec.id_proyecto">{{ sec.nombre }}</option>
+          </select>
+        </div>
+
+        <div class="mb-3" *ngIf="subsecciones.length > 0">
+          <label class="form-label fw-bold">Subsección</label>
+          <select class="form-select form-select-solid" [(ngModel)]="subseccionId" (ngModelChange)="onSubseccionChange()">
+            <option value="">-- SELECCIONE SUBSECCIÓN --</option>
+            <option *ngFor="let sub of subsecciones" [value]="sub.id_proyecto">{{ sub.nombre }}</option>
+          </select>
+        </div>
+
+        <div class="mb-3" *ngIf="subsubsecciones.length > 0">
+          <label class="form-label fw-bold">Sub-Subsección</label>
+          <select class="form-select form-select-solid" [(ngModel)]="subsubseccionId" (ngModelChange)="onSubSubseccionChange()">
+            <option value="">-- SELECCIONE --</option>
+            <option *ngFor="let sub2 of subsubsecciones" [value]="sub2.id_proyecto">{{ sub2.nombre }}</option>
+          </select>
+        </div>
+
+        <div class="mb-3" *ngIf="series.length > 0">
+          <label class="form-label fw-bold">Serie Documental <span class="text-danger">*</span></label>
+          <select class="form-select form-select-solid" [(ngModel)]="serieId" (ngModelChange)="onSerieChange()">
+            <option value="">-- SELECCIONE SERIE --</option>
+            <option *ngFor="let s of series" [value]="s.id_serie">{{ s.nombre }}</option>
+          </select>
+        </div>
+
+        <div class="mb-3" *ngIf="subseries.length > 0">
+          <label class="form-label fw-bold">Sub-Serie</label>
+          <select class="form-select form-select-solid" [(ngModel)]="subserieId" (ngModelChange)="onSubserieChange()">
+            <option value="">-- SIN SUB-SERIE (usar la serie) --</option>
+            <option *ngFor="let ss of subseries" [value]="ss.id_serie">{{ ss.nombre }}</option>
+          </select>
+        </div>
+      </div>
+      <!--end::Clasificación-->
+
+      <!--begin::Ubicación-->
+      <div class="col-md-6">
+        <h4 class="fw-bold text-primary mb-4">
+          <span class="badge badge-circle badge-primary me-2">2</span> Ubicación topográfica
+        </h4>
+
+        <div class="alert alert-light-primary d-flex align-items-center" *ngIf="!idSerieSubserie">
+          <i class="ki-duotone ki-information fs-2x text-primary me-4">
+            <span class="path1"></span><span class="path2"></span><span class="path3"></span>
+          </i>
+          <span class="text-gray-700 fs-7">
+            Seleccioná primero la Serie o Sub-Serie para elegir la ubicación.
+          </span>
+        </div>
+
+        <ng-container *ngIf="idSerieSubserie">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Sede / Edificio <span class="text-danger">*</span></label>
+            <select class="form-select form-select-solid" [(ngModel)]="idEdificio" (ngModelChange)="onEdificioChange()">
+              <option value="">-- SELECCIONE EDIFICIO --</option>
+              <option *ngFor="let e of edificios" [value]="e.id">{{ e.nombre }}</option>
+            </select>
+          </div>
+
+          <div class="mb-3" *ngIf="salas.length > 0">
+            <label class="form-label fw-bold">Depósito / Sala</label>
+            <select class="form-select form-select-solid" [(ngModel)]="idSala" (ngModelChange)="onSalaChange()">
+              <option value="">-- SELECCIONE SALA --</option>
+              <option *ngFor="let s of salas" [value]="s.id">{{ s.nombre }}</option>
+            </select>
+          </div>
+
+          <!-- De estantería hacia abajo cada nivel se puede elegir con el lector -->
+          <div class="mb-3" *ngIf="estanterias.length > 0">
+            <label class="form-label fw-bold">Estantería</label>
+            <div class="input-group">
+              <select class="form-select form-select-solid" [(ngModel)]="idEstanteria" (ngModelChange)="onEstanteriaChange()">
+                <option value="">-- SELECCIONE ESTANTERÍA --</option>
+                <option *ngFor="let e of estanterias" [value]="e.id">{{ e.nombre }}</option>
+              </select>
+              <button class="btn btn-primary" type="button" title="Escanear estantería" (click)="escanear('estanteria')">
+                <i class="ki-duotone ki-focus fs-2">
+                  <span class="path1"></span><span class="path2"></span>
+                </i>
+              </button>
+            </div>
+          </div>
+
+          <div class="mb-3" *ngIf="filas.length > 0">
+            <label class="form-label fw-bold">Fila</label>
+            <div class="input-group">
+              <select class="form-select form-select-solid" [(ngModel)]="idFila" (ngModelChange)="onFilaChange()">
+                <option value="">-- SELECCIONE FILA --</option>
+                <option *ngFor="let f of filas" [value]="f.id">{{ f.nombre }}</option>
+              </select>
+              <button class="btn btn-primary" type="button" title="Escanear fila" (click)="escanear('fila')">
+                <i class="ki-duotone ki-focus fs-2">
+                  <span class="path1"></span><span class="path2"></span>
+                </i>
+              </button>
+            </div>
+          </div>
+
+          <div class="mb-3" *ngIf="cajas.length > 0">
+            <label class="form-label fw-bold">Caja</label>
+            <div class="input-group">
+              <select class="form-select form-select-solid" [(ngModel)]="idCaja" (ngModelChange)="onCajaChange()">
+                <option value="">-- SELECCIONE CAJA --</option>
+                <option *ngFor="let c of cajas" [value]="c.id">{{ c.nombre }}</option>
+              </select>
+              <button class="btn btn-primary" type="button" title="Escanear caja" (click)="escanear('caja')">
+                <i class="ki-duotone ki-focus fs-2">
+                  <span class="path1"></span><span class="path2"></span>
+                </i>
+              </button>
+            </div>
+          </div>
+
+          <div class="mb-3" *ngIf="carpetas.length > 0">
+            <label class="form-label fw-bold">Carpeta</label>
+            <div class="input-group">
+              <select class="form-select form-select-solid" [(ngModel)]="idCarpeta">
+                <option value="">-- SELECCIONE CARPETA --</option>
+                <option *ngFor="let c of carpetas" [value]="c.id">{{ c.nombre }}</option>
+              </select>
+              <button class="btn btn-primary" type="button" title="Escanear carpeta" (click)="escanear('carpeta')">
+                <i class="ki-duotone ki-focus fs-2">
+                  <span class="path1"></span><span class="path2"></span>
+                </i>
+              </button>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+      <!--end::Ubicación-->
+    </div>
+
+    <!--begin::Ruta elegida-->
+    <div class="separator separator-dashed my-6" *ngIf="rutaTexto"></div>
+
+    <div class="d-flex align-items-center bg-light-primary rounded p-4" *ngIf="rutaTexto">
+      <i class="ki-duotone ki-geolocation fs-2x text-primary me-4">
+        <span class="path1"></span><span class="path2"></span>
+      </i>
+      <div>
+        <span class="text-muted fs-8 d-block">Ubicación seleccionada</span>
+        <span class="fw-bold text-gray-800">{{ rutaTexto }}</span>
+      </div>
+    </div>
+    <!--end::Ruta elegida-->
+  </div>
+</div>

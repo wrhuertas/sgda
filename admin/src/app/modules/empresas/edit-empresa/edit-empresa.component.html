@@ -46,13 +46,24 @@
                 </label>
               </div>
 
-              <div *ngIf="IMAGEN_PREVISUALIZA">
+              <ng-container *ngIf="IMAGEN_PREVISUALIZA; else placeholderLogoEditar">
                 <img
                   [src]="IMAGEN_PREVISUALIZA"
                   style="height: 100px;"
                   alt="Vista previa del logo"
                 />
-              </div>
+              </ng-container>
+
+              <ng-template #placeholderLogoEditar>
+                <div class="border rounded bg-light d-flex flex-column align-items-center justify-content-center"
+                     style="height:100px; width:100%;">
+                  <span class="text-muted">No hay logo cargado</span>
+
+                  <small class="text-muted mt-1">
+                    Tamaño recomendado: <b>500 x 500 px</b> (Ancho x Alto).
+                  </small>
+                </div>
+              </ng-template>
             </div>
 
             <!-- Nombre -->
@@ -306,11 +317,105 @@
       <!-- Línea separadora -->
             <hr class="my-10 border border-primary border-2 opacity-50" />
 
-            <!-- Título -->
-            <h4 class="fw-bolder mb-5 text-center text-primary">Configurar Correo de salida de Empresa</h4>
+            <!--begin::Autenticación externa (Active Directory / API)-->
+            <h4
+              class="fw-bolder mb-5 text-center text-primary"
+              style="cursor: pointer;"
+              (click)="toggleDirectorio()">
+              Configurar Active Directory de Empresa
+              <span [ngClass]="{'rotate-180': mostrarDirectorio}" style="transition: 0.3s;">▼</span>
+            </h4>
+
+            <hr class="mb-4">
+
+            <div *ngIf="mostrarDirectorio">
+
+              <div class="alert alert-light-primary d-flex align-items-center mb-6">
+                <i class="ki-duotone ki-information fs-2x text-primary me-4">
+                  <span class="path1"></span><span class="path2"></span><span class="path3"></span>
+                </i>
+                <span class="text-gray-700 fs-7">
+                  Todos estos campos son opcionales. Completalos sólo si la empresa
+                  valida sus usuarios contra un directorio LDAP o una API externa.
+                </span>
+              </div>
+
+              <!--begin::LDAP-->
+              <div class="card mb-6">
+                <div class="card-body d-flex align-items-center justify-content-between py-3">
+                  <div class="fw-bold text-primary">Autenticar con Active Directory (LDAP)</div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="edit_empresa_utiliza_ldap"
+                           name="utiliza_ldap" [(ngModel)]="utiliza_ldap">
+                    <label class="form-check-label" for="edit_empresa_utiliza_ldap">Activo</label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row" *ngIf="utiliza_ldap">
+                <div class="col-md-8 fv-row mb-7">
+                  <label class="fw-bold fs-6 mb-2">Servidor (host)</label>
+                  <input type="text" name="ldap_host" [(ngModel)]="ldap_host"
+                         class="form-control form-control-solid" placeholder="Ej.: 192.168.1.10 o dc.empresa.local" />
+                </div>
+
+                <div class="col-md-4 fv-row mb-7">
+                  <label class="fw-bold fs-6 mb-2">Puerto</label>
+                  <input type="number" name="ldap_port" [(ngModel)]="ldap_port"
+                         class="form-control form-control-solid" placeholder="389" />
+                </div>
+
+                <div class="col-md-12 fv-row mb-7">
+                  <label class="fw-bold fs-6 mb-2">Base DN</label>
+                  <input type="text" name="ldap_base_dn" [(ngModel)]="ldap_base_dn"
+                         class="form-control form-control-solid" placeholder="Ej.: dc=empresa,dc=local" />
+                </div>
+
+                <div class="col-md-6 fv-row mb-7">
+                  <label class="fw-bold fs-6 mb-2">Usuario</label>
+                  <input type="text" name="ldap_username" [(ngModel)]="ldap_username"
+                         class="form-control form-control-solid" placeholder="Usuario de consulta" />
+                </div>
+
+                <div class="col-md-6 fv-row mb-7">
+                  <label class="fw-bold fs-6 mb-2">Contraseña</label>
+                  <input type="password" name="ldap_password" [(ngModel)]="ldap_password"
+                         class="form-control form-control-solid" placeholder="Dejar vacío para no cambiarla" />
+                </div>
+              </div>
+              <!--end::LDAP-->
+
+              <!--begin::API externa-->
+              <div class="card mb-6">
+                <div class="card-body d-flex align-items-center justify-content-between py-3">
+                  <div class="fw-bold text-primary">Autenticar con API externa</div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="edit_empresa_utiliza_api_auth"
+                           name="utiliza_api_auth" [(ngModel)]="utiliza_api_auth">
+                    <label class="form-check-label" for="edit_empresa_utiliza_api_auth">Activo</label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row" *ngIf="utiliza_api_auth">
+                <div class="col-md-6 fv-row mb-7">
+                  <label class="fw-bold fs-6 mb-2">URL de la API</label>
+                  <input type="text" name="api_auth_url" [(ngModel)]="api_auth_url"
+                         class="form-control form-control-solid" placeholder="https://api.empresa.com/login" />
+                </div>
+
+                <div class="col-md-6 fv-row mb-7">
+                  <label class="fw-bold fs-6 mb-2">Token</label>
+                  <input type="text" name="api_auth_token" [(ngModel)]="api_auth_token"
+                         class="form-control form-control-solid" placeholder="Token de acceso" />
+                </div>
+              </div>
+              <!--end::API externa-->
+            </div>
 
             <!-- Línea separadora -->
             <hr class="my-10 border border-primary border-2 opacity-50" />
+            <!--end::Autenticación externa-->
 
              <h4 
             class="fw-bolder mb-5 text-center text-primary" 

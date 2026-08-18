@@ -20,6 +20,10 @@ export class UserInnerComponent implements OnInit, OnDestroy {
 
   language: LanguageFlag;
   user$: Observable<any>;
+
+  /** Se prende si la foto guardada no se puede cargar */
+  sinFoto = false;
+
   langs = languages;
   private unsubscribe: Subscription[] = [];
 
@@ -33,6 +37,13 @@ export class UserInnerComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.user$ = this.auth.currentUserSubject.asObservable();
+
+    // El backend manda una URL de flaticon cuando el usuario no tiene foto:
+    // en ese caso se muestra la inicial en vez de esa imagen genérica.
+    this.user$.subscribe(user => {
+      this.sinFoto = !user?.avatar || String(user.avatar).includes('cdn-icons-png.flaticon.com');
+    });
+
     this.setLanguage(this.translationService.getSelectedLanguage());
   }
 

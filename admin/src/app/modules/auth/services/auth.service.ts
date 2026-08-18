@@ -6,8 +6,8 @@ import { AuthModel } from '../models/auth.model';
 import { AuthHTTPService } from './auth-http';
 import { environment } from 'src/environments/environment';
 import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
-import { URL_SERVICIOS } from 'src/app/config/config';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { URL_BACKEND, URL_SERVICIOS } from 'src/app/config/config';
 
 export type UserType = UserModel | undefined;
 
@@ -96,6 +96,21 @@ get id_usuario(): string | null {
   );
 }
 
+  /**
+   * Ingreso validando contra el directorio externo de la empresa.
+   * La contraseña no se compara con la del sistema: la valida el servidor de
+   * Active Directory (o la API) que tenga configurada esa empresa.
+   */
+  loginDirectorio(email: string, password: string, id_empresa: number): Observable<any> {
+    this.isLoadingSubject.next(true);
+
+    return this.http.post(URL_SERVICIOS + '/auth/login-directorio', { email, password, id_empresa }).pipe(
+      map((auth: any) => this.setAuthFromLocalStorage(auth)),
+      catchError((err) => throwError(() => err)),
+      finalize(() => this.isLoadingSubject.next(false))
+    );
+  }
+
 logout() {
   if (this.token) {
     this.http.post('/api/logout', {}, {
@@ -131,6 +146,12 @@ private clearStorage() {
     }
 
     this.isLoadingSubject.next(true);
+
+    // La sesión guarda los datos tal como estaban al iniciarla, así que si el
+    // usuario cambió su foto después, la de la cabecera queda vieja. Se
+    // refresca aparte para no demorar el arranque.
+    this.refrescarFoto();
+
     return of(auth).pipe(
       map((user: any) => {
         if (user) {
@@ -142,6 +163,44 @@ private clearStorage() {
       }),
       finalize(() => this.isLoadingSubject.next(false))
     );
+  }
+
+  /**
+   * Trae la foto actual desde /me y la actualiza en la sesión.
+   * Sólo toca el avatar: el resto de los datos se dejan como estaban para no
+   * pisar permisos ni rol, que /me no devuelve con el mismo formato.
+   */
+  private refrescarFoto(): void {
+    const token = localStorage.getItem('token');
+    const guardado = localStorage.getItem('user');
+
+    if (!token || !guardado) { return; }
+
+    const headers = new HttpHeaders({ Authorization: 'Bearer ' + token });
+
+    this.http.post(URL_SERVICIOS + '/me', {}, { headers }).subscribe({
+      next: (perfil: any) => {
+        try {
+          const usuario = JSON.parse(guardado);
+
+          const avatar = perfil?.avatar
+            ? URL_BACKEND + 'storage/' + perfil.avatar
+            : 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
+
+          if (usuario.avatar === avatar) { return; }
+
+          usuario.avatar = avatar;
+
+          localStorage.setItem('user', JSON.stringify(usuario));
+          this.user = usuario;
+          this.currentUserSubject.next(usuario);
+        } catch (e) {
+          console.error('No se pudo refrescar la foto del usuario', e);
+        }
+      },
+      // Si falla se sigue usando la foto guardada, no es motivo para cortar
+      error: () => {}
+    });
   }
 
   // need create new user then login

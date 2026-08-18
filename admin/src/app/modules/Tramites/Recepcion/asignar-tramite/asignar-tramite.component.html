@@ -13,7 +13,7 @@
           Información del Docu.
       </div>
       <div class="quipux-tab" [ngClass]="{'active': tab_active === 2}" (click)="changeTab(2)">
-          Anexos
+          Anexos ({{ (anexosGuardados?.length || 0) + (archivos?.length || 0) }})
       </div>
       
   </div>
@@ -33,10 +33,10 @@
                       <span class="me-5">
                           <strong>Fecha Ingreso:</strong> {{ tramiteDatos?.created_at | date:'dd/MM/yyyy HH:mm' }}
                       </span>
-                      
+                      <!--
                       <span>
                           <strong>Tipo:</strong> {{ tramiteDatos?.tipo_documento_nombre }}
-                      </span>
+                      </span>-->
                   </div>
                   
                   <div class="fs-7 text-gray-600 mt-1">
@@ -165,20 +165,21 @@
       
       
           <div class="row g-9 mb-8">
-              <div class="col-md-6 fv-row">
+              <!-- Los tres selects se muestran u ocultan juntos -->
+              <div class="col-md-6 fv-row" *ngIf="!selectsPrecargados">
                   <label class="fs-7 fw-bold mb-2 d-flex align-items-center justify-content-between">
                     <span>Tipo de Documento:</span>
-                    <span class="badge" [ngClass]="getPrioridadClass()">{{ getPrioridadLabel() }}</span>
+                    <!--   <span class="badge" [ngClass]="getPrioridadClass()">{{ getPrioridadLabel() }}</span>-->
                   </label>
                   <select class="form-select form-select-sm form-select-solid" [(ngModel)]="id_tipo_documento_sel" (ngModelChange)="onTipoDocumentoChange($event)" name="id_tipo_documento_sel">
                     <option [ngValue]="null">Seleccione Tipo de Documento</option>
                     <option *ngFor="let td of tipo_documentos" [ngValue]="td.id_tipodocumento">{{ td.nombre }}</option>
                   </select>
               </div>
-              <div class="col-md-6 fv-row">
+              <div class="col-md-6 fv-row" *ngIf="!selectsPrecargados">
                   <label class="fs-7 fw-bold mb-2 d-flex align-items-center justify-content-between">
                     <span>Tipo de Trámite:</span>
-                    <span class="badge badge-light-info">{{ getTiempoTramiteLabel() }}</span>
+                <!--    <span class="badge badge-light-info">{{ getTiempoTramiteLabel() }}</span>-->
                   </label>
                   <select class="form-select form-select-sm form-select-solid" [(ngModel)]="id_tipo_tramite_sel" name="id_tipo_tramite_sel">
                     <option [ngValue]="null">Seleccione Tipo de Trámite</option>
@@ -187,7 +188,7 @@
               </div>
 
               <!-- Nueva: Categoría -->
-              <div class="col-md-6 fv-row">
+              <div class="col-md-6 fv-row" *ngIf="!selectsPrecargados">
                 <label class="fs-7 fw-bold mb-2">Categoría</label>
                 <select class="form-select form-select-sm form-select-solid" [(ngModel)]="categoria_sel" name="categoria_sel">
                   <option [ngValue]="''">Seleccione Categoría</option>
@@ -202,7 +203,7 @@
               <label class="fs-7 fw-bold mb-2">No. Referencia:</label>
               <input type="text" class="form-control form-control-sm form-control-solid" [value]="referenciaDisplay" readonly />
           </div>
-<!--
+          <!--
           <div class="fv-row mb-8">
               <label class="fs-7 fw-bold mb-2">Número de Documento:</label>
               <input type="text" class="form-control form-control-sm form-control-solid" [(ngModel)]="numero_documento_input" name="numero_documento_input" placeholder="Ingrese el número de documento" />
@@ -334,6 +335,6 @@
     [disabled]="isAsignarDisabled()"
     title="Seleccione al menos un destinatario en 'Para'"
   >
-    Enviar Tramite
+    Enviar y Firmar
   </button>
 </div>

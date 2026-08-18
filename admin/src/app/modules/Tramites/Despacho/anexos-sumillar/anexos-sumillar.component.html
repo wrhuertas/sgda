@@ -1,0 +1,30 @@
+<div class="modal-header">
+  <h5 class="modal-title">Anexos para Sumillar - Trámite #{{ id_tramite }}</h5>
+  <button type="button" class="btn-close" aria-label="Close" (click)="cerrar()"></button>
+</div>
+<div class="modal-body">
+  <div *ngIf="!anexos || anexos.length === 0" class="text-center text-muted py-4">
+    No hay anexos disponibles para este trámite.
+  </div>
+
+  <ul class="list-group" *ngIf="anexos && anexos.length > 0">
+    <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let a of anexos">
+      <div>
+        <div class="fw-semibold">{{ a.nombre_anexo }}</div>
+        <div class="small text-muted">Tipo: {{ a.tipo_documento || a.tipo || 'N/A' }} <span *ngIf="a.descripcion"> - {{ a.descripcion }}</span></div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-sm btn-light-primary" (click)="verAnexo(a)">Ver</button>
+      </div>
+    </li>
+  </ul>
+
+  <div class="mt-4">
+    <label class="form-label fw-bold">Sumilla (opcional)</label>
+    <textarea class="form-control" rows="3" [(ngModel)]="sumillaText" placeholder="Escriba la sumilla aquí..."></textarea>
+  </div>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-light" (click)="cerrar()">Cerrar</button>
+  <button type="button" class="btn btn-primary" (click)="guardarSumilla()">Guardar Sumilla</button>
+</div>

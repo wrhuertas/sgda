@@ -1,0 +1,108 @@
+<div class="modal-content">
+    <div class="modal-header" id="kt_modal_add_user_header">
+        <h5 class="modal-title">
+            Mover Expedientes
+        </h5>
+
+    <div class="btn btn-sm btn-icon btn-active-color-primary" (click)="cancelar()" style="cursor:pointer">
+      <i class="fas fa-times"></i>
+    </div>
+    </div>
+    <div class="card mb-5 bg-light border-0">
+ 
+ </div>
+    <div class="modal-body py-4">
+      <div class="row">
+        <div class="col-md-4">
+          <div class="card h-100 border">
+            <div class="card-header py-2"><strong>Ubicación Topográfica</strong></div>
+            <div class="card-body" style="max-height:50vh; overflow:auto;">
+              <ul class="list-unstyled mb-0">
+                <li *ngFor="let e of edificiosEmpresa; let ei = index">
+                  <button type="button" class="btn btn-link p-0 text-start" (click)="selectEdificio(e); toggle('e'+ei)">
+                    <i class="bi" [ngClass]="expandKeys['e'+ei] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
+                    <i class="bi bi-building text-primary me-1"></i> {{ e.nombre }}
+                  </button>
+                  <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei]">
+                    <li *ngFor="let s of (salasMap[e.id_edificio] || []); let si = index">
+                      <button type="button" class="btn btn-link p-0 text-start" (click)="selectSala(e, s); toggle('e'+ei+'s'+si)">
+                        <i class="bi" [ngClass]="expandKeys['e'+ei+'s'+si] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
+                        <i class="bi bi-door-open text-info me-1"></i> {{ s.nombre }}
+                      </button>
+                      <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei+'s'+si]">
+                        <li *ngFor="let est of (estanteriasMap[s.id_sala] || []); let ti = index">
+                          <button type="button" class="btn btn-link p-0 text-start" (click)="selectEstanteria(est); toggle('e'+ei+'s'+si+'t'+ti)">
+                            <i class="bi" [ngClass]="expandKeys['e'+ei+'s'+si+'t'+ti] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
+                            <i class="bi bi-grid-3x3-gap text-secondary me-1"></i> {{ est.nombre || est.codigo }}
+                          </button>
+                          <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei+'s'+si+'t'+ti]">
+                            <li *ngFor="let f of (filasMap[est.id_estanteria] || []); let fi = index">
+                              <button type="button" class="btn btn-link p-0 text-start" (click)="selectFila(f); toggle('e'+ei+'s'+si+'t'+ti+'f'+fi)">
+                                <i class="bi" [ngClass]="expandKeys['e'+ei+'s'+si+'t'+ti+'f'+fi] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
+                                <i class="bi bi-list-ol text-warning me-1"></i> {{ f.nombre || ('Fila ' + (fi + 1)) }}
+                              </button>
+                              <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei+'s'+si+'t'+ti+'f'+fi]">
+                                <li *ngFor="let c of (cajasMap[f.id_fila] || []); let ci = index">
+                                  <button type="button" class="btn btn-link p-0 text-start" (click)="selectCaja(c); toggle('e'+ei+'s'+si+'t'+ti+'f'+fi+'c'+ci)">
+                                    <i class="bi" [ngClass]="expandKeys['e'+ei+'s'+si+'t'+ti+'f'+fi+'c'+ci] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
+                                    <i class="bi bi-box-seam text-dark me-1"></i> {{ c.nombre || ('Caja ' + (c.numero_caja || (ci + 1))) }}
+                                  </button>
+                                  <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei+'s'+si+'t'+ti+'f'+fi+'c'+ci]">
+                                    <li *ngFor="let k of (carpetasMap[c.id_caja] || []); let ki = index">
+                                      <button type="button" class="btn btn-link p-0 text-start" (click)="selectCarpeta(k)">
+                                        <i class="bi bi-folder2-open text-warning me-1"></i>
+                                        <span class="text-muted small">{{ k.nombre }} ({{ k.numero_documentos || 0 }})</span>
+                                      </button>
+                                    </li>
+                                  </ul>
+                                </li>
+                              </ul>
+                            </li>
+                          </ul>
+                        </li>
+                      </ul>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-8">
+          <!-- Ubicación de destino que se va armando -->
+          <div class="mb-3 p-3 rounded border bg-light-primary">
+            <div class="fw-bold text-primary mb-1"><i class="bi bi-geo-alt-fill me-1"></i>Ubicación de destino</div>
+            <div *ngIf="rutaSeleccionadaDisplay; else sinRuta" class="fw-semibold text-dark">
+              {{ rutaSeleccionadaDisplay }}
+            </div>
+            <ng-template #sinRuta>
+              <div class="text-muted small">Seleccione una ubicación en el árbol de la izquierda...</div>
+            </ng-template>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Documentos seleccionados ({{ documentIds?.length || documentos?.length || 0 }})</label>
+            <div class="mt-2">
+              <div *ngIf="(documentos?.length ?? 0) > 0; else idsOnly">
+                <div *ngFor="let d of documentos" class="small d-flex align-items-center mb-1">
+                  <i class="bi bi-file-earmark-pdf-fill text-danger me-2 fs-5"></i>
+                  <span>{{ (d.id || d.id_documento) + ' - ' + (d.nombre || d.titulo || '-') }}</span>
+                </div>
+              </div>
+              <ng-template #idsOnly>
+                <div *ngFor="let id of (documentIds || [])" class="small d-flex align-items-center mb-1">
+                  <i class="bi bi-file-earmark-pdf-fill text-danger me-2 fs-5"></i>
+                  <span>{{ id }}</span>
+                </div>
+              </ng-template>
+            </div>
+          </div>
+
+         
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-light" (click)="cancelar()">Cancelar</button>
+      <button type="button" class="btn btn-success" (click)="confirmarTraslado()" [disabled]="!(documentIds?.length || documentos?.length)">Confirmar traslado</button>
+    </div>

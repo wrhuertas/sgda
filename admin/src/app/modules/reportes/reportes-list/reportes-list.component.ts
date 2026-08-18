@@ -168,6 +168,46 @@ series: any[] = [];
       });
   }
 
+  /**
+   * El inventario se arma sobre una serie, así que hay que bajar por el árbol
+   * hasta llegar a ella. Devuelve el mensaje del primer paso que falta, o null
+   * si la selección ya está completa.
+   *
+   * Una subsección puede tener series directas y además sub-subsecciones, por
+   * eso la sub-subsección sólo se exige cuando en ese nivel no hay series.
+   */
+  private validarInventario(): string | null {
+    if (!this.seccionId) {
+      return 'Debe seleccionar una Sección para generar el Inventario.';
+    }
+
+    if (this.subsecciones.length === 0) {
+      return 'La Sección seleccionada no tiene Subsecciones, por lo que no hay series que inventariar.';
+    }
+
+    if (!this.subseccionId) {
+      return 'Debe seleccionar una Subsección.';
+    }
+
+    if (this.series.length === 0 && this.subsubsecciones.length === 0) {
+      return 'La Subsección seleccionada no tiene Series Documentales.';
+    }
+
+    if (this.series.length === 0 && !this.subsubseccionId) {
+      return 'Debe seleccionar una Sub-Subsección.';
+    }
+
+    if (this.series.length === 0) {
+      return 'La Sub-Subsección seleccionada no tiene Series Documentales.';
+    }
+
+    if (!this.serieId) {
+      return 'Debe seleccionar una Serie Documental.';
+    }
+
+    return null;
+  }
+
   exportarExcel() {
     // 1. Cuadro de Clasificación
     if (this.tipoReporte === '1') {
@@ -181,31 +221,52 @@ series: any[] = [];
       return;
     }
   
-    // 3. Inventario de Trámites (Validación de Serie Obligatoria)
+    // 3. Inventario de Trámites (requiere bajar hasta la serie)
     if (this.tipoReporte === '3') {
-      // Mantenemos los IDs individuales tal cual están en el combo
-      const s_id = this.seccionId;
-      const ss_id = this.subseccionId;
-      const sss_id = this.subsubseccionId;
-      const serie_id = this.serieId;
-      const subserie_id = this.subserieId;
+      const error = this.validarInventario();
 
-      // Validación de seguridad
-      if (!s_id) {
+      if (error) {
         Swal.fire({
           icon: 'warning',
           title: 'Falta Selección',
-          text: 'Debe seleccionar al menos una Sección para generar el Inventario.',
+          text: error,
         });
         return;
       }
 
-  
-
-      this.procesarExcel("inventario_tramites.xlsx", serie_id, subserie_id, s_id, ss_id, sss_id);
+      this.procesarExcel(
+        "inventario_tramites.xlsx",
+        this.serieId,
+        this.subserieId,
+        this.seccionId,
+        this.subseccionId,
+        this.subsubseccionId
+      );
       return;
     }
-  
+
+    // 4 y 5. Organización Posicional / Estructural (sólo requieren la Sección)
+    if (this.tipoReporte === '4' || this.tipoReporte === '5') {
+      const esPosicional = this.tipoReporte === '4';
+      const nombreReporte = esPosicional ? 'Posicional' : 'Estructural';
+
+      if (!this.seccionId) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Falta Selección',
+          text: `Debe seleccionar una Sección para generar la Organización ${nombreReporte}.`,
+        });
+        return;
+      }
+
+      const archivo = esPosicional
+        ? 'organizacion_posicional.xlsx'
+        : 'organizacion_estructural.xlsx';
+
+      this.procesarExcel(archivo, null, null, this.seccionId);
+      return;
+    }
+
     // Caso inesperado
     Swal.fire({
       icon: 'info',
@@ -261,9 +322,35 @@ series: any[] = [];
         },
         error: (err) => {
           Swal.close();
-          Swal.fire('Error', 'No se pudo generar el Excel', 'error');
+          this.mostrarErrorExcel(err);
         }
       });
+  }
+
+  /**
+   * La petición pide un blob, así que cuando el backend responde con un error
+   * el cuerpo también llega como blob. Hay que leerlo para poder mostrar el
+   * mensaje real (por ejemplo, que la serie elegida no tiene documentos).
+   */
+  private mostrarErrorExcel(err: any) {
+    const cuerpo = err?.error;
+
+    if (!(cuerpo instanceof Blob)) {
+      Swal.fire('Error', cuerpo?.message || 'No se pudo generar el Excel', 'error');
+      return;
+    }
+
+    cuerpo.text().then((texto: string) => {
+      let mensaje = 'No se pudo generar el Excel';
+
+      try {
+        mensaje = JSON.parse(texto)?.message || mensaje;
+      } catch {
+        // El cuerpo no era JSON: se queda el mensaje genérico
+      }
+
+      Swal.fire('Atención', mensaje, 'warning');
+    });
   }
 
 }

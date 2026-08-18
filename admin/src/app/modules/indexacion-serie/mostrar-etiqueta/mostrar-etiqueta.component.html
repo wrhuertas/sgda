@@ -1,0 +1,40 @@
+<div class="modal-header">
+  <h4 class="modal-title fw-bold">Observación</h4>
+  <button type="button" class="btn btn-sm btn-icon btn-active-light-primary" (click)="activeModal.dismiss()">
+    <i class="ki-duotone ki-cross fs-2"><span class="path1"></span><span class="path2"></span></i>
+  </button>
+</div>
+
+<div class="modal-body">
+
+  <div class="bg-light rounded p-3 mb-4" *ngIf="rutaCompleta || nivel">
+    <div class="fs-8 text-muted text-uppercase fw-bold mb-1" *ngIf="rutaCompleta">Ruta</div>
+    <div class="fs-7 text-gray-800 mb-2" *ngIf="rutaCompleta">{{ rutaCompleta }}</div>
+
+    <div class="text-muted fs-7" *ngIf="nivel">
+      Se guardará en: <strong class="text-gray-800 text-uppercase">{{ nivel }}</strong>
+      <span *ngIf="nombreUbicacion"> — {{ nombreUbicacion }}</span>
+    </div>
+  </div>
+
+  <div class="mb-4">
+    <label class="form-label fw-semibold">Ingresar información</label>
+    <input type="text" class="form-control form-control-solid"
+           [(ngModel)]="informacion" name="informacion" />
+  </div>
+
+  <label class="form-check form-check-custom form-check-solid align-items-center">
+    <input class="form-check-input" type="checkbox"
+           [(ngModel)]="conforme" name="conforme" />
+    <span class="form-check-label fw-semibold">Conforme</span>
+  </label>
+
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-light" (click)="activeModal.dismiss()">Cerrar</button>
+  <button type="button" class="btn btn-primary" (click)="actualizar()" [disabled]="guardando">
+    <span *ngIf="guardando" class="spinner-border spinner-border-sm me-2"></span>
+    {{ guardando ? 'Guardando...' : 'Actualizar' }}
+  </button>
+</div>

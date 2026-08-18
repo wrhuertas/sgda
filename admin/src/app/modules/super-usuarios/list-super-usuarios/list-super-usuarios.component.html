@@ -1,0 +1,60 @@
+<div class="card">
+  <!-- Header -->
+  <div class="card-header border-0 pt-6">
+    <div class="card-title">
+      <div class="d-flex align-items-center position-relative my-1">
+        <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-5">
+          <span class="path1"></span><span class="path2"></span>
+        </i>
+        <input type="text" [(ngModel)]="search" name="search" (keyup.enter)="buscar()"
+          class="form-control form-control-solid w-250px ps-12" placeholder="Buscar Super Usuario..." />
+      </div>
+    </div>
+
+    <div class="card-toolbar">
+      <button type="button" class="btn btn-primary" (click)="crearSuperUsuario()">
+        <i class="ki-duotone ki-plus fs-2"></i>
+        Crear Super Usuario
+      </button>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="card-body py-4">
+    <div class="table-responsive">
+      <table class="table align-middle table-row-dashed fs-6 gy-5">
+        <thead>
+          <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
+            <th>Nombre</th>
+            <th>Correo</th>
+            <th>Estado</th>
+            <th>Fecha registro</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="text-gray-600 fw-semibold">
+          <tr *ngFor="let u of superUsuarios">
+            <td>{{ u.full_name || (u.name + ' ' + (u.surname || '')) }}</td>
+            <td>{{ u.email }}</td>
+            <td>
+              <span class="badge" [ngClass]="u.estado ? 'badge-light-success' : 'badge-light-danger'">
+                {{ u.estado ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+            <td>{{ u.fecha_registro || '-' }}</td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-light-primary me-2" (click)="editarSuperUsuario(u)">Editar</button>
+              <button class="btn btn-sm btn-light-danger" (click)="eliminarSuperUsuario(u)">Eliminar</button>
+            </td>
+          </tr>
+
+          <tr *ngIf="superUsuarios.length === 0">
+            <td colspan="5" class="text-center text-muted py-10">
+              No hay super usuarios registrados aún.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

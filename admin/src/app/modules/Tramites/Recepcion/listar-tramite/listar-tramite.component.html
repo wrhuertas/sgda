@@ -11,9 +11,13 @@
           class="form-control form-control-solid w-250px ps-12" placeholder="Buscar Trámite..." />
         
         <span class="spinner-border spinner-border-sm align-middle ms-4" *ngIf="isLoading$ | async"></span>
+        <!-- Contador de resultados junto al buscador -->
+        <span *ngIf="tramites !== undefined" class="ms-3 text-muted small">
+          {{ tramites.length }} trámite{{ tramites.length === 1 ? '' : 's' }} relacionados
+        </span>
       </div>
     </div>
-
+<!--
     <div class="card-toolbar">
       <div class="d-flex justify-content-end">
         <button type="button" class="btn btn-primary" (click)="crearTramite()">
@@ -22,7 +26,20 @@
         </button>
       </div>
     </div>
+-->
 
+  <div class="card-toolbar">
+      <div class="d-flex justify-content-end">
+        <!-- Mostrar el botón sólo cuando hay más de 1 trámite seleccionado -->
+        <button *ngIf="selectedTramites && selectedTramites.size > 1" type="button" class="btn btn-primary" (click)="enviarTramitesMasivo()">
+        <i class="ki-duotone ki-send fs-2">
+          <span class="path1"></span>
+          <span class="path2"></span>
+        </i>
+        Enviar Trámites
+      </button>
+    </div>
+  </div>
   </div>
 
   <div class="card-body pt-3">
@@ -84,6 +101,14 @@
             <table class="table align-middle table-row-dashed fs-7 gy-3">
               <thead>
                 <tr class="text-start text-gray-500 fw-bold fs-8 text-uppercase gs-0 bg-light">
+                  <!-- Checkbox column: select all / per-row selection -->
+                  <th class="min-w-40px text-center">
+                    <div class="form-check form-check-sm form-check-custom form-check-solid d-flex justify-content-center">
+                      <input type="checkbox" class="form-check-input" title="Seleccionar todos"
+                             [checked]="selectAllChecked"
+                             (change)="toggleSelectAll($any($event.target).checked)" />
+                    </div>
+                  </th>
                   <th class="min-w-40px text-center" title="Documento principal firmado electrónicamente">
                     <div class="d-flex flex-column align-items-center">
                       <i class="fa fa-key fs-4 text-gray-400"></i>
@@ -93,16 +118,25 @@
                   <th class="min-w-90px">DE</th>
                   <th class="min-w-90px">Para</th>
                   <th class="min-w-200px">Asunto</th>
+                  <th class="min-w-120px">Tiempo Trámite</th>
                   <th class="min-w-90px">Fecha Trámite</th>
                   <th class="min-w-80px">Nº Trámite</th>
                   <th class="min-w-90px">Nº Documento</th>
-                  <th class="min-w-80px">Nº Referido</th>
                   
                   <th class="text-center min-w-120px">Acciones</th>
                 </tr>
               </thead>
               <tbody class="fw-semibold text-gray-600">
                 <tr *ngFor="let item of filtrarTramites(cat)">
+                  <td class="text-center align-middle">
+                    <div class="form-check form-check-sm form-check-custom form-check-solid d-flex justify-content-center">
+                      <input type="checkbox" class="form-check-input"
+                             [checked]="isSelected(item)"
+                             (change)="toggleSelection(item, $any($event.target).checked)"
+                             [disabled]="calcularVigencia(item).bloqueado"
+                             title="Seleccionar trámite" />
+                    </div>
+                  </td>
                   <td class="text-center align-middle">
                     <i class="fa fa-flag"
                        [ngClass]="(item?.documento_principal?.firmado ? 'text-success' : 'text-secondary')"
@@ -127,22 +161,32 @@
                       {{ item.id_cliente ? 'Recepción' : (item.para_nombre || '-') }}
                     </span>
                   </td>
-                   <td>
-                     <div class="d-flex flex-column gap-2">
-                       <span class="text-gray-800 text-truncate d-inline-block" style="max-width: 260px;" title="{{ item.asunto || item.asunto_tramite }}">
-                         {{ item.asunto || item.asunto_tramite || '-' }}
-                       </span>
-                       <div *ngIf="item.categoria">
-                         <span class="badge" [ngClass]="{
-                           'badge-light-danger': item.categoria === 'Urgente',
-                           'badge-light-primary': item.categoria === 'Especial',
-                           'badge-light-success': item.categoria === 'Normal'
-                         }">
-                           {{ item.categoria }}
-                         </span>
-                       </div>
-                     </div>
-                   </td>
+                    <td>
+                      <div class="d-flex flex-column gap-2">
+                        <span class="text-gray-800 text-truncate d-inline-block" style="max-width: 260px;" title="{{ item.asunto || item.asunto_tramite }}">
+                          {{ item.asunto || item.asunto_tramite || '-' }}
+                        </span>
+                        <div *ngIf="item.categoria">
+                          <span class="badge" [ngClass]="{
+                            'badge-light-danger': item.categoria === 'Urgente',
+                            'badge-light-primary': item.categoria === 'Especial',
+                            'badge-light-success': item.categoria === 'Normal'
+                          }">
+                            {{ item.categoria }}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="d-flex flex-column align-items-start">
+                        <span>
+                          <span class="badge" [ngClass]="calcularVigencia(item).colorClass">{{ calcularVigencia(item).label }}</span>
+                        </span>
+                        <small class="text-muted mt-1" *ngIf="calcularDiasRestantes(item) !== null">
+                          {{ calcularDiasRestantes(item) }} día{{ calcularDiasRestantes(item) === 1 ? '' : 's' }} restantes
+                        </small>
+                      </div>
+                    </td>
                   <td>
                     <span class="text-gray-800 d-inline-block" style="max-width: 90px; white-space: normal; word-break: break-all;">{{ item.created_at | date:'dd/MM/yyyy HH:mm' }}</span>
                   </td>
@@ -152,14 +196,11 @@
                   <td>
                     <span class="text-gray-800 d-inline-block" style="max-width: 90px; white-space: normal; word-break: break-all;">{{ item.num_documento_interno || '-' }}</span>
                   </td>
-                  <td>
-                    <span class="text-gray-800 d-inline-block" style="max-width: 90px; white-space: normal; word-break: break-all;">{{ item.numero_referido || '-' }}</span>
-                  </td>
                   
                   <td class="text-center">
                     <div class="d-flex justify-content-center gap-2">
                       <button (click)="verMasDatos(item)" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm" title="Datos"><i class="fa fa-eye"></i></button>
-                      <button (click)="verSeguimiento(item)" class="btn btn-icon btn-bg-light btn-active-color-success btn-sm" title="Seguimiento"><i class="fa fa-history"></i></button>
+                    <!--  <button (click)="verSeguimiento(item)" class="btn btn-icon btn-bg-light btn-active-color-success btn-sm" title="Seguimiento"><i class="fa fa-history"></i></button>-->
                       <button
                         *ngIf="item.estado_registro == 1"
                         (click)="asignarTramite(item)"
@@ -174,7 +215,7 @@
                 </tr>
                 
                 <tr *ngIf="filtrarTramites(cat).length === 0">
-                  <td colspan="10" class="text-center text-muted py-4 fs-8 italic">No hay documentos clasificados como {{ cat }}</td>
+                  <td colspan="11" class="text-center text-muted py-4 fs-8 italic">No hay documentos clasificados como {{ cat }}</td>
                 </tr>
               </tbody>
             </table>
@@ -204,7 +245,10 @@
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">{{ tituloAnexos || 'Anexos' }}</h5>
+        <div class="d-flex flex-column">
+          <h5 class="modal-title mb-0">{{ tituloAnexos || 'Anexos' }}</h5>
+          <small class="text-muted" *ngIf="oficioAnexos">Nº de oficio: {{ oficioAnexos }}</small>
+        </div>
         <button type="button" class="btn-close" aria-label="Close" (click)="cerrarAnexos()"></button>
       </div>
       <div class="modal-body">
@@ -217,9 +261,9 @@
               <span class="badge bg-light text-gray-700 ms-2">{{ a.tipo_documento }}</span>
               <div class="small text-muted" *ngIf="a.descripcion">{{ a.descripcion }}</div>
             </div>
-            <a class="btn btn-sm btn-light-primary" [href]="('/storage/' + a.ruta)" target="_blank" rel="noopener">
+            <button *ngIf="a.ruta" type="button" class="btn btn-sm btn-light-primary" (click)="verAnexo(a)" title="Ver documento">
               <i class="fa fa-eye"></i> Ver
-            </a>
+            </button>
           </li>
         </ul>
       </div>

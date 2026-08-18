@@ -53,6 +53,8 @@ export class CreateEmpresaComponent {
       'Certificado',
       'Prestamo Expediente',
       'Certifiados Expediente',
+      'Scan',
+      'Etiquetas',
       'Busqueda de documentos',
       'Reporte'
     ],
@@ -64,6 +66,24 @@ export class CreateEmpresaComponent {
   groupedSidebar: Array<{ title: string; items: any[] }> = [];
 
   mostrarPermisos: boolean = false;
+
+  // ---------- Autenticación externa (opcional) ----------
+  mostrarDirectorio: boolean = false;
+
+  utiliza_ldap: boolean = false;
+  ldap_host: string = '';
+  ldap_port: any = '';
+  ldap_base_dn: string = '';
+  ldap_username: string = '';
+  ldap_password: string = '';
+
+  utiliza_api_auth: boolean = false;
+  api_auth_url: string = '';
+  api_auth_token: string = '';
+
+  toggleDirectorio() {
+    this.mostrarDirectorio = !this.mostrarDirectorio;
+  }
 
 
   constructor(
@@ -361,6 +381,19 @@ store() {
   formData.append("admin_password", this.admin_password);
 
   formData.append("permisos", JSON.stringify(this.permisions));
+
+  // Autenticación externa: todos opcionales. Los switches viajan como 1/0
+  // porque en un FormData el booleano se convertiría en "true"/"false".
+  formData.append("utiliza_ldap", this.utiliza_ldap ? '1' : '0');
+  formData.append("ldap_host", norm(this.ldap_host));
+  formData.append("ldap_port", norm(this.ldap_port));
+  formData.append("ldap_base_dn", norm(this.ldap_base_dn));
+  formData.append("ldap_username", norm(this.ldap_username));
+  formData.append("ldap_password", norm(this.ldap_password));
+
+  formData.append("utiliza_api_auth", this.utiliza_api_auth ? '1' : '0');
+  formData.append("api_auth_url", norm(this.api_auth_url));
+  formData.append("api_auth_token", norm(this.api_auth_token));
 
   // 🔹 Swal de espera mientras se crea la empresa
   Swal.fire({

@@ -16,7 +16,7 @@ import Swal from 'sweetalert2';
 import * as pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 import * as htmlToPdfmake from 'html-to-pdfmake';
-import { URL_SERVICIOS } from 'src/app/config/config';
+import { URL_SERVICIOS, URL_BACKEND } from 'src/app/config/config';
 
 (pdfMake as any).vfs = (pdfFonts as any).pdfMake ? (pdfFonts as any).pdfMake.vfs : (pdfFonts as any).vfs;
 
@@ -29,9 +29,9 @@ export class AsignarTramiteComponent {
 
   @Input() id_usuario: any;
   @Input() id_tramite!: number;
-@Input() tramiteDatos!: any;
-@Output() tramiteC = new EventEmitter<void>();
-@Input() areas: any[] = [];
+ @Input() tramiteDatos!: any;
+ @Output() tramiteC = new EventEmitter<void>();
+ @Input() areas: any[] = [];
   fechaRegistro = new Date().toLocaleDateString();
   accion: string = 'DERIVAR';
 
@@ -75,7 +75,7 @@ funcionariosDe: any[] = [];
 rucOrganizacion: string = '';
 nombreOrganizacion: string = '';
 tipoPersona: string = '';
-asunto: string = '';
+  asunto: string = '';
 
 
   public Editor: any = ClassicEditor; 
@@ -146,6 +146,8 @@ asunto: string = '';
     // Iniciar indicador de carga inicial
     this.showInitLoading();
     const user = this.authService.user;
+    // DEBUG: verificar que los datos del trámite llegan al componente
+    console.log('[AsignarTramite] ngOnInit - id_tramite:', this.id_tramite, 'tramiteDatos:', this.tramiteDatos);
     
     if (user) {
       this.id_empresa = user.id_empresa;
@@ -204,6 +206,17 @@ asunto: string = '';
   numero_documento_input: string = '';
   puedeAsignar: boolean = true;
 
+  // Indican si el valor ya vino cargado desde la base o del trámite anterior.
+  tipoDocumentoPrecargado: boolean = false;
+  tipoTramitePrecargado: boolean = false;
+  categoriaPrecargada: boolean = false;
+
+  // Los tres selects se ocultan/muestran juntos: sólo se ocultan cuando los
+  // tres datos ya vienen cargados; si falta alguno se muestran los tres.
+  get selectsPrecargados(): boolean {
+    return this.tipoDocumentoPrecargado && this.tipoTramitePrecargado && this.categoriaPrecargada;
+  }
+
 private cargarTipos(idEmpresa: number) {
   // --- Tipos de documento ---
   this.incInit();
@@ -213,9 +226,17 @@ private cargarTipos(idEmpresa: number) {
       const arr = resp?.tipo_documentos || resp?.data || resp || [];
       this.tipo_documentos = Array.isArray(arr) ? arr : [];
       
-      const mem = this.tipo_documentos.find((td: any) => String(td?.nombre || '').toLowerCase().includes('memor'));
-      if (mem && mem.id_tipodocumento) {
-        this.id_tipo_documento_sel = mem.id_tipodocumento;
+      // Si el trámite ya trae tipo de documento, se respeta y se oculta el select
+      const idTipoDocTramite = this.tramiteDatos?.id_tipo_documento ?? null;
+      if (idTipoDocTramite) {
+        this.id_tipo_documento_sel = idTipoDocTramite;
+        this.tipoDocumentoPrecargado = true;
+      } else {
+        const mem = this.tipo_documentos.find((td: any) => String(td?.nombre || '').toLowerCase().includes('memor'));
+        if (mem && mem.id_tipodocumento) {
+          this.id_tipo_documento_sel = mem.id_tipodocumento;
+        }
+        this.tipoDocumentoPrecargado = false;
       }
       this.cdr.detectChanges();
       this.decInit();
@@ -235,7 +256,9 @@ private cargarTipos(idEmpresa: number) {
       const arr = resp?.tipo_tramites || resp?.data || resp || [];
       this.tipo_tramites = Array.isArray(arr) ? arr : [];
       this.id_tipo_tramite_sel = this.tramiteDatos?.id_tipo_tramite ?? this.id_tipo_tramite_sel;
-      
+      // Sólo se considera precargado si el valor viene del trámite anterior
+      this.tipoTramitePrecargado = !!this.tramiteDatos?.id_tipo_tramite;
+
       this.cdr.detectChanges();
       this.decInit();
     },
@@ -264,80 +287,70 @@ private cargarTipos(idEmpresa: number) {
   }
 
   DatosLogeado(id_usuario: number): void {
-    try {
-      console.log('validarFirma - id_usuario (enviando al servicio):', id_usuario);
-      this.recepcionService.datosLogeado(id_usuario).subscribe({
-        next: (resp: any) => {
-          console.log('Logeado:', resp);
-          // Enriquecer la fila DE si existe
-          if (Array.isArray(this.usuarios_de) && this.usuarios_de.length > 0 && resp) {
-            const de = this.usuarios_de[0];
-            // Mapear campos si existen en respuesta
-            if (typeof resp.tiene_firma !== 'undefined') de.tiene_firma = !!resp.tiene_firma;
-            if (resp.titulo_usuario) de.titulo = resp.titulo_usuario;
-            // Usamos 'area' y 'subseccion' que la tabla ya muestra
-            if (resp.proyecto_actual) de.area = resp.proyecto_actual; // sección actual
-            if (resp.nombre_proyecto_raiz) de.subseccion = resp.nombre_proyecto_raiz; // subsección/raíz
-            if (resp.empresa) de.institucion = resp.empresa;
-            // Sigla opcional del usuario
-            if (resp.sigla_usuario) de.sigla = resp.sigla_usuario;
-            // Autogenerar Número de Documento con: SIGLA_EMPRESA-SIGLA_PROYECTO_RAIZ-SIGLA_PROYECTO_ACTUAL-AÑO-####-M
-            const siglaEmp = String(resp.sigla || resp.sigla_empresa || '').trim();
-            const siglaProyRaiz = String(resp.sigla_proyecto_raiz || '').trim();
-            const siglaProyActual = String(resp.sigla_proyecto_actual || '').trim();
-            const year = new Date().getFullYear();
-            const idEmp = this.id_empresa ?? resp.id_empresa ?? null;
-            if (idEmp) {
-              this.recepcionService.getSecuencialMemorandumRecepcion(Number(idEmp)).subscribe({
-                next: (r: any) => {
-                  const sec4 = String(r?.secuencial || '0001').padStart(4, '0');
-                   const partes: string[] = [];
-                   if (siglaEmp) partes.push(siglaEmp);
-                   if (siglaProyRaiz) partes.push(siglaProyRaiz);
-                   if (siglaProyActual) partes.push(siglaProyActual);
-                   partes.push(String(year));
-                   partes.push(sec4);
-                   partes.push('M');
-                   this.numero_documento_input = partes.join('-');
-                   this.cdr.detectChanges();
-                 },
-                 error: () => {
-                   const sec4 = '0001';
-                   const partes: string[] = [];
-                   if (siglaEmp) partes.push(siglaEmp);
-                   if (siglaProyRaiz) partes.push(siglaProyRaiz);
-                   if (siglaProyActual) partes.push(siglaProyActual);
-                  partes.push(String(year));
-                  partes.push(sec4);
-                  partes.push('M');
-                  this.numero_documento_input = partes.join('-');
-                  this.cdr.detectChanges();
-                }
-              });
-            } else {
-              const sec4 = '0001';
-                   const partes: string[] = [];
-                   if (siglaEmp) partes.push(siglaEmp);
-                   if (siglaProyRaiz) partes.push(siglaProyRaiz);
-                   if (siglaProyActual) partes.push(siglaProyActual);
-                   partes.push(String(year));
-              partes.push(sec4);
-              partes.push('M');
-              this.numero_documento_input = partes.join('-');
-              this.cdr.detectChanges();
-            }
+  try {
+    console.log('validarFirma - id_usuario (enviando al servicio):', id_usuario);
+    this.recepcionService.datosLogeado(id_usuario).subscribe({
+      next: (resp: any) => {
+        console.log('Logeado:', resp);
+        // Enriquecer la fila DE si existe
+        if (Array.isArray(this.usuarios_de) && this.usuarios_de.length > 0 && resp) {
+          const de = this.usuarios_de[0];
+          // Mapear campos si existen en respuesta
+          if (typeof resp.tiene_firma !== 'undefined') de.tiene_firma = !!resp.tiene_firma;
+          if (resp.titulo_usuario) de.titulo = resp.titulo_usuario;
+          // Usamos 'area' y 'subseccion' que la tabla ya muestra
+          if (resp.proyecto_actual) de.area = resp.proyecto_actual; // sección actual
+          if (resp.nombre_proyecto_raiz) de.subseccion = resp.nombre_proyecto_raiz; // subsección/raíz
+          if (resp.empresa) de.institucion = resp.empresa;
+          // Sigla opcional del usuario
+          if (resp.sigla_usuario) de.sigla = resp.sigla_usuario;
+
+          // Autogenerar Número de Documento con: SIGLA_EMPRESA-SIGLA_PROYECTO_RAIZ-SIGLA_PROYECTO_ACTUAL-AÑO-####-M
+          const siglaEmp = String(resp.sigla || resp.sigla_empresa || '').trim();
+          const siglaProyRaiz = String(resp.sigla_proyecto_raiz || '').trim();
+          const siglaProyActual = String(resp.sigla_proyecto_actual || '').trim();
+          const year = new Date().getFullYear();
+          const idEmp = this.id_empresa ?? resp.id_empresa ?? null;
+
+          // Armamos el PREFIJO (todo menos el secuencial y el "-M")
+          // Ejemplo resultante: "GADM-COG-2026" o "GADM-FIN-2026"
+          const partesPrefijo: string[] = [];
+          if (siglaEmp) partesPrefijo.push(siglaEmp);
+          if (siglaProyRaiz) partesPrefijo.push(siglaProyRaiz);
+          if (siglaProyActual) partesPrefijo.push(siglaProyActual);
+          partesPrefijo.push(String(year));
+          const prefijo = partesPrefijo.join('-');
+
+          if (idEmp && prefijo) {
+            this.recepcionService.getSecuencialMemorandumRecepcion(Number(idEmp), prefijo).subscribe({
+              next: (r: any) => {
+                const sec4 = String(r?.secuencial || '0001').padStart(4, '0');
+                this.numero_documento_input = `${prefijo}-${sec4}-M`;
+                this.cdr.detectChanges();
+              },
+              error: (err) => {
+                console.error('getSecuencialMemorandumRecepcion - error:', err);
+                this.numero_documento_input = `${prefijo}-0001-M`;
+                this.cdr.detectChanges();
+              }
+            });
+          } else {
+            // Si falta id_empresa o prefijo, generamos con secuencial por defecto
+            this.numero_documento_input = `${prefijo || 'SIN-PREFIJO'}-0001-M`;
+            this.cdr.detectChanges();
           }
-        },
-        error: (err) => {
-          console.error('validarFirma - error servicio:', err);
-        },
-        complete: () => this.decInit()
-      });
-    } catch (e) {
-      console.error('DatosLogeado - error:', e);
-      this.decInit();
-    }
+        }
+      },
+      error: (err) => {
+        console.error('validarFirma - error servicio:', err);
+      },
+      complete: () => this.decInit()
+    });
+  } catch (e) {
+    console.error('DatosLogeado - error:', e);
+    this.decInit();
   }
+}
 
   onEditorReady(editor: any) {
     this.editorInstance = editor;
@@ -388,11 +401,13 @@ verTramiteCompleto() {
 
 
   documentostramite(id_tramite: number) {
-  // Traer documentos del trámite (borrador/oficial según backend)
-  this.recepcionService.docuemntosTramite(id_tramite).subscribe({
+    // Traer documentos del trámite (borrador/oficial según backend)
+   this.recepcionService.docuemntosTramite(id_tramite).subscribe({
     next: (resp: any) => {
       const tramite = resp.tramite || resp; // Ajusta según la estructura exacta de tu respuesta
       this.categoria_sel = tramite.categoria || '';
+      // Si la categoría ya viene de la base, se oculta el select
+      this.categoriaPrecargada = !!this.categoria_sel;
       // Documentos
       this.documentosTramite = Array.isArray(resp?.documentos) ? resp.documentos : [];
       // Anexos en tabla anexos_tramite
@@ -698,8 +713,14 @@ verTramiteCompleto() {
         formData.append('id_usuario_firma', String(user.id));
       }
 
+      // El acta va primero; su descripción viaja vacía para mantener alineados
+      // los índices de 'archivos[]' con los de 'anexos_descripcion[]'.
       formData.append('archivos[]', actaFile);
-      this.archivos.forEach(file => formData.append('archivos[]', file));
+      formData.append('anexos_descripcion[]', '');
+      this.archivos.forEach((file, idx) => {
+        formData.append('archivos[]', file);
+        formData.append('anexos_descripcion[]', this.anexosDescripcion[idx] ?? '');
+      });
 
       // Enviar también los destinatarios actuales para que el backend pueda
       // persistirlos/usar sin depender de un paso previo de "Guardar".
@@ -742,87 +763,252 @@ verTramiteCompleto() {
     }
 }
 
-private async generarActaPdfFile(options?: { para?: any[]; de?: any[]; copia?: any[]; asunto?: string; numero_tramite?: string; tipo_documento?: string }): Promise<File> {
+// Convierte una URL de imagen a base64 (fallback cuando el backend no envía el base64)
+private async urlABase64(url: string): Promise<string | null> {
+  let finalUrl = String(url || '').trim();
+  if (!finalUrl) return null;
+  if (!/^https?:\/\//i.test(finalUrl)) {
+    const base = String(URL_BACKEND || '').replace(/\/+$/, '');
+    finalUrl = `${base}/${finalUrl.replace(/^\/+/, '')}`;
+  }
+  try {
+    const blob = await firstValueFrom(this.http.get(finalUrl, { responseType: 'blob' }));
+    return await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+// Genera el acta en PDF con el MISMO diseño de la vista previa (logo, cabecera,
+// pie de página, ciudad, destinatarios y anexos). El backend sólo guarda y firma
+// este archivo, por eso todo el armado del documento vive aquí.
+private async generarActaPdfFile(options?: { para?: any[]; de?: any[]; copia?: any[]; asunto?: string; numero_tramite?: string; tipo_documento?: string; borrador?: boolean }): Promise<File> {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const idEmpresa = user?.id_empresa ?? null;
+  const idEmpresa = user?.id_empresa ?? this.id_empresa ?? null;
   let empresa: any = null;
   let logoBase64: string | null = null;
+  let cabeceraBase64: string | null = null;
+  let pieBase64: string | null = null;
 
   if (idEmpresa) {
     try {
       empresa = await firstValueFrom(this.recepcionService.cargarempresaidVistaPrevia(idEmpresa));
-      const urlLogo = String(empresa?.imagen_empresa || '').trim();
-      if (urlLogo) {
-        const blob = await firstValueFrom(this.http.get(urlLogo, { responseType: 'blob' }));
-        logoBase64 = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(blob);
-        });
+      // El endpoint ya devuelve las imágenes en base64 (evita el CORS de /storage)
+      logoBase64 = empresa?.imagen_empresa_base64 ?? null;
+      cabeceraBase64 = empresa?.imagen_cabecera_base64 ?? null;
+      pieBase64 = empresa?.imagen_pie_pagina_base64 ?? null;
+
+      // Fallback: si no vino el base64, descargar la imagen por URL
+      if (!logoBase64 && empresa?.imagen_empresa) {
+        logoBase64 = await this.urlABase64(empresa.imagen_empresa);
       }
-    } catch {
-      empresa = null;
-      logoBase64 = null;
+      if (!cabeceraBase64 && empresa?.imagen_cabecera) {
+        cabeceraBase64 = await this.urlABase64(empresa.imagen_cabecera);
+      }
+      if (!pieBase64 && empresa?.imagen_pie_pagina) {
+        pieBase64 = await this.urlABase64(empresa.imagen_pie_pagina);
+      }
+    } catch (e) {
+      // Si falla la carga de imágenes NO perdemos los datos de la empresa
+      console.error('[AsignarTramite] No se pudo cargar la empresa para el acta:', e);
     }
   }
 
   const htmlContent = (htmlToPdfmake as any)(this.contenidoCuerpo || '', { window });
   const tipoDocumento = String(options?.tipo_documento || this.tramiteDatos?.tipo_documento_nombre || 'DOCUMENTO');
-  const numeroTramite = String(options?.numero_tramite || this.tramiteDatos?.num_documento_interno || 'S/N');
+  const numeroDocumento = String(
+    (this.numero_documento_input && this.numero_documento_input.trim()) ||
+    options?.numero_tramite ||
+    this.tramiteDatos?.num_documento_interno || 'S/N'
+  );
   const fecha = new Date().toLocaleDateString('es-EC', { year: 'numeric', month: 'long', day: 'numeric' });
   const para = options?.para ?? this.usuarios_para;
   const de = options?.de ?? this.usuarios_de;
   const copia = options?.copia ?? this.usuarios_copia;
   const asunto = options?.asunto ?? this.asunto ?? this.tramiteDatos?.asunto_tramite ?? 'Sin Asunto';
 
+  const nombreEmpresa = String(empresa?.nombre_empresa || '').trim();
+  const ciudadEmpresa = String(empresa?.ciudad || '').trim();
+  const ciudadFecha = ciudadEmpresa ? `${ciudadEmpresa}, ${fecha}` : fecha;
+
+  // Cabecera y pie: sólo se usan como imagen si la empresa así lo configuró
+  const cabeceraImg = (cabeceraBase64 && empresa?.si_cabecera === 1) ? cabeceraBase64 : null;
+  const pieImg = (pieBase64 && empresa?.si_pie_pagina === 1) ? pieBase64 : null;
+
+  // Anexos: los del memorándum actual (archivos nuevos) y los del trámite
+  const anexosMemorandum = (this.archivos || [])
+    .map((f: any) => String(f?.name || '').trim())
+    .filter((n: string) => !!n);
+  const anexosTramite = (this.anexosGuardados || [])
+    .map((ax: any) => String(ax?.nombre_anexo || ax?.nombre || '').trim())
+    .filter((n: string) => !!n);
+
   const docDefinition: any = {
     pageSize: 'A4',
-    pageMargins: [40, 40, 40, 60],
+    pageMargins: [20, 100, 20, 100],
+    // La marca de agua sólo aplica al borrador, nunca al acta oficial firmada
+    ...(options?.borrador ? { watermark: { text: 'BORRADOR', color: '#e3342f', opacity: 0.08, bold: true, fontSize: 55 } } : {}),
     content: [
+      // Texto de cabecera (cuando la empresa usa texto en lugar de imagen)
       {
         columns: [
-          logoBase64
-            ? { image: logoBase64, width: 100 }
-            : { text: empresa?.nombre_empresa || '', bold: true, fontSize: 12 },
-          {
-            stack: [
-              { text: `${tipoDocumento} Nro. ${numeroTramite}`, style: 'header', alignment: 'right' },
-              { text: fecha, alignment: 'right', fontSize: 10 },
-            ],
-            margin: [0, 10, 0, 0],
-          },
-        ],
+          { width: '*', text: '' },
+          { width: 'auto', text: (empresa?.texto_cabecera && empresa?.si_cabecera === 0) ? String(empresa.texto_cabecera || '') : '', alignment: 'center', style: 'empresa', margin: [0, 0, 0, 10] },
+          { width: '*', text: '' }
+        ]
       },
-      { canvas: [{ type: 'line', x1: 0, y1: 5, x2: 515, y2: 5, lineWidth: 1, lineColor: '#eeeeee' }] },
-      { text: '\n' },
+      // Logo centrado
       {
-        table: {
-          widths: [60, '*'],
-          body: [
-            [{ text: 'PARA:', bold: true, fillColor: '#f3f3f3' }, { text: this.formatLista(para) }],
-            [{ text: 'DE:', bold: true, fillColor: '#f3f3f3' }, { text: this.formatLista(de) }],
-            [{ text: 'COPIA:', bold: true, fillColor: '#f3f3f3' }, { text: this.formatLista(copia) }],
-            [{ text: 'ASUNTO:', bold: true, fillColor: '#f3f3f3' }, { text: asunto }],
-            [{ text: 'FECHA:', bold: true, fillColor: '#f3f3f3' }, { text: fecha }],
-          ],
-        },
-        layout: 'lightHorizontalLines',
+        columns: [
+          { width: '*', text: '' },
+          logoBase64
+            ? { width: 'auto', stack: [{ image: logoBase64, width: 100, alignment: 'center' }] }
+            : { width: 'auto', text: '' },
+          { width: '*', text: '' }
+        ]
       },
-      { text: '\n\n' },
-      htmlContent,
-      { text: '\n\nAtentamente,\n\n', margin: [0, 30, 0, 0] },
+      // Empresa / número de documento / ciudad y fecha, alineados a la derecha
       {
         stack: [
-          { text: 'Firmado electrónicamente', italics: true, color: '#004a99', fontSize: 9 },
-          { text: this.formatLista(de), bold: true, margin: [0, 5, 0, 0] },
-          { text: empresa?.nombre_empresa || '', fontSize: 9, color: '#666' },
-        ],
-        alignment: 'left',
+          { text: nombreEmpresa || '', style: 'empresa', alignment: 'right', margin: [0, 0, 0, 2] },
+          { text: `${tipoDocumento} Nro. ${numeroDocumento}`, style: 'docNumber', alignment: 'right', margin: [0, 0, 0, 2] },
+          { text: ciudadFecha, style: 'docDate', alignment: 'right' }
+        ]
       },
+      { text: ' ', margin: [0, 10, 0, 0] },
+      { text: ' ', margin: [0, 20, 0, 0] },
+      { canvas: [{ type: 'line', x1: 0, y1: 10, x2: 515, y2: 10, lineWidth: 1, lineColor: '#e5e7eb' }], margin: [0, 0, 0, 10] },
+
+      {
+        stack: [
+          {
+            columns: [
+              { width: 55, text: 'Para:', style: 'label' },
+              { width: '*', text: this.formatLista(para), style: 'value' }
+            ],
+            columnGap: 8
+          },
+          {
+            columns: [
+              { width: 55, text: 'De:', style: 'label' },
+              { width: '*', text: this.formatLista(de), style: 'value' }
+            ],
+            columnGap: 8,
+            margin: [0, 4, 0, 0]
+          },
+          ...(Array.isArray(copia) && copia.length > 0 ? [
+            {
+              columns: [
+                { width: 55, text: 'Copia:', style: 'label' },
+                { width: '*', text: this.formatLista(copia), style: 'value' }
+              ],
+              columnGap: 8,
+              margin: [0, 4, 0, 0]
+            }
+          ] : []),
+          { text: '\n' },
+          {
+            columns: [
+              { width: 55, text: 'Asunto:', style: 'label' },
+              { width: '*', text: String(asunto || 'Sin Asunto'), style: 'value' }
+            ],
+            columnGap: 8,
+            margin: [0, 4, 0, 0]
+          }
+        ]
+      },
+
+      { text: '\n' },
+
+      htmlContent,
+
+      // "Atentamente" + firma en una celda para que no se partan entre páginas
+      {
+        table: {
+          widths: ['*'],
+          body: [
+            [
+              {
+                stack: [
+                  { text: '\n\nAtentamente,\n\n', margin: [0, 100, 0, 0] },
+                  {
+                    stack: [
+                      { text: this.formatLista(de), bold: true, margin: [0, 40, 0, 0] },
+                      { text: nombreEmpresa, fontSize: 9, color: '#666', margin: [0, 12, 0, 0] }
+                    ],
+                    alignment: 'left'
+                  }
+                ]
+              }
+            ]
+          ],
+          dontBreakRows: true
+        },
+        layout: 'noBorders'
+      },
+
+      ...(anexosMemorandum.length > 0
+        ? [
+            { text: `\nAnexos de este Memorándum ${numeroDocumento || ''}`.trimEnd() + ':', style: 'label', margin: [0, 12, 0, 6] },
+            { ul: anexosMemorandum, fontSize: 9 }
+          ]
+        : []),
+      ...(anexosTramite.length > 0
+        ? [
+            { text: `\nAnexos de Trámite ${this.tramiteDatos?.numero_tramite || ''}`.trimEnd() + ':', style: 'label', margin: [0, 12, 0, 6] },
+            { ul: anexosTramite, fontSize: 9 }
+          ]
+        : []),
     ],
-    styles: {
-      header: { fontSize: 13, bold: true, color: '#333' },
+    footer: () => {
+      if (pieImg) {
+        return {
+          columns: [
+            { width: '*', text: '' },
+            { image: pieImg, width: 515, height: 60, alignment: 'center' },
+            { width: '*', text: '' }
+          ],
+          margin: [0, 0, 0, 0]
+        };
+      }
+
+      const direccion = String(empresa?.direccion_empresa || empresa?.direccion || '').trim();
+      const telefono = String(empresa?.telefono_empresa || empresa?.telefono || '').trim();
+      const textoPie = String(empresa?.texto_pie_pagina || empresa?.texto_pie || '').trim();
+
+      const parts = [direccion, telefono, textoPie].filter(p => !!p);
+      if (parts.length === 0) return null;
+
+      return {
+        columns: [
+          { width: '*', text: '' },
+          { width: 'auto', stack: parts.map(p => ({ text: p, fontSize: 9, color: '#444', alignment: 'center' })) },
+          { width: '*', text: '' }
+        ],
+        margin: [0, 40, 0, 0]
+      };
     },
+    header: cabeceraImg
+      ? () => ({
+          columns: [
+            { width: '*', text: '' },
+            { image: cabeceraImg, width: 555, height: 80, alignment: 'center' },
+            { width: '*', text: '' }
+          ],
+          margin: [0, 0, 0, 0]
+        })
+      : undefined,
+    styles: {
+      empresa: { fontSize: 13, bold: true, color: '#111827' },
+      docNumber: { fontSize: 10.5, bold: true, color: '#111827' },
+      docDate: { fontSize: 9.5, color: '#374151' },
+      label: { fontSize: 10, bold: true, color: '#111827' },
+      value: { fontSize: 10, color: '#111827' }
+    }
   };
 
   const buffer: ArrayBuffer = await new Promise((resolve, reject) => {
@@ -835,13 +1021,35 @@ private async generarActaPdfFile(options?: { para?: any[]; de?: any[]; copia?: a
   });
 
   const blob = new Blob([buffer], { type: 'application/pdf' });
-  const nombre = `ACTA_${numeroTramite}.pdf`;
+  const nombre = `ACTA_${numeroDocumento}.pdf`;
   return new File([blob], nombre, { type: 'application/pdf' });
 }
 
+// Mismo formato que usa la vista previa: sigla + nombre y, en la línea
+// siguiente, título y puesto/sección del usuario.
 private formatLista(usuarios: any[]): string {
   if (!usuarios || usuarios.length === 0) return 'No asignado';
-  return usuarios.map(u => `${u.nombre_completo}`).join(', ');
+  return usuarios
+    .map(u => {
+      const sigla = String(u?.sigla || u?.sigla_usuario || '').trim();
+      const nombre = String(u?.nombre_completo || `${u?.nombre || ''} ${u?.apellido || ''}`.trim() || u?.full_name || u?.name || '').trim();
+      const titulo = String(u?.titulo || u?.titulo_usuario || u?.cargo || '').trim();
+      const puesto = String(u?.puesto || u?.area || u?.seccion || u?.subseccion || '').trim();
+      const seccion = String(u?.seccion || u?.subseccion || '').trim();
+
+      if (!nombre) return '';
+
+      const main = [sigla, nombre].filter(x => !!x).join(' ').trim();
+
+      const extras: string[] = [];
+      if (titulo) extras.push(titulo);
+      const puestoSeccion = [puesto, seccion].filter(x => !!x).join(' / ');
+      if (puestoSeccion) extras.push(puestoSeccion);
+
+      return extras.length > 0 ? `${main}\n${extras.join(' — ')}` : main;
+    })
+    .filter(v => !!v)
+    .join('\n\n') || 'No asignado';
 }
 
 getPrioridadLabel(): string {
@@ -1038,57 +1246,71 @@ changeTab(tab: number) {
     } catch {}
   }
 
-private setUsuarioDeFijo() {
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const id = this.usuario_id ?? user?.id ?? null;
-  if (!id) return;
+  private setUsuarioDeFijo() {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const id = this.usuario_id ?? user?.id ?? null;
+    if (!id) return;
 
-  const nombre = String(
-    user?.nombre_completo ||
-      user?.full_name ||
-      `${user?.name ?? ''} ${user?.surname ?? ''}`.trim() ||
-      `${user?.nombre ?? ''} ${user?.apellido ?? ''}`.trim() ||
-      `${user?.nombres ?? ''} ${user?.apellidos ?? ''}`.trim()
-  ).trim() || 'Usuario';
+    // Si ya existen destinatarios "DE" (por ejemplo venidos desde BuscarUsuario),
+    // no sobrescribimos la lista completa. En su lugar, marcamos al usuario logueado
+    // como rol fijo 'DE' si ya está presente o dejamos la lista tal cual.
+    if (Array.isArray(this.usuarios_de) && this.usuarios_de.length > 0) {
+      const idx = this.usuarios_de.findIndex(u => Number(u.id) === Number(id));
+      if (idx >= 0) {
+        this.usuarios_de[idx].rol_envio = 'DE';
+        this.usuarios_de[idx].lockedRole = true;
+        this.usuarios_de[idx].tiene_firma = !!user?.archivo_firma;
+      }
+      this.cdr.detectChanges();
+      return;
+    }
 
-  const titulo = String(user?.titulo || user?.title || user?.cargo || user?.puesto || '').trim();
-  const subseccion = String(
-    user?.subseccion ||
-      user?.subseccion_nombre ||
-      user?.area_nombre ||
-      user?.nombre_area ||
-      user?.departamento ||
-      user?.seccion ||
-      ''
-  ).trim();
+    const nombre = String(
+      user?.nombre_completo ||
+        user?.full_name ||
+        `${user?.name ?? ''} ${user?.surname ?? ''}`.trim() ||
+        `${user?.nombre ?? ''} ${user?.apellido ?? ''}`.trim() ||
+        `${user?.nombres ?? ''} ${user?.apellidos ?? ''}`.trim()
+    ).trim() || 'Usuario';
 
-  const entry: any = {
-    id,
-    nombre_completo: nombre,
-    email: user?.email ?? '',
-    titulo: titulo || null,
-    empresa: String(user?.empresa || user?.empresa_nombre || '').trim(),
-    proyecto: 'N/A',
-    subseccion: subseccion || 'N/A',
-    id_proyecto: user?.id_proyecto ?? null,
-    rol_envio: 'DE',
-    lockedRole: true,
-    tiene_firma: !!user?.archivo_firma,
-  };
+    const titulo = String(user?.titulo || user?.title || user?.cargo || user?.puesto || '').trim();
+    const subseccion = String(
+      user?.subseccion ||
+        user?.subseccion_nombre ||
+        user?.area_nombre ||
+        user?.nombre_area ||
+        user?.departamento ||
+        user?.seccion ||
+        ''
+    ).trim() || 'N/A';
 
-  this.usuarios_de = [entry];
+    const entry: any = {
+      id,
+      nombre_completo: nombre,
+      email: user?.email ?? '',
+      titulo: titulo || null,
+      empresa: String(user?.empresa || user?.empresa_nombre || '').trim(),
+      proyecto: 'N/A',
+      subseccion: subseccion,
+      id_proyecto: user?.id_proyecto ?? null,
+      rol_envio: 'DE',
+      lockedRole: true,
+      tiene_firma: !!user?.archivo_firma,
+    };
 
-  const idEmpresa = this.id_empresa ?? user?.id_empresa ?? null;
-  if (!entry.empresa && idEmpresa) {
-    this.recepcionService.cargarempresaid(Number(idEmpresa)).subscribe({
-      next: (empresaResp: any) => {
-        entry.empresa = empresaResp?.nombre_empresa || entry.empresa || 'Sin Empresa';
-        this.cdr.detectChanges();
-      },
-      error: () => this.cdr.detectChanges()
-    });
+    this.usuarios_de = [entry];
+
+    const idEmpresa = this.id_empresa ?? user?.id_empresa ?? null;
+    if (!entry.empresa && idEmpresa) {
+      this.recepcionService.cargarempresaid(Number(idEmpresa)).subscribe({
+        next: (empresaResp: any) => {
+          entry.empresa = empresaResp?.nombre_empresa || entry.empresa || 'Sin Empresa';
+          this.cdr.detectChanges();
+        },
+        error: () => this.cdr.detectChanges()
+      });
+    }
   }
-}
 
   verActas() {
     const modalRef = this.modalService.open(SeguimientoComponent, {
@@ -1128,7 +1350,8 @@ private setUsuarioDeFijo() {
     });
     const actaFile = await this.generarActaPdfFile({
       numero_tramite: this.tramiteDatos?.num_documento_interno,
-      tipo_documento: this.tramiteDatos?.tipo_documento_nombre
+      tipo_documento: this.tramiteDatos?.tipo_documento_nombre,
+      borrador: true
     });
 
     const formData = new FormData();
@@ -1150,7 +1373,13 @@ private setUsuarioDeFijo() {
     if (this.contenidoCuerpo) formData.append('cuerpo_documento', this.contenidoCuerpo);
     formData.append('usuario_update', String(user.id));
 
-      if (actaFile) formData.append('anexos[]', actaFile);
+      // El acta ocupa la primera posición de 'anexos[]', así que necesita su
+      // propia entrada (vacía) en 'anexos_descripcion[]'. Si no, los índices se
+      // desplazan y cada anexo recibe la descripción del siguiente.
+      if (actaFile) {
+        formData.append('anexos[]', actaFile);
+        formData.append('anexos_descripcion[]', '');
+      }
       this.archivos.forEach((f, idx) => {
         formData.append('anexos[]', f);
         const desc = this.anexosDescripcion[idx] ?? '';
@@ -1505,29 +1734,58 @@ validarFirma(id_usuario: number): void {
     }
   }
 
-abrirVistaPrevia() {
-  this.setUsuarioDeFijo();
-  const modalRef = this.modalService.open(VistaPreviaComponent, {
-    centered: true,
-    size: 'xl',
-    backdrop: 'static'
-  });
+  abrirVistaPrevia() {
+    this.setUsuarioDeFijo();
+    const modalRef = this.modalService.open(VistaPreviaComponent, {
+      centered: true,
+      size: 'xl',
+      backdrop: 'static'
+    });
 
-  modalRef.componentInstance.data = {
-    asunto: this.asunto,
-    cuerpo: this.contenidoCuerpo,
-    para: this.usuarios_para,
-    de: this.usuarios_de,
-    copia: this.usuarios_copia,
-    // En vista previa queremos ver el Nº de Documento actual (no Nº Trámite)
-    num_documento_interno: this.numero_documento_input || this.tramiteDatos?.num_documento_interno,
-    tipo_documento_nombre: this.tramiteDatos?.tipo_documento_nombre,
-    anexos_nombres: [
-      // Solo archivos seleccionados actualmente (no los guardados anteriormente)
-      ...((this.archivos || []).map(f => f?.name).filter((v: any) => !!v))
-    ]
-  };
-}
+    // Normalizar usuarios para enviar solo los campos necesarios a la vista previa
+    const normalizeUsuarios = (arr: any[] | undefined) => (Array.isArray(arr) ? arr : []).map(u => ({
+      id: u?.id ?? null,
+      sigla: String(u?.sigla || u?.sigla_usuario || '').trim(),
+      nombre: String(u?.nombre || u?.nombres || u?.nombre_completo?.split(' ')?.[0] || '').trim(),
+      apellido: String(u?.apellido || u?.apellidos || (u?.nombre_completo ? u.nombre_completo.split(' ').slice(1).join(' ') : '') || '').trim(),
+      nombre_completo: String(u?.nombre_completo || `${u?.nombre || ''} ${u?.apellido || ''}`.trim()).trim(),
+      titulo: String(u?.titulo || u?.titulo_usuario || u?.cargo || u?.puesto || '').trim(),
+      puesto: String(u?.puesto || u?.area || u?.seccion || u?.subseccion || '').trim(),
+      seccion: String(u?.subseccion || u?.area || u?.seccion || '').trim()
+    }));
+
+    modalRef.componentInstance.data = {
+      asunto: this.asunto,
+      cuerpo: this.contenidoCuerpo,
+      para: normalizeUsuarios(this.usuarios_para),
+      de: normalizeUsuarios(this.usuarios_de),
+      copia: normalizeUsuarios(this.usuarios_copia),
+      // Pasar los datos completos del trámite para que la vista previa los use si es necesario
+      tramite: this.tramiteDatos,
+      // En vista previa queremos ver el Nº de Documento actual (no Nº Trámite)
+      num_documento_interno: this.numero_documento_input || this.tramiteDatos?.num_documento_interno,
+      tipo_documento_nombre: this.tramiteDatos?.tipo_documento_nombre,
+      // La ciudad ya no se captura aquí: la vista previa la toma de la empresa
+      // Anexos separados:
+      //  - del MEMORÁNDUM actual = archivos nuevos que se están adjuntando
+      //  - del TRÁMITE = anexos ya guardados del trámite original
+      anexos_memorandum: (this.archivos || [])
+        .map((f: any) => String(f?.name || '').trim())
+        .filter((n: string) => !!n),
+      numero_memorandum: this.numero_documento_input || this.tramiteDatos?.num_documento_interno || '',
+      anexos_tramite: (this.anexosGuardados || [])
+        .map((ax: any) => String(ax?.nombre_anexo || ax?.nombre || '').trim())
+        .filter((n: string) => !!n),
+      numero_tramite_anexos: this.tramiteDatos?.numero_tramite || '',
+      // Compatibilidad: mantener anexos_nombres con los del trámite
+      anexos_nombres: [
+        ...((this.anexosGuardados || [])
+          .map((ax: any) => String(ax?.nombre_anexo || ax?.nombre || '').trim())
+          .filter((n: string) => !!n))
+      ],
+      anexos_count: Array.isArray(this.anexosGuardados) ? this.anexosGuardados.length : 0
+    };
+  }
 
 
 }

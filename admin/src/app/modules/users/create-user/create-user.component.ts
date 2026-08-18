@@ -1270,9 +1270,17 @@ cargarSeriesDesdeNodo(nodo: any) {
     formData.append("sucursale_id",this.sucursale_id);
    // formData.append("id_area", this.area_id);
     formData.append("id_proyecto", proyectoFinalId);
+    // Marcar director/subdirector según el nivel seleccionado en los selects
+    // - Sección seleccionada    -> director = 1
+    // - Subsección seleccionada -> subdirector = 1
+    formData.append('director', this.id_proyecto_seleccionado ? '1' : '0');
+    formData.append('subdirector', this.id_subseccion_seleccionada ? '1' : '0');
     formData.append("password",this.password);
-    // Enviar avatar con la clave esperada por el backend
-    formData.append("avatar",this.file_name);
+    // Enviar avatar con la clave esperada por el backend. Sólo si se eligió
+    // un archivo: sin esta condición viajaba la cadena "undefined".
+    if (this.file_name) {
+      formData.append("avatar", this.file_name);
+    }
     formData.append("id_empresa", this.id_empresa.toString());
 
     // ===============================

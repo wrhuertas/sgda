@@ -1,96 +1,164 @@
 <div class="card">
   <div class="card-header border-0 pt-6">
+    
     <div class="card-title">
       <div class="d-flex align-items-center position-relative my-1">
         <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-5">
-          <span class="path1"></span><span class="path2"></span>
+          <span class="path1"></span>
+          <span class="path2"></span>
         </i>
         <input type="text" [(ngModel)]="search" (keyup.enter)="listatramites()" name="search"
           class="form-control form-control-solid w-250px ps-12" placeholder="Buscar Trámite..." />
-        
+
+        <span class="badge badge-light-primary fw-bold ms-4">
+          <i class="ki-duotone ki-document fs-6 me-1"><span class="path1"></span><span class="path2"></span></i>
+          Documentos: {{ totalPages }}
+        </span>
+
         <span class="spinner-border spinner-border-sm align-middle ms-4" *ngIf="isLoading$ | async"></span>
       </div>
     </div>
 
     <div class="card-toolbar">
-      <button type="button" class="btn btn-primary" (click)="crearTramite()">
-        <i class="ki-duotone ki-plus fs-2"></i> Crear Nuevo Trámite
-      </button>
+      <div class="d-flex justify-content-end">
+        <button type="button" class="btn btn-primary" (click)="crearTramite()">
+          <i class="ki-duotone ki-plus fs-2"></i>
+          Crear Nuevo Trámite
+        </button>
+      </div>
     </div>
+
   </div>
 
   <div class="card-body pt-3">
-    <div class="table-responsive">
-       <table class="table align-middle table-row-dashed fs-7 gy-3">
+    
+    <div class="accordion accordion-icon-toggle" id="kt_accordion_tramites">
+  
+      <div *ngIf="tramites.length === 0" class="text-center p-20 bg-light-light rounded border border-dashed border-gray-400">
+        <div class="mb-5">
+          <i class="ki-duotone ki-search-list fs-3x text-gray-500">
+            <span class="path1"></span><span class="path2"></span><span class="path3"></span>
+          </i>
+        </div>
+        <h3 class="fs-4 fw-bold text-gray-800">No se encontraron trámites</h3>
+        <p class="text-gray-500 fs-7">
+          El trámite con los datos <span class="badge badge-light-danger fw-bold">"{{ search }}"</span> no existe o no coincide con los criterios.
+        </p>
+        <button class="btn btn-sm btn-primary mt-2" (click)="search = ''; listatramites()">
+          Limpiar búsqueda
+        </button>
+      </div>
+    
+      <div class="mb-5" *ngFor="let cat of ['Rechazados', 'Urgente', 'Especial', 'Normal']; let i = index" 
+           [hidden]="tramites.length === 0">
+        
+        <div class="accordion-header py-3 d-flex" 
+              data-bs-toggle="collapse" 
+              [attr.data-bs-target]="'#kt_accordion_body_' + i"
+             class="border"
+             [ngStyle]="cat === 'Rechazados' ? {'background-color':'#fee2e2','border-color':'#dc2626','border-width':'2px'} : {'background-color':'#e5e7eb','border-color':'#9ca3af','border-width':'1.5px'}"
+             style="cursor: pointer; border-radius: 8px;">
+          
+          <span class="accordion-icon ms-4">
+            <i class="ki-duotone ki-arrow-right fs-4" [ngClass]="cat === 'Rechazados' ? 'text-danger' : 'text-gray-600'">
+              <span class="path1"></span><span class="path2"></span>
+            </i>
+          </span>
+          
+          <div class="d-flex align-items-center justify-content-between w-100 pe-5">
+            <h3 class="fs-4 fw-bold mb-0 ms-4 text-uppercase" [ngStyle]="cat === 'Rechazados' ? {'color':'#b91c1c'} : {'color':'#4b5563'}">
+              Trámites:
+              <span [ngClass]="{
+                'text-danger': cat === 'Urgente',
+                'text-primary': cat === 'Especial',
+                'text-success': cat === 'Normal'
+              }">{{ cat }}</span>
+            </h3>
+            <span class="badge badge-circle fw-bold" [ngStyle]="cat === 'Rechazados' ? {'background-color':'#ef4444', 'color':'#fff'} : {'background-color':'#cbd5e1','color':'#111827'}">
+              {{ filtrarTramites(cat).length }}
+            </span>
+          </div>
+        </div>
+    
+        <div [id]="'kt_accordion_body_' + i" 
+             class="collapse" 
+             [class.show]="filtrarTramites(cat).length > 0" 
+             data-bs-parent="#kt_accordion_tramites">
+          
+          <div class="table-responsive mt-4">
+            <table class="table align-middle table-row-dashed fs-7 gy-3">
               <thead>
                 <tr class="text-start text-gray-500 fw-bold fs-8 text-uppercase gs-0 bg-light">
-                  <th class="min-w-40px text-center" title="Documento principal firmado electrónicamente">
-                    <div class="d-flex flex-column align-items-center">
-                      <i class="fa fa-key fs-4 text-gray-400"></i>
-                    </div>
-                  </th>
-                  <th class="ps-4 min-w-40px">Anexos</th>
-                  <th class="min-w-90px">DE</th>
-                  <th class="min-w-90px">Para</th>
-                  <th class="min-w-200px">Asunto</th>
-                  <th class="min-w-90px">Fecha Trámite</th>
-                  <th class="min-w-80px">Nº Trámite</th>
-                  <th class="min-w-90px">Nº Documento</th>
-                  <th class="min-w-80px">Nº Referido</th>
+                   <th class="min-w-40px text-center" title="Documento principal firmado electrónicamente">
+                     <div class="d-flex flex-column align-items-center">
+                       <i class="fa fa-key fs-4 text-gray-400"></i>
+                     </div>
+                   </th>
+                   <th class="ps-4 min-w-40px">Docs</th>
+                   <th class="min-w-120px">DE</th>
+                   <th class="min-w-120px">Para</th>
+                   <th class="min-w-200px">Asunto</th>
+                   <th class="min-w-90px">Fecha Trámite</th>
+                   <th class="min-w-80px">Nº Trámite</th>
+                   <th class="min-w-90px">Nº Documento</th>
+                   <th class="min-w-80px">Nº Referido</th>
                   
                   <th class="text-center min-w-120px">Acciones</th>
                 </tr>
               </thead>
               <tbody class="fw-semibold text-gray-600">
-                <tr *ngFor="let item of tramites">
-                  <td class="text-center align-middle">
-                    <i class="fa fa-flag"
-                       [ngClass]="(item?.documento_principal?.firmado ? 'text-success' : 'text-secondary')"
-                       [title]="item?.documento_principal?.firmado ? 'Firmado electrónicamente' : 'No firmado'"></i>
-                  </td>
-                  <td class="ps-4">
-                    <div class="position-relative d-inline-block" title="Anexos" (click)="abrirAnexos(item)" style="cursor:pointer;">
-                      <i class="fa fa-folder text-warning"></i>
-                      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary text-white fs-9">
-                        {{ item.anexos_count || 0 }}
+                <tr *ngFor="let item of filtrarTramites(cat)">
+                   <td class="text-center align-middle">
+                     <i class="fa fa-flag"
+                        [ngClass]="(item?.documento_principal?.firmado ? 'text-success' : 'text-secondary')"
+                        [title]="item?.documento_principal?.firmado ? 'Firmado electrónicamente' : 'No firmado'"></i>
+                   </td>
+                   <td class="ps-4">
+                     <div class="position-relative d-inline-block" title="Anexos del trámite" (click)="abrirAnexos(item)" style="cursor:pointer;">
+                       <i class="fa fa-folder text-warning"></i>
+                       <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary text-white fs-9">
+                         {{ item.anexos?.length || 0 }}
+                       </span>
+                     </div>
+                   </td>
+                    <td>
+                      <div class="d-flex flex-column" style="max-width: 120px; white-space: normal; word-break: break-all;">
+                        <span class="text-gray-800 text-hover-primary mb-1 fw-semibold">{{ item.usuario_origen?.nombre_completo || '-' }}</span>
+                        <span class="fs-9 text-muted">{{ item.usuario_origen?.documento || '-' }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="d-flex flex-column" style="max-width: 120px; white-space: normal; word-break: break-all;">
+                        <span class="text-gray-800 fw-semibold">{{ item.usuario_destino?.nombre_completo || '-' }}</span>
+                        <span class="fs-9 text-muted">{{ item.usuario_destino?.documento || '-' }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="text-gray-800 d-block" style="white-space: normal; word-wrap: break-word; word-break: break-word;">
+                        {{ item.asignacion?.asunto_asignar || '-' }}
                       </span>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="d-flex flex-column" style="max-width: 90px; white-space: normal; word-break: break-all;">
-                      <span class="text-gray-800 text-hover-primary mb-1">{{ item.usuario_origen?.nombre_completo || item.cliente?.nombre || '-' }}</span>
-                      <span class="fs-9 text-muted">{{ item.cliente?.cedula_ruc || '-' }}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <span class="text-gray-800 d-inline-block" style="max-width: 90px; white-space: normal; word-break: break-all;">
-                      {{ item.usuario_destino?.nombre_completo || '-' }}
-                    </span>
-                  </td>
-                  <td>
-                    <span class="text-gray-800 text-truncate d-inline-block" style="max-width: 260px;" title="{{ item.asignacion?.asunto_asignar || item.tramite?.asunto }}">
-                      {{ item.asignacion?.asunto_asignar || item.tramite?.asunto || '-' }}
-                    </span>
-                  </td>
-                  <td>
-                    <span class="text-gray-800 d-inline-block" style="max-width: 90px; white-space: normal; word-break: break-all;">{{ item.asignacion?.fecha_registro | date:'dd/MM/yyyy HH:mm' }}</span>
-                  </td>
-                  <td>
-                    <span class="fw-bold text-primary d-inline-block" style="max-width: 90px; white-space: normal; word-break: break-all;">{{ item.asignacion?.numero_tramite || '-' }}</span>
-                  </td>
-                  <td>
-                    <span class="text-gray-800 d-inline-block" style="max-width: 90px; white-space: normal; word-break: break-all;">{{ item.asignacion?.num_documento_interno || '-' }}</span>
-                  </td>
-                  <td>
-                    <span class="text-gray-800 d-inline-block" style="max-width: 90px; white-space: normal; word-break: break-all;">{{ item.asignacion?.numero_referido || '-' }}</span>
-                  </td>
+                      <span *ngIf="item.asignacion?.sumilla == 1" class="badge badge-light-primary mt-1">Sumillado</span>
+                      <span *ngIf="item.asignacion?.sumilla == 2" class="badge badge-light-success mt-1">Sumillado revisada</span>
+                    </td>
+                    <td>
+                      <span class="text-gray-800 d-inline-block" style="max-width: 90px; white-space: normal; word-break: break-all;">{{ item.asignacion?.fecha_registro | date:'dd/MM/yyyy HH:mm' }}</span>
+                    </td>
+                    <td>
+                      <span class="fw-bold text-primary d-inline-block" style="max-width: 90px; white-space: normal; word-break: break-all;">{{ item.asignacion?.numero_tramite || '-' }}</span>
+                    </td>
+                    <td>
+                      <span class="text-gray-800 d-inline-block" style="max-width: 90px; white-space: normal; word-break: break-all;">{{ item.asignacion?.num_documento_interno || '-' }}</span>
+                    </td>
+                    <td>
+                      <span class="text-gray-800 d-inline-block" style="max-width: 90px; white-space: normal; word-break: break-all;">{{ item.asignacion?.numero_referido || '-' }}</span>
+                    </td>
                   
                   <td class="text-center">
                     <div class="d-flex justify-content-center gap-2">
                       <button (click)="verMasDatos(item)" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm" title="Datos"><i class="fa fa-eye"></i></button>
                       <button (click)="verSeguimiento(item)" class="btn btn-icon btn-bg-light btn-active-color-success btn-sm" title="Seguimiento"><i class="fa fa-history"></i></button>
                       <button
-                        *ngIf="item.asignacion?.tipo_asignacion === 'PARA' && item.asignacion?.estado_tramite === 'DERIVAR' && item.asignacion?.estado === 2"
+                        
                         (click)="asignarTramite(item)"
                         class="btn btn-icon btn-bg-light btn-active-color-warning btn-sm"
                         title="Asignar"
@@ -102,16 +170,69 @@
                   </td>
                 </tr>
                 
-                <tr *ngIf="tramites.length === 0">
-                  <td colspan="10" class="text-center text-muted py-4 fs-8 italic">No hay documentos para mostrar</td>
+                <tr *ngIf="filtrarTramites(cat).length === 0">
+                  <td colspan="10" class="text-center text-muted py-4 fs-8 italic">No hay documentos clasificados como {{ cat }}</td>
                 </tr>
               </tbody>
             </table>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="d-flex justify-content-between align-items-center flex-wrap mt-5">
-      <div class="text-muted fs-7 fw-bold">Total: {{ totalPages }}</div>
-      <ngb-pagination [collectionSize]="totalPages" [(page)]="currentPage" [pageSize]="10" (pageChange)="listatramites($event)"></ngb-pagination>
+    <div class="d-flex justify-content-between align-items-center flex-wrap">
+        <div class="text-muted fs-7 fw-bold">Total de registros: {{ totalPages }}</div>
+        <ngb-pagination
+          [collectionSize]="totalPages"
+          [(page)]="currentPage"
+          [pageSize]="10"
+          [rotate]="true"
+          [boundaryLinks]="true"
+          (pageChange)="listatramites($event)"
+          class="mt-4">
+        </ngb-pagination>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal Anexos -->
+<div *ngIf="showAnexosModal" class="modal fade show" style="display:block; background: rgba(0,0,0,0.5);">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-light">
+        <h5 class="modal-title fw-bold">{{ tituloAnexos || 'Anexos' }}</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="cerrarAnexos()"></button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="!gruposAnexos?.length" class="text-center text-muted py-6">
+          <i class="fa fa-file-o fs-1x mb-3"></i>
+          <p>No existen anexos asociados</p>
+        </div>
+
+        <!-- Anexos agrupados por el documento al que pertenecen -->
+        <div *ngFor="let grupo of gruposAnexos" class="mb-5">
+          <h6 class="fw-bold text-gray-800 mb-3">{{ grupo.titulo }}</h6>
+          <ul class="list-group">
+            <li class="list-group-item d-flex justify-content-between align-items-center"
+                *ngFor="let a of grupo.anexos">
+              <div class="text-truncate" style="max-width: 70%">
+                <i class="fa fa-file text-muted me-2"></i>
+                <span class="fw-semibold" title="{{a.nombre_anexo}}">{{ a.nombre_anexo }}</span>
+                <span class="badge badge-light text-gray-700 ms-2">{{ a.tipo_documento }}</span>
+                <div class="small text-muted mt-1" *ngIf="a.descripcion">{{ a.descripcion }}</div>
+              </div>
+              <button *ngIf="a.ruta" type="button" class="btn btn-sm btn-light-primary" (click)="verAnexo(a)" title="Ver documento">
+                <i class="fa fa-eye"></i> Ver
+              </button>
+              <span *ngIf="!a.ruta" class="text-muted fs-9">Sin archivo</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" (click)="cerrarAnexos()">Cerrar</button>
+      </div>
     </div>
   </div>
 </div>

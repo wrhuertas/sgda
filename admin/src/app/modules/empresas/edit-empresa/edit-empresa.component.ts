@@ -46,6 +46,24 @@ export class EditEmpresaComponent {
 
   mostrarPermisos: boolean = false;
 
+  // ---------- Autenticación externa (opcional) ----------
+  mostrarDirectorio: boolean = false;
+
+  utiliza_ldap: boolean = false;
+  ldap_host: string = '';
+  ldap_port: any = '';
+  ldap_base_dn: string = '';
+  ldap_username: string = '';
+  ldap_password: string = '';
+
+  utiliza_api_auth: boolean = false;
+  api_auth_url: string = '';
+  api_auth_token: string = '';
+
+  toggleDirectorio() {
+    this.mostrarDirectorio = !this.mostrarDirectorio;
+  }
+
   // Agrupación de permisos (igual que crear empresa)
   private gruposConfig: { [key: string]: string[] } = {
     'Administración': [
@@ -57,6 +75,8 @@ export class EditEmpresaComponent {
       'Certificado',
       'Prestamo Expediente',
       'Certifiados Expediente',
+      'Scan',
+      'Etiquetas',
       'Busqueda de documentos',
       'Reporte'
     ],
@@ -102,6 +122,21 @@ export class EditEmpresaComponent {
   this.fecha_expiracion_firma = this.EMPRESA_SELECTED.fecha_expiracion_firma
     ? this.EMPRESA_SELECTED.fecha_expiracion_firma.split(' ')[0]
     : '';
+
+  // Autenticación externa. Si la empresa ya tiene algo configurado se abre
+  // la sección sola, para que no quede escondida.
+  this.utiliza_ldap = !!Number(this.EMPRESA_SELECTED.utiliza_ldap);
+  this.ldap_host = norm(this.EMPRESA_SELECTED.ldap_host);
+  this.ldap_port = norm(this.EMPRESA_SELECTED.ldap_port);
+  this.ldap_base_dn = norm(this.EMPRESA_SELECTED.ldap_base_dn);
+  this.ldap_username = norm(this.EMPRESA_SELECTED.ldap_username);
+  this.ldap_password = norm(this.EMPRESA_SELECTED.ldap_password);
+
+  this.utiliza_api_auth = !!Number(this.EMPRESA_SELECTED.utiliza_api_auth);
+  this.api_auth_url = norm(this.EMPRESA_SELECTED.api_auth_url);
+  this.api_auth_token = norm(this.EMPRESA_SELECTED.api_auth_token);
+
+  this.mostrarDirectorio = this.utiliza_ldap || this.utiliza_api_auth;
 
   // Datos del administrador
   if (this.EMPRESA_SELECTED.admin) {
@@ -398,6 +433,19 @@ if (this.admin_password || this.admin_password_confirm) {
   if (this.IMAGEN_EMPRESA) {
     formData.append("imagen_empresa", this.IMAGEN_EMPRESA);
   }
+
+  // Autenticación externa: todos opcionales. Los switches viajan como 1/0
+  // porque en un FormData el booleano se convertiría en "true"/"false".
+  formData.append("utiliza_ldap", this.utiliza_ldap ? '1' : '0');
+  formData.append("ldap_host", this.ldap_host || '');
+  formData.append("ldap_port", this.ldap_port || '');
+  formData.append("ldap_base_dn", this.ldap_base_dn || '');
+  formData.append("ldap_username", this.ldap_username || '');
+  formData.append("ldap_password", this.ldap_password || '');
+
+  formData.append("utiliza_api_auth", this.utiliza_api_auth ? '1' : '0');
+  formData.append("api_auth_url", this.api_auth_url || '');
+  formData.append("api_auth_token", this.api_auth_token || '');
 
   // 🔹 Datos del administrador
   formData.append("admin_nombre", this.admin_nombre);

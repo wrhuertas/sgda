@@ -126,7 +126,12 @@ activeTab = 1; // Tab por defecto
 
                 // --- GRUPO 2: FOJAS Y DESTINO ---
                 this.nroFolios = doc.nro_folios;
-                this.nroPaginasDigitales = doc.nro_paginas_digitales;
+
+                // Si nadie cargó las carillas a mano, se muestra el conteo de
+                // páginas que sacó el sistema al subir el PDF
+                this.nroPaginasDigitales = doc.nro_paginas_digitales
+                    ? doc.nro_paginas_digitales
+                    : (doc.total_paginas || 0);
                 this.destinoFinal = doc.destino_final || '';
 
                 // --- GRUPO 3: SECUENCIALES ---

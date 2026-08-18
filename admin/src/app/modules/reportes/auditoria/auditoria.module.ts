@@ -10,6 +10,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbModule, NgbModalModule, NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
 import { InlineSVGModule } from 'ng-inline-svg-2';
 import { SafeUrlPipe } from './pipes/safe-url.pipe';
+import { VerDocumentoModule } from 'src/app/modules/indexacion-serie/ver-documento/ver-documento.module';
 
 
 @NgModule({
@@ -30,6 +31,7 @@ import { SafeUrlPipe } from './pipes/safe-url.pipe';
                     InlineSVGModule,
                     NgbModalModule,
                     NgbPaginationModule,
+                    VerDocumentoModule,
   ]
 })
 export class AuditoriaModule { }

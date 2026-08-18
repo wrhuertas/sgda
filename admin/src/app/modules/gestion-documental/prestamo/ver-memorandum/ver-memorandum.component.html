@@ -1,0 +1,58 @@
+<div class="modal-header">
+  <h4 class="modal-title fw-bold">
+    Memorandum
+    <span class="text-primary" *ngIf="memorandum?.num_documento_interno">
+      {{ memorandum.num_documento_interno }}
+    </span>
+  </h4>
+  <button type="button" class="btn btn-sm btn-icon btn-active-light-primary" (click)="activeModal.dismiss()">
+    <i class="ki-duotone ki-cross fs-2"><span class="path1"></span><span class="path2"></span></i>
+  </button>
+</div>
+
+<div class="modal-body">
+
+  <div class="text-center py-8" *ngIf="cargando">
+    <div class="spinner-border text-primary" role="status"></div>
+    <div class="text-muted fs-7 mt-3">Buscando el memorandum...</div>
+  </div>
+
+  <div class="alert alert-light-danger d-flex align-items-center" *ngIf="!cargando && error">
+    <i class="ki-duotone ki-information fs-2 text-danger me-3">
+      <span class="path1"></span><span class="path2"></span><span class="path3"></span>
+    </i>
+    <span>{{ error }}</span>
+  </div>
+
+  <div *ngIf="!cargando && !error && acta">
+    <div class="mb-4" *ngIf="memorandum?.asunto">
+      <div class="fs-8 text-muted text-uppercase fw-bold mb-1">Asunto</div>
+      <div class="fs-7 text-gray-800">{{ memorandum.asunto }}</div>
+    </div>
+
+    <div class="d-flex align-items-center justify-content-between p-4 border rounded">
+      <div class="d-flex align-items-center">
+        <i class="ki-duotone ki-file fs-2x text-danger me-4"><span class="path1"></span><span class="path2"></span></i>
+        <div>
+          <div class="fw-semibold text-gray-800">{{ acta.nombre }}</div>
+          <div class="text-muted fs-8">
+            {{ acta.tipo_documento | uppercase }}
+            <span *ngIf="acta.documento_firmado"> • Firmado</span>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" class="btn btn-sm btn-light-primary" (click)="verDocumento()">
+        <i class="ki-duotone ki-eye fs-4 me-1">
+          <span class="path1"></span><span class="path2"></span><span class="path3"></span>
+        </i>
+        Ver
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-light" (click)="activeModal.dismiss()">Cerrar</button>
+</div>

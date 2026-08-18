@@ -52,8 +52,17 @@
     data-kt-menu-attach="parent"
     data-kt-menu-placement="bottom-end"
   >
-    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="avatar">
+    <!-- Foto del usuario; si no tiene o no carga, va su inicial -->
+    <img *ngIf="!sinFoto"
+         [src]="user.avatar"
+         (error)="sinFoto = true"
+         style="object-fit: cover;"
+         alt="Foto de {{ user?.full_name }}">
 
+    <span *ngIf="sinFoto"
+          class="symbol-label bg-light-primary text-primary fw-bold">
+      {{ (user?.full_name || '?').charAt(0) | uppercase }}
+    </span>
   </div>
   <app-user-inner data-kt-menu="true"></app-user-inner>
   <!--end::Menu wrapper-->

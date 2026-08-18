@@ -137,6 +137,47 @@
   </div>
   <!--end::Wrapper-->
 
+  <!--begin::Active Directory-->
+  <div class="mb-8">
+    <label class="form-check form-check-custom form-check-solid align-items-center">
+      <input class="form-check-input" type="checkbox"
+             [(ngModel)]="usaDirectorioActivo"
+             [ngModelOptions]="{ standalone: true }"
+             (change)="alCambiarDirectorio()" />
+      <span class="form-check-label fw-semibold text-gray-800">
+        Active Directory
+      </span>
+    </label>
+
+    <div class="mt-4" *ngIf="usaDirectorioActivo">
+      <label class="form-label fw-bolder text-gray-900 fs-6">Empresa</label>
+
+      <select class="form-select bg-transparent"
+              [(ngModel)]="empresaSeleccionada"
+              [ngModelOptions]="{ standalone: true }"
+              (change)="verificarEmpresa()">
+        <option [ngValue]="null">Seleccione una empresa</option>
+        <option *ngFor="let empresa of empresas" [ngValue]="empresa.id">
+          {{ empresa.nombre_empresa }}
+        </option>
+      </select>
+
+      <div class="form-text" *ngIf="cargandoEmpresas">Cargando empresas...</div>
+      <div class="form-text text-danger" *ngIf="!cargandoEmpresas && empresas.length === 0">
+        No se pudieron cargar las empresas
+      </div>
+
+      <div class="form-text d-flex align-items-center gap-2" *ngIf="verificandoEmpresa">
+        <span class="spinner-border spinner-border-sm"></span> Verificando conexión...
+      </div>
+
+      <div class="text-danger small mt-1" *ngIf="!verificandoEmpresa && directorioConfigurado === false">
+        Error de conexión, consulte con el Administrador
+      </div>
+    </div>
+  </div>
+  <!--end::Active Directory-->
+
   <!--begin::Faux reCAPTCHA v2 UI -->
   <div class="mb-6">
     <div class="d-flex align-items-center justify-content-between border border-primary rounded py-3 px-3 bg-white" style="min-height:54px;">
@@ -168,7 +209,7 @@
 
   <!--begin::Action-->
   <div class="d-grid mb-10">
-    <button type="submit" id="kt_sign_in_submit" class="btn btn-primary" [disabled]="loginForm.invalid || !fauxCaptchaVerified || fauxCaptchaLoading">
+    <button type="submit" id="kt_sign_in_submit" class="btn btn-primary" [disabled]="loginForm.invalid || !fauxCaptchaVerified || fauxCaptchaLoading || !puedeIngresar()">
       <ng-container *ngIf="isLoading$ | async">
         <span class="indicator-progress" [style.display]="'block'">
           Espere Por favor...

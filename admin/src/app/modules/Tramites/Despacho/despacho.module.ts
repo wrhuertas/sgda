@@ -8,7 +8,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CKEditorModule } from '@ckeditor/ckeditor5-angular';
 import { NgbModule, NgbModalModule, NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
 import { InlineSVGModule } from 'ng-inline-svg-2';
-import { AsignarTramiteModule } from '../asignar-tramite/asignar-tramite.module';
 import { AsignarTramiteComponent as DespachoAsignarTramiteComponent } from './asignar-tramite/asignar-tramite.component';
 import { BuscarUsuarioComponent } from './buscar-usuario/buscar-usuario.component';
 import { ListarTramiteComponent } from './listar-tramite/listar-tramite.component';
@@ -18,6 +17,10 @@ import { VerDatosComponent } from './ver-datos/ver-datos.component';
 import { VerTramiteComponent } from './ver-tramite/ver-tramite.component';
 import { VistaPreviaComponent } from './vista-previa/vista-previa.component';
 import { DespachoComponent } from './despacho.component';
+import { SeguimientoComponent } from './seguimiento/seguimiento.component';
+import { VerActasComponent } from './ver-actas/ver-actas.component';
+import { AnexosSumillarComponent } from './anexos-sumillar/anexos-sumillar.component';
+import { VerDocumentoModule } from 'src/app/modules/indexacion-serie/ver-documento/ver-documento.module';
 
 
 
@@ -29,9 +32,12 @@ import { DespachoComponent } from './despacho.component';
         UsuarioAreaComponent,
         NuevoTramiteComponent,
         BuscarUsuarioComponent,
-        VerTramiteComponent,
-        VistaPreviaComponent,
-        DespachoAsignarTramiteComponent
+    VerTramiteComponent,
+    VistaPreviaComponent,
+        DespachoAsignarTramiteComponent,
+        SeguimientoComponent,
+        VerActasComponent,
+        AnexosSumillarComponent
   ],
   imports: [
     CommonModule,
@@ -45,7 +51,8 @@ import { DespachoComponent } from './despacho.component';
         NgbPaginationModule,
         InlineSVGModule,
         CKEditorModule,
-        AsignarTramiteModule
+        VerDocumentoModule,
+        // AsignarTramiteModule removed to avoid duplicate declarations
   ]
 })
 export class DespachoModule { }

@@ -115,38 +115,50 @@
           <div class="row g-5">
             <div class="col-4 text-center">
               <div class="bg-light p-3 rounded">
-                <label class="fw-bold text-muted d-block fs-8">Caja</label>
-                <span class="fw-bolder text-dark">{{ detalle.nro_caja || '-' }}</span>
+                <label class="fw-bold text-muted d-block fs-8">Sede / Edificio</label>
+                <span class="fw-bolder text-dark">{{ detalle.ubicacion?.edificio || '-' }}</span>
               </div>
             </div>
             <div class="col-4 text-center">
               <div class="bg-light p-3 rounded">
-                <label class="fw-bold text-muted d-block fs-8">Carpeta</label>
-                <span class="fw-bolder text-dark">{{ detalle.nro_carpeta_fisica || '-' }}</span>
-              </div>
-            </div>
-            <div class="col-4 text-center">
-              <div class="bg-light p-3 rounded">
-                <label class="fw-bold text-muted d-block fs-8">Tomo</label>
-                <span class="fw-bolder text-dark">{{ detalle.nro_tomo || '-' }}</span>
+                <label class="fw-bold text-muted d-block fs-8">Depósito / Sala</label>
+                <span class="fw-bolder text-dark">{{ detalle.ubicacion?.sala || '-' }}</span>
               </div>
             </div>
             <div class="col-4 text-center">
               <div class="bg-light p-3 rounded">
                 <label class="fw-bold text-muted d-block fs-8">Estantería</label>
-                <span class="fw-bolder text-dark">{{ detalle.nro_estanteria || '-' }}</span>
+                <span class="fw-bolder text-dark">{{ detalle.ubicacion?.estanteria || '-' }}</span>
               </div>
             </div>
             <div class="col-4 text-center">
               <div class="bg-light p-3 rounded">
-                <label class="fw-bold text-muted d-block fs-8">Bandeja</label>
-                <span class="fw-bolder text-dark">{{ detalle.nro_bandeja || '-' }}</span>
+                <label class="fw-bold text-muted d-block fs-8">Fila / Bandeja</label>
+                <span class="fw-bolder text-dark">{{ detalle.ubicacion?.fila || '-' }}</span>
+              </div>
+            </div>
+            <div class="col-4 text-center">
+              <div class="bg-light p-3 rounded">
+                <label class="fw-bold text-muted d-block fs-8">Caja</label>
+                <span class="fw-bolder text-dark">{{ detalle.ubicacion?.caja || '-' }}</span>
+              </div>
+            </div>
+            <div class="col-4 text-center">
+              <div class="bg-light p-3 rounded">
+                <label class="fw-bold text-muted d-block fs-8">Carpeta</label>
+                <span class="fw-bolder text-dark">{{ detalle.ubicacion?.carpeta || '-' }}</span>
+              </div>
+            </div>
+            <div class="col-4 text-center">
+              <div class="bg-light p-3 rounded">
+                <label class="fw-bold text-muted d-block fs-8">Tomo</label>
+                <span class="fw-bolder text-dark">{{ detalle.ubicacion?.tomo || '-' }}</span>
               </div>
             </div>
             <div class="col-4 text-center">
               <div class="bg-light p-3 rounded border-primary border border-dashed">
                 <label class="fw-bold text-muted d-block fs-8">Folios</label>
-                <span class="fw-bolder text-primary">{{ detalle.nro_folios || '0' }}</span>
+                <span class="fw-bolder text-primary">{{ detalle.ubicacion?.folios || '0' }}</span>
               </div>
             </div>
           </div>

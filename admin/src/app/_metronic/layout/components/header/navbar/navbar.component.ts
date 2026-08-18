@@ -22,7 +22,14 @@ export class NavbarComponent implements OnInit {
   itemClass: string = 'ms-1 ms-lg-3';
   btnClass: string =
     'btn btn-icon btn-custom btn-icon-muted btn-active-light btn-active-color-primary w-35px h-35px w-md-40px h-md-40px';
-  userAvatarClass: string = 'symbol-35px symbol-md-40px';
+  userAvatarClass: string = 'symbol-circle symbol-35px symbol-md-40px';
+
+  /** Se prende si el usuario no tiene foto propia o si no se puede cargar */
+  sinFoto = false;
+
+  private esFotoPorDefecto(avatar: any): boolean {
+    return !avatar || String(avatar).includes('cdn-icons-png.flaticon.com');
+  }
   btnIconClass: string = 'fs-2 fs-md-1';
 
   constructor(
@@ -34,6 +41,21 @@ export class NavbarComponent implements OnInit {
   ngOnInit(): void {
     this.user = this.authService.user;
     this.userOriginal = this.authService.user; // 🔐 Guardar super admin original
+
+    // El backend manda una URL de flaticon cuando el usuario no tiene foto:
+    // en ese caso se muestra la inicial en vez de esa imagen genérica.
+    this.sinFoto = this.esFotoPorDefecto(this.user?.avatar);
+
+    // La foto se refresca contra el servidor después de arrancar, así que hay
+    // que escuchar el cambio para no quedarse con la de la sesión vieja.
+    this.authService.currentUserSubject.subscribe((usuario: any) => {
+      if (!usuario) { return; }
+
+      this.user = usuario;
+      this.sinFoto = this.esFotoPorDefecto(usuario.avatar);
+
+      try { this.cdr.detectChanges(); } catch {}
+    });
 
      // ✅ Doble condición: si es id 1 o el rol es Super-Admin
       if (this.userOriginal?.id === 1 || this.userOriginal?.role_name === 'Super-Admin') {

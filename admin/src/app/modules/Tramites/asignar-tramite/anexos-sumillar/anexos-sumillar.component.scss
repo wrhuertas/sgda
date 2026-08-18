@@ -1,0 +1,70 @@
+.anexo-card {
+  border-radius: 12px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: default;
+}
+
+.anexo-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1) !important;
+}
+
+.anexo-icon-wrapper {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f1f4ff;
+  border-radius: 50%;
+}
+
+.anexo-nombre {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 2.6em;
+  line-height: 1.3em;
+  word-break: break-word;
+  font-size: 0.95rem;
+}
+
+.anexo-tipo {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  min-height: 1.2em;
+}
+
+/* Botón X rojo estilo "cerrar" clásico */
+.btn-close-custom {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background-color: #f1416c; /* rojo (variante Metronic danger) */
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.btn-close-custom i {
+  color: #fff;
+  font-size: 1rem;
+}
+
+.btn-close-custom:hover {
+  background-color: #d9214f;
+  transform: scale(1.05);
+}
+
+.anexo-folio {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}

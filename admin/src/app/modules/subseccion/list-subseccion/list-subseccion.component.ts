@@ -26,6 +26,10 @@ export class ListSubseccionComponent implements OnInit {
   nombreProyecto!: string;
   search: string = '';
   SUBSECCIONES: any[] = [];
+  // Lista tal como llegó del servidor, antes de filtrar por permisos.
+  // Se conserva porque los permisos pueden llegar después que la lista.
+  subseccionesSinFiltrar: any[] = [];
+  totalSinFiltrar = 0;
   totalPages: number = 0;
   currentPage: number = 1;
  isLoading$: any;
@@ -131,19 +135,13 @@ isDataLoaded: boolean = false;
       .listSubsecciones(this.idProyecto, page, this.search)
       .subscribe({
         next: (res: any) => {
-          this.totalPages = res.total;
+          // Se guarda sin filtrar: los permisos pueden llegar después
+          this.subseccionesSinFiltrar = res.data || [];
+          this.totalSinFiltrar = res.total;
           this.currentPage = page;
-  
-          // 🔥 FILTRADO SEGÚN ROL
-          if (this.isAdminUser(user)) {
-            this.SUBSECCIONES = res.data;
-          } else {
-            this.SUBSECCIONES = res.data.filter((sub: any) => {
-              const permiso = this.permisosPorSubSeccion[sub.id_proyecto];
-              return permiso?.ver === true || permiso?.ver === 1;
-            });
-          }
-  
+
+          this.aplicarFiltroPermisos();
+
           // 3. ✅ PROCESO TERMINADO
           this.isDataLoaded = true; // Ahora el HTML tiene permiso de mostrarse
           Swal.close(); // Cerramos el aviso
@@ -166,6 +164,30 @@ isDataLoaded: boolean = false;
         user?.role_name?.toLowerCase().includes('admin') ||
         user?.permissions?.includes('super_admin')
       );
+    }
+
+    /**
+     * Deja en pantalla solo las subsecciones que el usuario puede ver.
+     *
+     * Se llama tanto cuando llega la lista como cuando llegan los permisos,
+     * porque son dos peticiones independientes y no hay forma de saber cuál
+     * responde primero. Antes, si los permisos llegaban después, la lista se
+     * filtraba contra un mapa vacío y salía "Sin información" hasta recargar.
+     */
+    aplicarFiltroPermisos() {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+      if (this.isAdminUser(user)) {
+        this.SUBSECCIONES = this.subseccionesSinFiltrar;
+      } else {
+        this.SUBSECCIONES = this.subseccionesSinFiltrar.filter((sub: any) => {
+          const permiso = this.permisosPorSubSeccion[sub.id_proyecto];
+          return permiso?.ver === true || permiso?.ver === 1;
+        });
+      }
+
+      this.totalPages = this.totalSinFiltrar || this.SUBSECCIONES.length;
+      this.cdr.detectChanges();
     }
 
 
@@ -288,6 +310,10 @@ isDataLoaded: boolean = false;
           }, {} as { [id_subseccion: number]: any });
     
           console.log('Permisos por Sub Sección cargados:', this.permisosPorSubSeccion);
+
+          // Si la lista ya había llegado, se vuelve a filtrar ahora que sí hay
+          // permisos. Sin esto quedaba vacía hasta recargar la página.
+          this.aplicarFiltroPermisos();
     
           // 3. Evaluar permisos globales para Sub Sección
           this.puedeCrearSubSeccion = this.permisosDocumentales.some(p =>

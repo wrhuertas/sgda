@@ -1,259 +1,161 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectorRef, OnDestroy, OnInit } from '@angular/core';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, Input, Output, EventEmitter, OnInit, Optional } from '@angular/core';
+import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
-import { firstValueFrom } from 'rxjs';
 import { AuthService } from 'src/app/modules/auth';
 import { AsignartramiteService } from '../service/asignartramite.service';
-import { URL_BACKEND } from 'src/app/config/config';
+import { URL_SERVICIOS } from 'src/app/config/config';
+import { VerActasComponent } from '../ver-actas/ver-actas.component';
 
 @Component({
   selector: 'app-seguimiento',
   templateUrl: './seguimiento.component.html',
   styleUrls: ['./seguimiento.component.scss']
 })
-export class SeguimientoComponent implements OnInit, OnDestroy {
+export class SeguimientoComponent implements OnInit {
 
   // Datos recibidos del padre
   @Input() id_tramite!: number;
   @Input() tramiteDatos!: any;
   @Input() areas!: any[];
   @Input() soloActas: boolean = false;
+  // Cuando se usa dentro de otra vista (pestaña) y no como modal propio,
+  // se ocultan la cabecera y el pie de modal.
+  @Input() embebido: boolean = false;
 
-  // Datos internos
-  tramite: any = null;
-  documentos: any[] = [];
-  selectedDoc: any = null;
-  selectedPreviewUrl: SafeResourceUrl | null = null;
-  selectedRawUrl: string = '';
-  previewNoDisponible: boolean = false;
-  private currentObjectUrl: string | null = null;
-  // Tabla de seguimiento (rellenar desde API si aplica)
-  seguimientos: Array<{ seccion: string; fecha_hora: string; dias: number | string; comentario: string }> = [];
-
-  // Evento para notificar cambios al padre (si necesitas refrescar listado)
   @Output() tramiteC: EventEmitter<any> = new EventEmitter();
 
+  public responseData: any = null;
+  public loading: boolean = false;
+  public expandedAsignacion: number | null = null;
+
   constructor(
-    public activeModal: NgbActiveModal,
+    // Opcional: cuando el componente se usa embebido en una pestaña no existe
+    // un modal propio al cual cerrar.
+    @Optional() public activeModal: NgbActiveModal | null,
+    public modalService: NgbModal,
     public AsignartramiteService: AsignartramiteService,
     public toast: ToastrService,
-    private cdr: ChangeDetectorRef,
-    public authService: AuthService,
-    private sanitizer: DomSanitizer
+    public authService: AuthService
   ) {}
 
   ngOnInit() {
-    if (this.id_tramite) {
-      console.log('ID del trámite recibido:', this.id_tramite);
-      this.cargarSeguimiento(this.id_tramite);
-    }
+    const user = this.authService?.currentUserValue ?? JSON.parse(localStorage.getItem('user') || '{}');
+    const id_usuario = user?.id ?? null;
+    const id_empresa = user?.id_empresa ?? null;
+
+    // Resolver id_asignacion_tramite desde varias posibles ubicaciones
+    const id_asignacion_tramite = this.tramiteDatos?.asignacion?.id_asignacion_tramite
+      ?? this.tramiteDatos?.id_asignacion_tramite
+      ?? this.tramiteDatos?.id_asignar_tramite
+      ?? this.tramiteDatos?.id_asignar
+      ?? this.tramiteDatos?.id_asignacion
+      ?? null;
+
+    // Resolver id_tramite desde posibles ubicaciones
+    const id_tramite: number = this.id_tramite
+      ?? this.tramiteDatos?.tramite?.id_tramite
+      ?? this.tramiteDatos?.id_tramite
+      ?? this.tramiteDatos?.asignacion?.id_tramite
+      ?? null;
+
+    this.traerDatosAsinacion(id_asignacion_tramite, id_empresa, id_usuario, id_tramite);
   }
 
-  ngOnDestroy(): void {
-    this.revokeCurrentObjectUrl();
-  }
+  traerDatosAsinacion(
+    id_asignacion_tramite: number,
+    id_empresa: number,
+    id_usuario: number,
+    id_tramite: number
+  ) {
+    if (!id_asignacion_tramite) { this.toast.error('No se encontró id_asignacion_tramite'); return; }
+    if (!id_empresa) { this.toast.error('No se encontró id_empresa'); return; }
+    if (!id_usuario) { this.toast.error('No se encontró id_usuario'); return; }
 
-  // Carga el trámite y sus documentos desde la API
-  cargarSeguimiento(id_tramite: number) {
-    this.AsignartramiteService.seguimientosTramite(id_tramite).subscribe({
+    // El id_tramite ya no es obligatorio: los trámites creados por memorandum
+    // no tienen uno, y el backend arma el seguimiento desde la asignación.
+    const payload: any = {
+      id_asignacion_tramite: Number(id_asignacion_tramite),
+      id_empresa: Number(id_empresa),
+      id_usuario: Number(id_usuario),
+      id_tramite: id_tramite ? Number(id_tramite) : null
+    };
+
+    console.log('[Seguimiento] payload enviado:', payload);
+
+    this.loading = true;
+    this.AsignartramiteService.traerDatosAsinacion(payload).subscribe({
       next: (resp: any) => {
-        console.log('Trámite y documentos cargados:', resp);
-        this.tramite = resp.tramite;
-        const docs = resp.documentos || [];
-        this.documentos = this.soloActas ? docs.filter((d: any) => this.esActa(d)) : docs;
-        if (this.documentos.length > 0) {
-          this.seleccionarDocumento(this.documentos[0]);
-        } else {
-          this.selectedDoc = null;
-          this.selectedPreviewUrl = null;
-          this.selectedRawUrl = '';
-          this.previewNoDisponible = false;
-        }
-        this.cdr.detectChanges();
+        this.loading = false;
+        console.log('[Seguimiento] respuesta del servicio:', resp);
+        this.responseData = resp;
       },
       error: (err) => {
-        console.error('Error cargando trámite:', err);
-        this.toast.error('No se pudo cargar el trámite');
+        this.loading = false;
+        console.error('Error al traer datos de asignación:', err);
+        this.toast.error('No se pudieron obtener los datos');
       }
     });
   }
 
-  private esActa(doc: any): boolean {
-    const nombre = String(doc?.nombre_original || doc?.nombre_archivo || '').toLowerCase();
-    return nombre.includes('acta');
-  }
-
-  getTituloTramite(): string {
-    const numero = this.tramiteDatos?.num_documento_interno || this.tramite?.num_documento_interno || '';
-    const base = this.soloActas ? 'Actas del trámite' : 'Seguimiento del trámite';
-    return numero ? `${base} ${numero}` : `${base} #${this.id_tramite}`;
-  }
-
-  getClienteLabel(): string {
-    return (
-      this.tramiteDatos?.cliente_razon_social ||
-      this.tramiteDatos?.cliente_nombre ||
-      this.tramite?.cliente?.razon_social ||
-      this.tramite?.cliente?.nombre ||
-      '-'
-    );
-  }
-
-  getAsuntoLabel(): string {
-    return this.tramiteDatos?.asunto_tramite || this.tramite?.asunto_tramite || '-';
-  }
-
-  getCedulaRucLabel(): string {
-    return this.tramiteDatos?.cedula_ruc || this.tramite?.cliente?.cedula_ruc || '-';
-  }
-
-  private buildStorageUrl(ruta_archivo: string): string {
-    const cleanBase = String(URL_BACKEND || '').replace(/\/+$/, '');
-    const raw = String(ruta_archivo || '').trim();
-    if (!raw) return '';
-
-    if (/^https?:\/\//i.test(raw)) {
-      return encodeURI(raw);
+  formatDate(dateStr: string | null): string {
+    if (!dateStr) return '-';
+    try {
+      const d = new Date(dateStr);
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      const hh = String(d.getHours()).padStart(2, '0');
+      const min = String(d.getMinutes()).padStart(2, '0');
+      return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
+    } catch {
+      return String(dateStr);
     }
+  }
 
-    let cleanRuta = raw.replace(/^\/+/, '');
+  formatSize(bytes: number | null): string {
+    const b = Number(bytes) || 0;
+    const kb = Math.round(b / 1024);
+    return kb.toString();
+  }
 
-    if (cleanRuta.startsWith('public/')) {
-      cleanRuta = cleanRuta.slice('public/'.length);
+  toggleAsignacion(index: number) {
+    this.expandedAsignacion = this.expandedAsignacion === index ? null : index;
+  }
+
+  abrirDocumento(ruta: string) {
+    if (!ruta) return;
+    const cleanBase = String(URL_SERVICIOS || '').replace(/\/+$/, '');
+    let cleanRuta = String(ruta || '').replace(/^\/+/, '');
+    if (/^https?:\/\//i.test(cleanRuta)) {
+      window.open(cleanRuta, '_blank');
+      return;
     }
-
     if (cleanRuta.startsWith('storage/')) {
-      return encodeURI(`${cleanBase}/${cleanRuta}`);
+      cleanRuta = cleanRuta.replace(/^storage\//, '');
     }
-
-    return encodeURI(`${cleanBase}/storage/${cleanRuta}`);
+    const url = `${cleanBase}/storage/${cleanRuta}`;
+    window.open(url, '_blank');
   }
 
-  private getExtension(doc: any): string {
-    const extFromField = String(doc?.extension || '').toLowerCase();
-    if (extFromField) return extFromField;
-    const nombre = String(doc?.nombre_original || doc?.nombre_archivo || '').toLowerCase();
-    const idx = nombre.lastIndexOf('.');
-    return idx >= 0 ? nombre.slice(idx + 1) : '';
-  }
-
-  seleccionarDocumento(doc: any) {
-    if (!doc?.ruta_archivo) return;
-    this.selectedDoc = doc;
-    this.previewNoDisponible = false;
-    this.selectedPreviewUrl = null;
-    this.selectedRawUrl = '';
-    this.revokeCurrentObjectUrl();
-
-    const ext = this.getExtension(doc);
-    if (ext && ext !== 'pdf') {
-      this.previewNoDisponible = true;
-      this.cdr.detectChanges();
+  // Abrir modal VerActasComponent con las actas (igual que el seguimiento de Despacho)
+  mostrarActas(actas: any[]) {
+    if (!Array.isArray(actas) || actas.length === 0) {
+      this.toast.info('No hay actas para mostrar');
       return;
     }
-
-    this.cargarPreviewPdf(doc);
+    const modalRef = this.modalService.open(VerActasComponent, {
+      centered: true,
+      size: 'lg',
+      backdrop: 'static'
+    });
+    modalRef.componentInstance.actas = actas || [];
+    const asignId = actas.length > 0 ? (actas[0].asignar_tramite_id ?? actas[0].id_asignacion_tramite ?? null) : null;
+    modalRef.componentInstance.id_asignacion_tramite = asignId;
+    modalRef.componentInstance.id_tramite = this.responseData?.tramite?.id_tramite ?? null;
   }
 
-  private revokeCurrentObjectUrl(): void {
-    if (!this.currentObjectUrl) return;
-    URL.revokeObjectURL(this.currentObjectUrl);
-    this.currentObjectUrl = null;
-  }
-
-  private async cargarPreviewPdf(doc: any): Promise<void> {
-    if (!doc?.id_documento_tramite) {
-      const url = this.buildStorageUrl(doc?.ruta_archivo);
-      if (!url) {
-        this.previewNoDisponible = true;
-        this.toast.error('El documento no está disponible.');
-        this.cdr.detectChanges();
-        return;
-      }
-      this.selectedRawUrl = url;
-      this.selectedPreviewUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
-      this.cdr.detectChanges();
-      return;
-    }
-
-    try {
-      const blob = await firstValueFrom(this.AsignartramiteService.obtenerDocumentoTramite(doc.id_documento_tramite));
-      if (!blob || blob.size === 0) {
-        this.previewNoDisponible = true;
-        this.toast.error('El documento no está disponible.');
-        return;
-      }
-
-      const urlBlob = URL.createObjectURL(blob);
-      this.currentObjectUrl = urlBlob;
-      this.selectedRawUrl = urlBlob;
-      this.selectedPreviewUrl = this.sanitizer.bypassSecurityTrustResourceUrl(urlBlob);
-    } catch (err) {
-      this.previewNoDisponible = true;
-      this.toast.error('No se pudo abrir el documento.');
-    } finally {
-      this.cdr.detectChanges();
-    }
-  }
-
-  // Descargar archivo
-  async descargarArchivo(doc: any) {
-    if (!doc.ruta_archivo) return;
-    if (!doc?.id_documento_tramite) {
-      const url = this.buildStorageUrl(doc?.ruta_archivo);
-      if (!url) return;
-      window.open(url, '_blank', 'noopener');
-      return;
-    }
-    try {
-      const blob = await firstValueFrom(this.AsignartramiteService.obtenerDocumentoTramite(doc.id_documento_tramite));
-      if (!blob || blob.size === 0) {
-        this.toast.error('El documento no está disponible.');
-        return;
-      }
-
-      const urlBlob = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = urlBlob;
-      a.download = doc.nombre_original || doc.nombre_archivo || 'documento';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(urlBlob);
-    } catch (err) {
-      this.toast.error('No se pudo descargar el documento.');
-    }
-  }
-
-  async abrirEnNuevaPestana() {
-    if (!this.selectedDoc) return;
-    if (this.selectedRawUrl) {
-      window.open(this.selectedRawUrl, '_blank', 'noopener');
-      return;
-    }
-    if (!this.selectedDoc?.id_documento_tramite) {
-      const url = this.buildStorageUrl(this.selectedDoc?.ruta_archivo);
-      if (!url) return;
-      window.open(url, '_blank', 'noopener');
-      return;
-    }
-    try {
-      const blob = await firstValueFrom(this.AsignartramiteService.obtenerDocumentoTramite(this.selectedDoc.id_documento_tramite));
-      if (!blob || blob.size === 0) {
-        this.toast.error('El documento no está disponible.');
-        return;
-      }
-      const urlBlob = URL.createObjectURL(blob);
-      window.open(urlBlob, '_blank', 'noopener');
-    } catch (err) {
-      this.toast.error('No se pudo abrir el documento.');
-    }
-  }
-
-  // Cerrar modal
+  // Cerrar modal (sólo aplica cuando no está embebido en una pestaña)
   cerrarModal() {
-    this.activeModal.close();
+    this.activeModal?.close();
   }
-
 }

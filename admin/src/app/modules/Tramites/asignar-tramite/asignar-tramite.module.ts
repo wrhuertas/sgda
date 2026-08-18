@@ -15,6 +15,13 @@ import { VerTramiteComponent } from './ver-tramite/ver-tramite.component';
 import { SeguimientoComponent } from './seguimiento/seguimiento.component';
 import { VistaPreviaComponent } from './vista-previa/vista-previa.component';
 import { CKEditorModule } from '@ckeditor/ckeditor5-angular';
+import { VerDatosComponent } from './ver-datos/ver-datos.component';
+import { AnexosSumillarComponent } from './anexos-sumillar/anexos-sumillar.component';
+import { SumillarComponent } from './sumillar/sumillar.component';
+import { VistaActaComponent } from './vista-acta/vista-acta.component';
+import { VerActasComponent } from './ver-actas/ver-actas.component';
+import { VerDocumentoModule } from 'src/app/modules/indexacion-serie/ver-documento/ver-documento.module';
+import { CrearTramiteComponent } from './crear-tramite/crear-tramite.component';
 
 
 @NgModule({
@@ -27,6 +34,12 @@ import { CKEditorModule } from '@ckeditor/ckeditor5-angular';
      VerTramiteComponent,
      SeguimientoComponent,
      VistaPreviaComponent,
+     VerDatosComponent,
+     AnexosSumillarComponent,
+     SumillarComponent,
+     VistaActaComponent,
+     VerActasComponent,
+     CrearTramiteComponent,
   ],
   imports: [
     CommonModule,
@@ -41,6 +54,7 @@ import { CKEditorModule } from '@ckeditor/ckeditor5-angular';
                                 NgbModalModule,
                                 NgbPaginationModule,
                                 CKEditorModule,
+                                VerDocumentoModule,
       ]
   
 })

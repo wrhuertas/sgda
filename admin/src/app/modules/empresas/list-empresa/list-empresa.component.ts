@@ -7,7 +7,7 @@ import { EmpresaService } from '../service/empresa.service';
 import { ToastrService } from 'ngx-toastr';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
-import { URL_SERVICIOS } from 'src/app/config/config';
+import { URL_SERVICIOS, URL_BACKEND } from 'src/app/config/config';
 
 @Component({
   selector: 'app-list-empresa',
@@ -19,7 +19,7 @@ export class ListEmpresaComponent {
   search: string = '';
   EMPRESAS: any[] = [];
   isLoading$: any;
-  private readonly backendUrl = URL_SERVICIOS;
+  private readonly backendUrl = URL_BACKEND; // usar URL_BACKEND para construir rutas a /storage
 
   totalPages: number = 0;
   currentPage: number = 1;
@@ -37,8 +37,27 @@ export class ListEmpresaComponent {
   telefono: string = '';
   correo: string = '';
   direccion: string = '';
+  ciudad: string = '';
   estado: number = 1;
   sigla_empresa: string = '';
+
+  // ---------- Autenticación externa (opcional) ----------
+  mostrarDirectorio: boolean = false;
+
+  utiliza_ldap: boolean = false;
+  ldap_host: string = '';
+  ldap_port: any = '';
+  ldap_base_dn: string = '';
+  ldap_username: string = '';
+  ldap_password: string = '';
+
+  utiliza_api_auth: boolean = false;
+  api_auth_url: string = '';
+  api_auth_token: string = '';
+
+  toggleDirectorio() {
+    this.mostrarDirectorio = !this.mostrarDirectorio;
+  }
 
   firmaFile: File | null = null;
   contrasena_firma = '';
@@ -53,6 +72,12 @@ export class ListEmpresaComponent {
   IMAGEN_CABECERA_PREVISUALIZA: any;
   IMAGEN_PIE_PAGINA: any;
   IMAGEN_PIE_PAGINA_PREVISUALIZA: any;
+  // Textos adicionales para cabecera y pie de página
+  cabecera_text: string = '';
+  pie_pagina_text: string = '';
+  // Modos: si true -> usar texto; false -> usar imagen
+  cabeceraUsarTexto: boolean = false;
+  pieUsarTexto: boolean = false;
 
   // Datos del administrador
   admin_nombre: string = '';
@@ -186,7 +211,23 @@ cargarEmpresa(idEmpresa: number) {
       this.telefono  = empresa.telefono ?? '';
       this.correo    = empresa.correo ?? '';
       this.direccion = empresa.direccion ?? '';
+      this.ciudad    = empresa.ciudad ?? '';
       this.sigla_empresa = empresa.sigla ?? '';
+
+      // Autenticación externa. Si ya hay algo configurado, la sección se abre
+      // sola para que no quede escondida.
+      this.utiliza_ldap     = !!Number(empresa.utiliza_ldap);
+      this.ldap_host        = empresa.ldap_host ?? '';
+      this.ldap_port        = empresa.ldap_port ?? '';
+      this.ldap_base_dn     = empresa.ldap_base_dn ?? '';
+      this.ldap_username    = empresa.ldap_username ?? '';
+      this.ldap_password    = empresa.ldap_password ?? '';
+
+      this.utiliza_api_auth = !!Number(empresa.utiliza_api_auth);
+      this.api_auth_url     = empresa.api_auth_url ?? '';
+      this.api_auth_token   = empresa.api_auth_token ?? '';
+
+      this.mostrarDirectorio = this.utiliza_ldap || this.utiliza_api_auth;
 
       // 🖼️ Imagen Principal (viene con URL completa desde el backend)
       if (empresa.imagen_empresa) {
@@ -194,13 +235,38 @@ cargarEmpresa(idEmpresa: number) {
       }
 
       // 🖼️ Imagen Cabecera (viene con URL completa desde el backend)
+      // 🖼️ Imagen Cabecera (puede venir como ruta relativa). Normalizar a URL pública
       if (empresa.imagen_cabecera) {
-        this.IMAGEN_CABECERA_PREVISUALIZA = empresa.imagen_cabecera;
+        const imgCab = String(empresa.imagen_cabecera || '').trim();
+        if (/^https?:\/\//i.test(imgCab)) {
+          this.IMAGEN_CABECERA_PREVISUALIZA = imgCab;
+        } else if (imgCab.length > 0) {
+          const base = String(this.backendUrl || '').replace(/\/+$/, '');
+          this.IMAGEN_CABECERA_PREVISUALIZA = `${base}/storage/${imgCab.replace(/^\/+/, '')}`;
+        }
       }
 
-      // 🖼️ Imagen Pie de Página (viene con URL completa desde el backend)
+      // 🖼️ Imagen Pie de Página (puede venir como ruta relativa)
       if (empresa.imagen_pie_pagina) {
-        this.IMAGEN_PIE_PAGINA_PREVISUALIZA = empresa.imagen_pie_pagina;
+        const imgPie = String(empresa.imagen_pie_pagina || '').trim();
+        if (/^https?:\/\//i.test(imgPie)) {
+          this.IMAGEN_PIE_PAGINA_PREVISUALIZA = imgPie;
+        } else if (imgPie.length > 0) {
+          const base = String(this.backendUrl || '').replace(/\/+$/, '');
+          this.IMAGEN_PIE_PAGINA_PREVISUALIZA = `${base}/storage/${imgPie.replace(/^\/+/, '')}`;
+        }
+      }
+
+      // Textos (si vienen desde el backend) -> en la BD usan texto_cabecera / texto_pie_pagina
+      this.cabecera_text = empresa.texto_cabecera ?? '';
+      this.pie_pagina_text = empresa.texto_pie_pagina ?? '';
+
+      // Inicializar switches según flags si_cabecera / si_pie_pagina (1=image, 0=text)
+      if (typeof empresa.si_cabecera !== 'undefined' && empresa.si_cabecera !== null) {
+        this.cabeceraUsarTexto = Number(empresa.si_cabecera) === 0; // 0 -> usar texto
+      }
+      if (typeof empresa.si_pie_pagina !== 'undefined' && empresa.si_pie_pagina !== null) {
+        this.pieUsarTexto = Number(empresa.si_pie_pagina) === 0; // 0 -> usar texto
       }
 
       // 🔁 Forzar refresco de vista
@@ -424,6 +490,7 @@ ActulizarEmpresa() {
   formData.append('telefono', this.telefono ?? '');
   formData.append('correo', this.correo ?? '');
   formData.append('direccion', this.direccion ?? '');
+  formData.append('ciudad', this.ciudad ?? '');
   if (this.sigla_empresa) {
     formData.append('sigla_empresa', this.sigla_empresa.trim());
   }
@@ -433,15 +500,49 @@ ActulizarEmpresa() {
     formData.append('imagen_empresa', this.IMAGEN_EMPRESA);
   }
 
-  // 📷 Agregar imagen cabecera solo si se seleccionó
-  if (this.IMAGEN_CABECERA) {
-    formData.append('imagen_cabecera', this.IMAGEN_CABECERA);
+  // Cabecera: si el usuario eligió usar texto, solicitar eliminación de la imagen existente
+  if (this.cabeceraUsarTexto) {
+    if (this.IMAGEN_CABECERA_PREVISUALIZA && !this.IMAGEN_CABECERA) {
+      // Marcar al backend que elimine la imagen anterior si existe y no se subió una nueva
+      formData.append('eliminar_imagen_cabecera', '1');
+    }
+  } else {
+    // Si no se usa texto, enviar la imagen seleccionada (si la hay)
+    if (this.IMAGEN_CABECERA) {
+      formData.append('imagen_cabecera', this.IMAGEN_CABECERA);
+    }
   }
 
-  // 📷 Agregar imagen pie de página solo si se seleccionó
-  if (this.IMAGEN_PIE_PAGINA) {
-    formData.append('imagen_pie_pagina', this.IMAGEN_PIE_PAGINA);
+  // Pie de página: comportamiento similar
+  if (this.pieUsarTexto) {
+    if (this.IMAGEN_PIE_PAGINA_PREVISUALIZA && !this.IMAGEN_PIE_PAGINA) {
+      formData.append('eliminar_imagen_pie_pagina', '1');
+    }
+  } else {
+    if (this.IMAGEN_PIE_PAGINA) {
+      formData.append('imagen_pie_pagina', this.IMAGEN_PIE_PAGINA);
+    }
   }
+
+  // Textos adicionales
+  if (this.cabecera_text != null) formData.append('cabecera_text', this.cabecera_text);
+  if (this.pie_pagina_text != null) formData.append('pie_pagina_text', this.pie_pagina_text);
+
+  // Autenticación externa: todos opcionales. Los switches viajan como 1/0
+  // porque en un FormData el booleano se convertiría en "true"/"false".
+  formData.append('utiliza_ldap', this.utiliza_ldap ? '1' : '0');
+  formData.append('ldap_host', this.ldap_host ?? '');
+  formData.append('ldap_port', this.ldap_port ?? '');
+  formData.append('ldap_base_dn', this.ldap_base_dn ?? '');
+  formData.append('ldap_username', this.ldap_username ?? '');
+  formData.append('ldap_password', this.ldap_password ?? '');
+
+  formData.append('utiliza_api_auth', this.utiliza_api_auth ? '1' : '0');
+  formData.append('api_auth_url', this.api_auth_url ?? '');
+  formData.append('api_auth_token', this.api_auth_token ?? '');
+  // Tipos (imagen o texto)
+  formData.append('cabecera_tipo', this.cabeceraUsarTexto ? 'text' : 'image');
+  formData.append('pie_tipo', this.pieUsarTexto ? 'text' : 'image');
 
   // ✅ Log para revisar que los datos se están enviando
   console.log('📤 Datos a enviar:', {
@@ -451,6 +552,7 @@ ActulizarEmpresa() {
     telefono: this.telefono,
     correo: this.correo,
     direccion: this.direccion,
+    ciudad: this.ciudad,
     sigla_empresa: this.sigla_empresa,
     imagen: this.IMAGEN_EMPRESA,
   });

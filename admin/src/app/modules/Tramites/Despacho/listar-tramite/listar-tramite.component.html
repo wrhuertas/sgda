@@ -109,10 +109,10 @@
                         [title]="item?.documento_principal?.firmado ? 'Firmado electrónicamente' : 'No firmado'"></i>
                    </td>
                    <td class="ps-4">
-                     <div class="position-relative d-inline-block" title="Documentos (Actas y Anexos)" (click)="abrirAnexos(item)" style="cursor:pointer;">
+                     <div class="position-relative d-inline-block" title="Anexos del trámite" (click)="abrirAnexos(item)" style="cursor:pointer;">
                        <i class="fa fa-folder text-warning"></i>
                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary text-white fs-9">
-                         {{ (item.actas?.length || 0) + (item.anexos?.length || 0) }}
+                         {{ item.anexos?.length || 0 }}
                        </span>
                      </div>
                    </td>
@@ -189,37 +189,39 @@
   </div>
 </div>
 
-<!-- Modal Documentos (Actas y Anexos) -->
+<!-- Modal Anexos -->
 <div *ngIf="showAnexosModal" class="modal fade show" style="display:block; background: rgba(0,0,0,0.5);">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header bg-light">
-        <h5 class="modal-title fw-bold">{{ tituloAnexos || 'Documentos' }}</h5>
+        <h5 class="modal-title fw-bold">{{ tituloAnexos || 'Anexos' }}</h5>
         <button type="button" class="btn-close" aria-label="Close" (click)="cerrarAnexos()"></button>
       </div>
       <div class="modal-body">
-        <div *ngIf="!anexosSeleccionados?.length" class="text-center text-muted py-6">
+        <div *ngIf="!gruposAnexos?.length" class="text-center text-muted py-6">
           <i class="fa fa-file-o fs-1x mb-3"></i>
-          <p>No existen documentos asociados</p>
+          <p>No existen anexos asociados</p>
         </div>
-        <ul class="list-group" *ngIf="anexosSeleccionados?.length">
-          <li class="list-group-item d-flex justify-content-between align-items-center" 
-              *ngFor="let a of anexosSeleccionados"
-              [ngClass]="a.tipo === 'acta' ? 'border-start border-4 border-danger' : 'border-start border-4 border-warning'">
-            <div class="text-truncate" style="max-width: 70%">
-              <i [class]="a.tipo === 'acta' ? 'fa fa-file-pdf text-danger me-2' : 'fa fa-paperclip text-warning me-2'"></i>
-              <span class="fw-semibold" title="{{a.nombre_anexo}}">{{ a.nombre_anexo }}</span>
-              <span class="badge" [ngClass]="a.tipo === 'acta' ? 'bg-danger' : 'bg-warning text-dark'" style="margin-left: 8px;">
-                {{ a.tipo === 'acta' ? 'ACTA' : a.tipo_documento }}
-              </span>
-              <div class="small text-muted mt-1" *ngIf="a.descripcion">{{ a.descripcion }}</div>
-            </div>
-            <a *ngIf="a.ruta" class="btn btn-sm btn-light-primary" [href]="('/storage/' + a.ruta)" target="_blank" rel="noopener" title="Ver documento">
-              <i class="fa fa-eye"></i> Ver
-            </a>
-            <span *ngIf="!a.ruta" class="text-muted fs-9">Sin archivo</span>
-          </li>
-        </ul>
+
+        <!-- Anexos agrupados por el documento al que pertenecen -->
+        <div *ngFor="let grupo of gruposAnexos" class="mb-5">
+          <h6 class="fw-bold text-gray-800 mb-3">{{ grupo.titulo }}</h6>
+          <ul class="list-group">
+            <li class="list-group-item d-flex justify-content-between align-items-center"
+                *ngFor="let a of grupo.anexos">
+              <div class="text-truncate" style="max-width: 70%">
+                <i class="fa fa-file text-muted me-2"></i>
+                <span class="fw-semibold" title="{{a.nombre_anexo}}">{{ a.nombre_anexo }}</span>
+                <span class="badge badge-light text-gray-700 ms-2">{{ a.tipo_documento }}</span>
+                <div class="small text-muted mt-1" *ngIf="a.descripcion">{{ a.descripcion }}</div>
+              </div>
+              <button *ngIf="a.ruta" type="button" class="btn btn-sm btn-light-primary" (click)="verAnexo(a)" title="Ver documento">
+                <i class="fa fa-eye"></i> Ver
+              </button>
+              <span *ngIf="!a.ruta" class="text-muted fs-9">Sin archivo</span>
+            </li>
+          </ul>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-light" (click)="cerrarAnexos()">Cerrar</button>

@@ -9,6 +9,7 @@ import { CreateIndexacionSerieComponent } from '../create-indexacion-serie/creat
 import Swal from 'sweetalert2';
 import { CrearLugarDocumentoComponent } from '../crear-lugar-documento/crear-lugar-documento.component';
 import { EditarLugarDocumentoComponent } from '../editar-lugar-documento/editar-lugar-documento.component';
+import { EtiquetaDocumentoComponent } from '../etiqueta-documento/etiqueta-documento.component';
 
 @Component({
   selector: 'app-list-indexacion-serie',
@@ -98,6 +99,10 @@ mostrarBotonSubirDocumentos = false;
   currentPageLugares: number = 1;
   isLoadingLugares: boolean = false;
 
+  // Coordinación entre el aviso inicial y la carga de la tabla de rutas
+  private avisoAceptado: boolean = false;
+  private rutasCargadas: boolean = false;
+
   
 
   private updateCountersFromIndexaciones(): void {
@@ -150,6 +155,17 @@ mostrarBotonSubirDocumentos = false;
   confirmButtonText: 'Aceptar',
   confirmButtonColor: '#009ef7', // <-- Este es el azul de Keenthemes / Metronic
   allowOutsideClick: false
+}).then(() => {
+  this.avisoAceptado = true;
+  // Si la tabla de rutas aún no ha cargado, mostramos el "Cargando datos..."
+  if (!this.rutasCargadas) {
+    Swal.fire({
+      title: 'Cargando datos',
+      text: 'Espere por favor, obteniendo las ubicaciones...',
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+  }
 });
 
     
@@ -246,12 +262,17 @@ private cargarLugaresRuta(page: number = 1) {
       this.totalPages = resp.total || 0;
       this.currentPageLugares = page;
       this.isLoadingLugares = false;
+      this.rutasCargadas = true;
       this.cdr.detectChanges();
+      // Si el usuario ya aceptó el aviso, cerramos el "Cargando datos..."
+      if (this.avisoAceptado) { try { Swal.close(); } catch {} }
     },
     error: (err) => {
       console.error('Error listando lugares de la ruta:', err);
       this.lugaresRuta = [];
       this.isLoadingLugares = false;
+      this.rutasCargadas = true;
+      if (this.avisoAceptado) { try { Swal.close(); } catch {} }
     }
   });
 }
@@ -283,7 +304,7 @@ obtenerDatosGenerales() {
   this.indexacionService.obtenerDatosGenerales(payload).subscribe({
     next: (resp: any) => {
       console.log('RESPUESTA DATOS GENERALES:', resp);
-      this.serieRespuesta = resp; 
+      this.serieRespuesta = resp.data || resp;
       this.cdr.detectChanges();
     },
     error: (err) => {
@@ -432,7 +453,8 @@ editarIndexacion(idEdificio?: number | null, idSala?: number | null)
   }
 
   // Eliminar un lugar de la serie (edificio/sala)
-  eliminarLugar(lugar: { id_edificio: number | null; id_sala: number | null; edificio?: string; sala?: string }) {
+  eliminarLugar(lugar: any) {
+    // Ahora la entidad 'lugar' contiene id_lugar (clave primaria). Usaremos eso.
     if (this.idSerie == null) { return; }
 
     const edificioNombre = lugar?.edificio ?? 'Edificio';
@@ -449,10 +471,11 @@ editarIndexacion(idEdificio?: number | null, idSala?: number | null)
     }).then(result => {
       if (!result.isConfirmed) return;
 
+      // Enviar id_lugar al backend (la nueva estructura usa id_lugar como identificador)
       const payload = {
-        id_serie: this.idSerie as number,
-        id_edificio: lugar.id_edificio,
-        id_sala: lugar.id_sala
+        id_lugar: lugar.id_lugar,
+        // mantener id_serie por compatibilidad si el backend lo necesita
+        id_serie: this.idSerie as number
       };
 
       this.indexacionService.eliminarLugarDeSerie(payload).subscribe({
@@ -462,16 +485,13 @@ editarIndexacion(idEdificio?: number | null, idSala?: number | null)
           // Refrescar listado
           this.cargarLugaresRuta();
           // Limpiar selección si coincide
-          if (this.selectedLugar &&
-              this.selectedLugar.id_edificio === lugar.id_edificio &&
-              this.selectedLugar.id_sala === lugar.id_sala) {
+          if (this.selectedLugar && this.selectedLugar.id_lugar === lugar.id_lugar) {
             this.selectedLugar = null;
           }
         },
         error: (err) => {
           console.error('Error eliminando ubicación:', err);
           const backendMsg = err?.error?.message || err?.message;
-          // Si el backend envía el mensaje de restricción, mostrarlo explícitamente
           const msg = backendMsg || 'No se pudo eliminar la ubicación';
           this.toast.error(msg);
         }
@@ -518,6 +538,25 @@ editarIndexacion(idEdificio?: number | null, idSala?: number | null)
   abrirModalAgregar() {
     console.log('Abrir modal para agregar indexación');
     // Aquí luego puedes abrir un modal o navegar a otro componente
+  }
+
+  // Abrir modal para generar la etiqueta (código de barras / QR) del lugar
+  abrirEtiqueta(lugar: any) {
+    const modalRef = this.modalService.open(EtiquetaDocumentoComponent, {
+      centered: true,
+      size: 'md'
+    });
+    modalRef.componentInstance.lugar = lugar;
+    modalRef.componentInstance.idSerie = this.idSerie;
+
+    // La misma ruta que se ve en la miga de pan de arriba, para que en el
+    // modal se sepa de qué serie viene la observación
+    modalRef.componentInstance.rutaDocumental = [
+      this.serieRespuesta?.seccion_superior,
+      this.serieRespuesta?.subseccion?.nombre,
+      this.serieRespuesta?.padre?.nombre,
+      this.serieRespuesta?.serie?.nombre
+    ].filter((t: any) => !!t).join(' / ');
   }
   
   

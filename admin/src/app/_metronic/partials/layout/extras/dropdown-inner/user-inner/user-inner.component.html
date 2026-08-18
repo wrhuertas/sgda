@@ -1,9 +1,18 @@
 <ng-container *ngIf="user$ | async as _user">
   <div class="menu-item px-3">
     <div class="menu-content d-flex align-items-center px-3">
-      <div class="symbol symbol-50px me-5">
-         <img src="assets/media/avatars/blank.png" alt="avatar">
+      <div class="symbol symbol-circle symbol-50px me-5">
+        <!-- Foto del usuario; si no tiene o no carga, va su inicial -->
+        <img *ngIf="!sinFoto"
+             [src]="_user.avatar"
+             (error)="sinFoto = true"
+             style="object-fit: cover;"
+             alt="Foto de {{ _user.full_name }}">
 
+        <span *ngIf="sinFoto"
+              class="symbol-label bg-light-primary text-primary fw-bold fs-3">
+          {{ (_user.full_name || '?').charAt(0) | uppercase }}
+        </span>
       </div>
 
       <div class="d-flex flex-column">

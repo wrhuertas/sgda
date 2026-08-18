@@ -1,0 +1,113 @@
+<div class="modal-header">
+  <h2 class="fw-bold m-0">
+    <i class="ki-duotone ki-focus fs-1 text-primary me-3">
+      <span class="path1"></span><span class="path2"></span>
+    </i>
+    Escanear documentos
+  </h2>
+  <button type="button" class="btn btn-sm btn-icon btn-active-light-primary" (click)="activeModal.dismiss()">
+    <i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span class="path2"></span></i>
+  </button>
+</div>
+
+<div class="modal-body">
+
+  <!--begin::Ruta-->
+  <div class="ruta-scan">
+    <ng-container *ngFor="let tramo of RUTA; let ultimo = last">
+      <span class="tramo" [class.activo]="ultimo">
+        <i class="ki-duotone {{ tramo.icono }} fs-3 me-2">
+          <span *ngFor="let p of paths(tramo.paths)" class="path{{ p }}"></span>
+        </i>
+        {{ tramo.nombre }}
+      </span>
+
+      <i class="ki-duotone ki-right fs-4 separador" *ngIf="!ultimo">
+        <span class="path1"></span>
+      </i>
+    </ng-container>
+  </div>
+  <!--end::Ruta-->
+
+  <!--begin::Escáner-->
+  <div class="text-center mt-8">
+
+    <!-- Los dos botones siempre visibles: abrir y descargar el conector -->
+    <div class="d-flex justify-content-center gap-3 flex-wrap">
+      <button type="button" class="btn btn-primary" (click)="abrirEscaner()" [disabled]="abriendo">
+        <span *ngIf="abriendo" class="spinner-border spinner-border-sm me-2"></span>
+        <i *ngIf="!abriendo" class="ki-duotone ki-scan-barcode fs-2 me-2">
+          <span class="path1"></span><span class="path2"></span><span class="path3"></span>
+          <span class="path4"></span><span class="path5"></span><span class="path6"></span>
+        </i>
+        {{ abriendo ? 'Abriendo...' : 'Abrir escáner' }}
+      </button>
+
+      <a class="btn btn-light-primary"
+         href="assets/escaner/conector-escaner.bat"
+         download="conector-escaner.bat">
+        <i class="ki-duotone ki-cloud-download fs-2 me-2">
+          <span class="path1"></span><span class="path2"></span><span class="path3"></span>
+        </i>
+        Descargar conexión al escáner
+      </a>
+    </div>
+
+    <div class="text-muted fs-7 mt-3" *ngIf="!escanerNoRegistrado">
+      Se abrirá PaperStream Capture en esta computadora
+    </div>
+
+    <!-- Sólo aparece si no se pudo abrir el escáner -->
+    <div class="alert alert-light-warning fs-7 mt-4 text-start" *ngIf="escanerNoRegistrado">
+
+      <!-- Primera vez: se explica todo el procedimiento -->
+      <ng-container *ngIf="!yaLoDeclaroInstalado">
+        <div class="fw-bold fs-6 mb-2">
+          Esta computadora no tiene conexión con el escáner
+        </div>
+
+        <p class="mb-3">
+          Para que el sistema pueda abrir el escáner, primero hay que descargar
+          este archivo e instalarlo en esta computadora. Se hace una sola vez y
+          no necesita permisos de administrador.
+        </p>
+
+        <ol class="ps-4 mb-3">
+          <li>Use el botón <strong>Descargar conexión al escáner</strong> de arriba.</li>
+          <li>Ábralo con doble clic y espere el mensaje de confirmación.</li>
+          <li>Vuelva acá y toque otra vez <strong>Abrir escáner</strong>.</li>
+        </ol>
+      </ng-container>
+
+      <!-- Ya dijo que lo instaló y aun así no abrió -->
+      <ng-container *ngIf="yaLoDeclaroInstalado">
+        <div class="fw-bold fs-6 mb-2">
+          No se pudo abrir el escáner
+        </div>
+
+        <p class="mb-3">
+          La conexión figura como instalada, pero no respondió. Vuelva a
+          descargarla e instalarla con el botón de arriba, y si sigue igual
+          avise a sistemas.
+        </p>
+      </ng-container>
+
+      <button type="button" class="btn btn-sm btn-light"
+              *ngIf="!yaLoDeclaroInstalado"
+              (click)="marcarConectorInstalado()">
+        Ya lo instalé
+      </button>
+
+      <div class="text-muted mt-3">
+        El navegador puede avisar que el archivo no es habitual: elija
+        <strong>Conservar</strong> y luego ábralo.
+      </div>
+    </div>
+  </div>
+  <!--end::Escáner-->
+
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-light" (click)="activeModal.dismiss()">Cerrar</button>
+</div>

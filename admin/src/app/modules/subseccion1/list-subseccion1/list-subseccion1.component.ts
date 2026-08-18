@@ -28,6 +28,10 @@ export class ListSubseccion1Component {
   nombreProyecto!: string;
   search: string = '';
   SUBSECCIONES: any[] = [];
+  // Lista tal como llegó del servidor, antes de filtrar por permisos.
+  // Se conserva porque los permisos pueden llegar después que la lista.
+  subseccionesSinFiltrar: any[] = [];
+  totalSinFiltrar = 0;
   totalPages: number = 0;
   currentPage: number = 1;
   isLoading$: any;
@@ -163,21 +167,13 @@ isDataLoaded: boolean = false;
       .listSubsecciones1(this.idSubseccion, page, this.search)
       .subscribe({
         next: (res: any) => {
-          const subs = res.data || [];
-  
-          if (this.esAdmin) {
-            this.SUBSECCIONES = subs;
-          } else {
-            // Filtrado por permisos
-            this.SUBSECCIONES = subs.filter((sub: any) => {
-              const permiso = this.permisosPorSubSubSeccion[sub.id_proyecto];
-              return permiso?.ver === true || permiso?.ver === 1;
-            });
-          }
-  
-          this.totalPages = res.total || this.SUBSECCIONES.length;
+          // Se guarda la lista sin filtrar: los permisos pueden llegar después
+          this.subseccionesSinFiltrar = res.data || [];
+          this.totalSinFiltrar = res.total || this.subseccionesSinFiltrar.length;
           this.currentPage = page;
-  
+
+          this.aplicarFiltroPermisos();
+
           // 🏁 FINALIZAR CARGA
           this.isDataLoaded = true;
           Swal.close();
@@ -194,6 +190,28 @@ isDataLoaded: boolean = false;
   }
   
 
+
+  /**
+   * Deja en pantalla solo las subsecciones que el usuario puede ver.
+   *
+   * Se llama tanto cuando llega la lista como cuando llegan los permisos,
+   * porque son dos peticiones independientes y no hay forma de saber cuál
+   * responde primero. Antes, si los permisos llegaban después, la lista se
+   * filtraba contra un mapa vacío y salía "Sin información" hasta recargar.
+   */
+  aplicarFiltroPermisos() {
+    if (this.esAdmin) {
+      this.SUBSECCIONES = this.subseccionesSinFiltrar;
+    } else {
+      this.SUBSECCIONES = this.subseccionesSinFiltrar.filter((sub: any) => {
+        const permiso = this.permisosPorSubSubSeccion[sub.id_proyecto];
+        return permiso?.ver === true || permiso?.ver === 1;
+      });
+    }
+
+    this.totalPages = this.totalSinFiltrar || this.SUBSECCIONES.length;
+    this.cdr.detectChanges();
+  }
 
   // Función para aplanar recursivamente
   flattenSubsecciones(subs: any[]): any[] {
@@ -344,6 +362,10 @@ deleteSubseccion1(SUB: any) {
       }, {} as { [id_subsubseccion: number]: any });
 
       console.log('Permisos por Sub-Sub Sección:', this.permisosPorSubSubSeccion);
+
+      // Si la lista ya había llegado, se vuelve a filtrar ahora que sí hay
+      // permisos. Sin esto quedaba vacía hasta recargar la página.
+      this.aplicarFiltroPermisos();
 
       // Evaluar permisos globales para Sub-Sub Sección
       this.puedeCrearSubSubSeccion = this.permisosDocumentales.some(p =>

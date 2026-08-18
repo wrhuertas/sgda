@@ -14,10 +14,17 @@
                 <div class="row g-2 mb-2">
                     <label class="col-sm-3 col-form-label fs-7 fw-bold text-end">Tipo de Usuario:</label>
                     <div class="col-sm-9">
-                        <select class="form-select form-select-sm form-select-solid">
-                            <option>Servidor Público</option>
-                            <option>Ciudadano</option>
+                        <select class="form-select form-select-sm form-select-solid"
+                                [(ngModel)]="tipo_busqueda"
+                                name="tipo_busqueda"
+                                [disabled]="esSubdirector"
+                                (ngModelChange)="usuarios_encontrados = []">
+                            <option value="servidor">Servidor Público</option>
+                            <option value="ciudadano" *ngIf="!esSubdirector">Ciudadano</option>
                         </select>
+                        <div *ngIf="esSubdirector" class="form-text fs-9 text-muted mt-1">
+                          Sólo el director puede enviar trámites a ciudadanos.
+                        </div>
                     </div>
                 </div>
 
@@ -44,6 +51,11 @@
                                 <div class="d-flex flex-column">
                                     <span class="fs-7 fw-bold text-gray-800">{{ user.nombre_completo }}</span>
                                     <span class="fs-9 text-muted">{{ user.n_document }} | {{ user.empresa }}</span>
+                                    <!-- Para ciudadanos se avisa si tienen o no correo registrado -->
+                                    <span *ngIf="user.es_cliente" class="fs-9" [ngClass]="user.email ? 'text-success' : 'text-danger'">
+                                        <i class="fa" [ngClass]="user.email ? 'fa-envelope' : 'fa-envelope-open'"></i>
+                                        {{ user.email || 'Sin correo registrado' }}
+                                    </span>
                                 </div>
                             </button>
                         </div>
@@ -98,7 +110,9 @@
     
                 <tr *ngFor="let p of personas_en_lista; let i = index">
                     <td>
-                        <span class="badge badge-light-dark fs-9 text-uppercase">Serv.</span>
+                        <span class="badge badge-light-dark fs-9 text-uppercase">
+                          {{ (p.es_cliente || p.id_cliente) ? 'Ciud.' : 'Serv.' }}
+                        </span>
                     </td>
                     <td class="fw-bold text-gray-800">
                         {{ p.nombre_completo }}

@@ -41,7 +41,13 @@
                             <span class="text-muted fs-7">{{ anexo.created_at | date:'dd/MM/yyyy HH:mm' }}</span>
                         </td>
                         <td class="text-end pe-4">
-                            <button class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm" 
+                            <button class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-2"
+                                    title="Ver anexo"
+                                    (click)="verAnexo(anexo)">
+                                <i class="ki-duotone ki-eye fs-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
+                            </button>
+                            <button class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm"
+                                    title="Eliminar anexo"
                                     (click)="eliminarAnexo(anexo)">
                                 <i class="ki-duotone ki-trash fs-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i>
                             </button>

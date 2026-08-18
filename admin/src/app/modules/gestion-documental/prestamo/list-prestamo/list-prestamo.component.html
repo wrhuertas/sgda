@@ -8,7 +8,7 @@
                 </i> 
                 <input type="text" [(ngModel)]="search" (keyup.enter)="listPrestamos()" 
                     name="search" class="form-control form-control-solid w-250px ps-12" 
-                    placeholder="Buscar Préstamo o Acta">
+                    placeholder="Buscar Préstamo o Memorandum">
             </div>
         </div>
 
@@ -31,10 +31,10 @@
                 <table class="table align-middle table-row-dashed fs-6 gy-5 dataTable" id="kt_prestamos_table">
                     <thead>
                         <tr class="text-start text-gray-500 fw-bold fs-7 text-uppercase gs-0">
-                            <th class="min-w-100px">N° Acta</th>
+                            <th class="min-w-100px">N° Memorandum</th>
                             <th class="min-w-150px">Documento(s)</th>
                             <th class="min-w-150px">Nombre Solicitante</th>
-                            <th class="min-w-125px">Estado del Acta</th>
+                            <th class="min-w-125px">Estado del Memorandum</th>
                             <th class="min-w-125px">Fecha Solicitud</th>
                             <th class="text-end min-w-70px">Acciones</th>
                         </tr>
@@ -123,7 +123,7 @@
                                         <a *ngIf="PRESTAMO.modo == 1" 
                                         href="#" (click)="imprimirActaFirmada(PRESTAMO); $event.preventDefault()" 
                                         class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm me-1"
-                                        title="Imprimir/Ver Acta Firmada">
+                                        title="Imprimir/Ver Memorandum Firmado">
                                             <i class="ki-duotone ki-document fs-2">
                                                 <span class="path1"></span><span class="path2"></span>
                                             </i>

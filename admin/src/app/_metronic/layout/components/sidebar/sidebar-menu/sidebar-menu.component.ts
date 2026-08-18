@@ -65,6 +65,11 @@ export class SidebarMenuComponent implements OnInit {
     return this.user?.role_name == 'Super-Admin' ? true : false;
   }
 
+  // Solo visible si el usuario logueado tiene super_usuario = 1
+  esSuperUsuario(): boolean {
+    return Number(this.user?.super_usuario) === 1;
+  }
+
   // 🔍 Verificar si se está mostrando como Admin pero es Super Admin
   isAdminConSuperAdminOriginal(): boolean {
     return (this.userOriginal?.id === 1 || this.userOriginal?.role_name === 'Super-Admin') && 

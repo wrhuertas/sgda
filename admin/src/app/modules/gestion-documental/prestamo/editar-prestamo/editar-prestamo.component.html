@@ -1,6 +1,6 @@
 <div class="modal-content">
     <div class="modal-header">
-        <h2 class="fw-bold text-uppercase">Editar Acta de Préstamo</h2>
+        <h2 class="fw-bold text-uppercase">Editar Memorandum de Préstamo</h2>
         <div class="btn btn-icon btn-sm btn-active-icon-primary" (click)="activeModal.dismiss()">
             <i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span class="path2"></span></i>
         </div>
@@ -10,7 +10,7 @@
         <div class="row g-10">
             <div class="col-lg-4">
                 <div class="mb-8">
-                    <label class="fs-6 fw-semibold mb-2 text-muted text-uppercase">Número Acta</label>
+                    <label class="fs-6 fw-semibold mb-2 text-muted text-uppercase">Número Memorandum</label>
                     <input type="text" class="form-control form-control-solid fw-bold fs-3 text-primary" 
                            [value]="PRESTAMO_SELECTED?.numero_acta || 'PROVISIONAL / BORRADOR'" readonly disabled>
                 </div>
@@ -80,7 +80,7 @@
                             </span>
                         </div>
                         <div *ngIf="!usuario_selected" class="text-muted text-center w-100 fs-7">
-                            Ningún usuario seleccionado para esta acta.
+                            Ningún usuario seleccionado para este memorandum.
                         </div>
                     </div>
                 </div>
@@ -178,7 +178,7 @@
                                     </tr>
                                     <tr *ngIf="documentos_seleccionados.length === 0">
                                         <td colspan="2" class="text-center text-danger fs-7 py-4 fw-bold">
-                                            ⚠️ Alerta: El acta no tiene ningún archivo asignado. Agregue uno o no podrá guardar.
+                                            ⚠️ Alerta: El memorandum no tiene ningún archivo asignado. Agregue uno o no podrá guardar.
                                         </td>
                                     </tr>
                                 </tbody>
@@ -292,7 +292,7 @@
         </div>
 
         <div class="card border border-primary border-dashed p-6 mt-10">
-            <h3 class="fw-bold text-gray-800 mb-4 fs-6 text-uppercase">Historial e Incidencias del Acta</h3>
+            <h3 class="fw-bold text-gray-800 mb-4 fs-6 text-uppercase">Historial e Incidencias del Memorandum</h3>
             
             <div class="row g-9">
                 <div class="col-md-6">
@@ -342,7 +342,7 @@
     <div class="modal-footer flex-center">
         <button type="button" class="btn btn-light me-3" (click)="activeModal.dismiss()" [disabled]="isLoading">Cancelar</button>
         <button type="button" class="btn btn-primary" (click)="CrearActa()" [disabled]="isLoading || documentos_seleccionados.length === 0">
-            <span class="indicator-label" *ngIf="!isLoading">Imprimir Acta Generada</span>
+            <span class="indicator-label" *ngIf="!isLoading">Imprimir Memorandum Generado</span>
             <span class="indicator-label" *ngIf="isLoading">Guardando cambios... <span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
         </button>
     </div>

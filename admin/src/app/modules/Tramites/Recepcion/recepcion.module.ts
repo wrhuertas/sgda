@@ -20,6 +20,10 @@ import { NuevoTramiteComponent } from './nuevo-tramite/nuevo-tramite.component';
 import { BuscarUsuarioComponent } from './buscar-usuario/buscar-usuario.component';
 import { VerTramiteComponent } from './ver-tramite/ver-tramite.component';
 import { VistaPreviaComponent } from './vista-previa/vista-previa.component';
+import { MoverTramitesMasivoComponent } from './mover-tramites-masivo/mover-tramites-masivo.component';
+import { UsuarioEnvioMasivoComponent } from './usuario-envio-masivo/usuario-envio-masivo.component';
+import { VistaMasivaPreviaComponent } from './vista-masiva-previa/vista-masiva-previa.component';
+import { VerDocumentoModule } from 'src/app/modules/indexacion-serie/ver-documento/ver-documento.module';
 
 
 @NgModule({
@@ -33,7 +37,10 @@ import { VistaPreviaComponent } from './vista-previa/vista-previa.component';
     NuevoTramiteComponent,
     BuscarUsuarioComponent,
     VerTramiteComponent,
-    VistaPreviaComponent
+    VistaPreviaComponent,
+    MoverTramitesMasivoComponent,
+    UsuarioEnvioMasivoComponent,
+    VistaMasivaPreviaComponent
   ],
   imports: [
     CommonModule,
@@ -45,7 +52,8 @@ import { VistaPreviaComponent } from './vista-previa/vista-previa.component';
     NgbModalModule,
     NgbPaginationModule,
     InlineSVGModule,
-    CKEditorModule // <--- 2. MÓDULO AGREGADO AQUÍ
+    CKEditorModule, // <--- 2. MÓDULO AGREGADO AQUÍ
+    VerDocumentoModule
   ]
 })
 export class RecepcionModule { }

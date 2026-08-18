@@ -221,6 +221,14 @@ export class CrearLugarDocumentoComponent implements OnInit {
           cantidad_filas: e.cantidad_filas ?? null,
           guardado: !!e.cantidad_filas // si ya tiene filas, lo consideramos guardado
         }));
+        // Orden natural por id o número extraído del nombre
+        this.estanteriasLista.sort((a: any, b: any) => {
+          const extractNum = (v: any) => { const m = String(v || '').match(/-?\d+/); return m ? Number(m[0]) : NaN; };
+          const na = !isNaN(Number(a.id)) ? Number(a.id) : extractNum(a.nombre);
+          const nb = !isNaN(Number(b.id)) ? Number(b.id) : extractNum(b.nombre);
+          if (!isNaN(na) && !isNaN(nb)) return na - nb;
+          return String(a.nombre || '').localeCompare(String(b.nombre || ''));
+        });
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -232,18 +240,94 @@ export class CrearLugarDocumentoComponent implements OnInit {
 
   // Al hacer clic en una estantería, cargar sus filas desde la BD
   seleccionarEstanteria(estanteria: any) {
+    // Selecciona la estantería y carga sus filas
     this.selectedEstanteria = estanteria;
+    // Asegurar que tenga la propiedad id (compatibilidad con distintos nombres del backend)
+    this.selectedEstanteria.id = this.selectedEstanteria.id ?? this.selectedEstanteria.id_estanteria ?? null;
+    console.log('[SeleccionarEstanteria] seleccionada:', this.selectedEstanteria);
     this.filasLista = [];
     this.cantidadFilasEstanteria = null;
     this.cargarFilasPorEstanteria();
+    // asegurarse de quitar modo edición de otras estanterías
+    this.estanteriasLista.forEach((e: any) => { if (e !== estanteria) e.isEditingName = false; });
+  }
+
+  // Inicia la edición inline del nombre de la estantería
+  startEditNombreEstanteria(estanteria: any, event?: Event) {
+    // Evitamos comportamiento por defecto del evento pero permitimos seleccionar
+    if (event) { try { event.preventDefault(); } catch {} }
+    // Seleccionar la estantería para que también se carguen sus filas
+    this.seleccionarEstanteria(estanteria);
+    // Guardar nombre original por si se cancela
+    estanteria._originalName = estanteria._originalName ?? estanteria.nombre;
+    // seleccionar estantería al iniciar edición
+    this.selectedEstanteria = estanteria;
+    estanteria.isEditingName = true;
+    // forzar re-render y enfocar el input
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      const selector = `[data-est-id="${estanteria.id}"]`;
+      const inp = document.querySelector(selector) as HTMLInputElement | null;
+      if (inp) { inp.focus(); inp.select(); }
+    }, 50);
+  }
+
+  // Guardar el nombre editado (al presionar Enter o blur)
+  guardarNombreEstanteria(estanteria: any) {
+    if (!estanteria) return;
+    const nuevo = String(estanteria.nombre || '').trim();
+    if (nuevo === '') {
+      this.toast.error('El nombre no puede quedar vacío', 'Error');
+      return;
+    }
+
+    // Si no hay cambio, sólo salir del modo edición
+    if (estanteria._originalName === nuevo) {
+      estanteria.isEditingName = false;
+      return;
+    }
+
+    const payload: any = {
+      id_estanteria: estanteria.id,
+      nombre: nuevo,
+      usuario_registro: this.usuario_id
+    };
+
+    // Llamada al servicio para actualizar
+    this.seccionesService.actualizarEstanteria(payload).subscribe({
+      next: (resp: any) => {
+        this.toast.success('Nombre de estantería actualizado', 'Éxito');
+        estanteria.isEditingName = false;
+        // refrescar listado para mantener consistencia
+        this.listarEstanterias();
+      },
+      error: (err: any) => {
+        console.error('Error actualizando estantería:', err);
+        this.toast.error('No se pudo actualizar el nombre', 'Error');
+        // restaurar valor original
+        estanteria.nombre = estanteria._originalName ?? estanteria.nombre;
+        estanteria.isEditingName = false;
+      }
+    });
+  }
+
+  // Cancelar edición inline y restaurar valor
+  cancelarEditNombre(estanteria: any) {
+    estanteria.nombre = estanteria._originalName ?? estanteria.nombre;
+    estanteria.isEditingName = false;
   }
 
   private cargarFilasPorEstanteria() {
-    if (!this.selectedEstanteria?.id) { return; }
+    if (!this.selectedEstanteria?.id) {
+      console.warn('[cargarFilasPorEstanteria] No hay id de estantería:', this.selectedEstanteria);
+      return;
+    }
     this.selectedFila = null; // limpia selección de fila al cambiar estantería
     const payload = { id_estanteria: this.selectedEstanteria.id };
+    console.log('[cargarFilasPorEstanteria] payload:', payload);
     this.seccionesService.listarFilasPorEstanteria(payload).subscribe({
       next: (res: any) => {
+        console.log('[cargarFilasPorEstanteria] resp:', res);
         const lista = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
         // Normaliza a un arreglo simple de filas con nombre/etiqueta
         this.filasLista = lista.map((f: any, i: number) => ({
@@ -251,6 +335,14 @@ export class CrearLugarDocumentoComponent implements OnInit {
           nombre: f.nombre || f.codigo || f.descripcion || `Fila ${i + 1}`,
           cantidad_cajas: (f.cantidad_cajas != null ? f.cantidad_cajas : 0)
         }));
+        // Orden natural por id o número en el nombre
+        this.filasLista.sort((a: any, b: any) => {
+          const extractNum = (v: any) => { const m = String(v || '').match(/-?\d+/); return m ? Number(m[0]) : NaN; };
+          const na = !isNaN(Number(a.id)) ? Number(a.id) : extractNum(a.nombre);
+          const nb = !isNaN(Number(b.id)) ? Number(b.id) : extractNum(b.nombre);
+          if (!isNaN(na) && !isNaN(nb)) return na - nb;
+          return String(a.nombre || '').localeCompare(String(b.nombre || ''));
+        });
         // Si el backend devuelve la cantidad en la estantería, úsala como referencia del input
         if (this.selectedEstanteria?.cantidad_filas != null) {
           this.cantidadFilasEstanteria = this.selectedEstanteria.cantidad_filas;
@@ -264,6 +356,58 @@ export class CrearLugarDocumentoComponent implements OnInit {
         console.error('Error listando filas:', err);
       }
     });
+  }
+
+  // Inicia la edición inline del nombre de una fila
+  startEditNombreFila(fila: any, event?: Event) {
+    if (event) { try { event.preventDefault(); } catch {} }
+    // Seleccionar la fila para que se carguen las cajas
+    this.seleccionarFila(fila);
+    fila._originalName = fila._originalName ?? fila.nombre;
+    // desactivar edición de otras filas
+    this.filasLista.forEach((r: any) => { if (r !== fila) r.isEditingName = false; });
+    fila.isEditingName = true;
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      const selector = `[data-f-id="${fila.id}"]`;
+      const inp = document.querySelector(selector) as HTMLInputElement | null;
+      if (inp) { inp.focus(); inp.select(); }
+    }, 50);
+  }
+
+  guardarNombreFila(fila: any) {
+    if (!fila) return;
+    const nuevo = String(fila.nombre || '').trim();
+    if (nuevo === '') { this.toast.error('El nombre no puede quedar vacío', 'Error'); return; }
+    if (fila._originalName === nuevo) { fila.isEditingName = false; return; }
+
+    const payload: any = {
+      id_fila: fila.id,
+      cantidad_cajas: fila.cantidad_cajas ?? 0,
+      usuario_registro: this.usuario_id,
+      nombre: nuevo
+    };
+
+    this.seccionesService.actualizarFila(payload).subscribe({
+      next: (resp: any) => {
+        this.toast.success('Nombre de fila actualizado', 'Éxito');
+        fila.isEditingName = false;
+        // refrescar cajas y filas
+        this.cargarCajasPorFila();
+        this.cargarFilasPorEstanteria();
+      },
+      error: (err: any) => {
+        console.error('Error actualizando fila:', err);
+        this.toast.error('No se pudo actualizar el nombre', 'Error');
+        fila.nombre = fila._originalName ?? fila.nombre;
+        fila.isEditingName = false;
+      }
+    });
+  }
+
+  cancelarEditNombreFila(fila: any) {
+    fila.nombre = fila._originalName ?? fila.nombre;
+    fila.isEditingName = false;
   }
 
   // Guardar/actualizar la cantidad de filas para la estantería seleccionada
@@ -295,6 +439,35 @@ export class CrearLugarDocumentoComponent implements OnInit {
       error: (err) => {
         this.toast.error('Ocurrió un error al guardar las filas.', 'Error');
         console.error('Error al registrar filas:', err);
+      }
+    });
+  }
+
+  // Actualiza la cantidad de filas de forma directa (sin confirm)
+  actualizarCantidadFilasAuto(estanteria: any) {
+    if (!estanteria?.id) return;
+    const cantidad = Number(estanteria.cantidad_filas || 0);
+    if (isNaN(cantidad) || cantidad < 0) {
+      this.toast.error('Ingrese una cantidad válida de filas', 'Error');
+      return;
+    }
+
+    const payload = {
+      estanteria_id: estanteria.id,
+      cantidad: cantidad,
+      usuario_registro: this.usuario_id
+    };
+
+    this.seccionesService.registrarFilas(payload).subscribe({
+      next: (resp: any) => {
+        this.toast.success('Cantidad de filas actualizada', 'Éxito');
+        // refrescar las filas y el listado de estanterías
+        this.cargarFilasPorEstanteria();
+        this.listarEstanterias();
+      },
+      error: (err) => {
+        this.toast.error('No se pudo actualizar la cantidad de filas', 'Error');
+        console.error('Error al actualizar cantidad de filas:', err);
       }
     });
   }
@@ -339,6 +512,15 @@ export class CrearLugarDocumentoComponent implements OnInit {
           numero_caja: c.numero_caja || (i + 1),
           cantidad_carpetas: (c.cantidad_carpetas != null ? c.cantidad_carpetas : 0)
         }));
+        // Orden natural por numero_caja (1,2,3,...10,11...)
+        this.cajasLista.sort((a: any, b: any) => {
+          const na = Number(a.numero_caja ?? a.id ?? NaN);
+          const nb = Number(b.numero_caja ?? b.id ?? NaN);
+          if (!isNaN(na) && !isNaN(nb)) return na - nb;
+          // fallback por id o nombre
+          if (a.id && b.id) return Number(a.id) - Number(b.id);
+          return String(a.nombre).localeCompare(String(b.nombre));
+        });
         // cantidad deseada por UI: si queremos reflejarla, usar length
         this.cantidadCajasFila = this.cajasLista.length || 0;
         this.cdr.detectChanges();
@@ -348,6 +530,58 @@ export class CrearLugarDocumentoComponent implements OnInit {
         console.error('Error listando cajas:', err);
       }
     });
+  }
+
+  // Inicia la edición inline del nombre de una caja
+  startEditNombreCaja(caja: any, event?: Event) {
+    if (event) { try { event.preventDefault(); } catch {} }
+    // Seleccionar caja para que se carguen las carpetas
+    this.seleccionarCaja(caja);
+    caja._originalName = caja._originalName ?? caja.nombre;
+    // desactivar edición de otras cajas
+    this.cajasLista.forEach((r: any) => { if (r !== caja) r.isEditingName = false; });
+    caja.isEditingName = true;
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      const selector = `[data-c-id="${caja.id}"]`;
+      const inp = document.querySelector(selector) as HTMLInputElement | null;
+      if (inp) { inp.focus(); inp.select(); }
+    }, 50);
+  }
+
+  guardarNombreCaja(caja: any) {
+    if (!caja) return;
+    const nuevo = String(caja.nombre || '').trim();
+    if (nuevo === '') { this.toast.error('El nombre no puede quedar vacío', 'Error'); return; }
+    if (caja._originalName === nuevo) { caja.isEditingName = false; return; }
+
+    const payload: any = {
+      id_caja: caja.id,
+      cantidad_carpetas: caja.cantidad_carpetas ?? 0,
+      usuario_registro: this.usuario_id,
+      nombre: nuevo
+    };
+
+    this.seccionesService.actualizarCaja(payload).subscribe({
+      next: (resp: any) => {
+        this.toast.success('Nombre de caja actualizado', 'Éxito');
+        caja.isEditingName = false;
+        // refrescar carpetas y cajas
+        this.cargarCarpetasPorCaja();
+        this.cargarCajasPorFila();
+      },
+      error: (err: any) => {
+        console.error('Error actualizando caja:', err);
+        this.toast.error('No se pudo actualizar el nombre', 'Error');
+        caja.nombre = caja._originalName ?? caja.nombre;
+        caja.isEditingName = false;
+      }
+    });
+  }
+
+  cancelarEditNombreCaja(caja: any) {
+    caja.nombre = caja._originalName ?? caja.nombre;
+    caja.isEditingName = false;
   }
 
   crearCajasParaFila() {
@@ -409,6 +643,14 @@ export class CrearLugarDocumentoComponent implements OnInit {
           nombre: k.nombre || `Carpeta ${i + 1}`,
           numero_documentos: (k.numero_documentos != null ? k.numero_documentos : 0)
         }));
+        // Orden natural por id o número en el nombre
+        this.carpetasLista.sort((a: any, b: any) => {
+          const extractNum = (v: any) => { const m = String(v || '').match(/-?\d+/); return m ? Number(m[0]) : NaN; };
+          const na = !isNaN(Number(a.id)) ? Number(a.id) : extractNum(a.nombre);
+          const nb = !isNaN(Number(b.id)) ? Number(b.id) : extractNum(b.nombre);
+          if (!isNaN(na) && !isNaN(nb)) return na - nb;
+          return String(a.nombre || '').localeCompare(String(b.nombre || ''));
+        });
         this.cantidadCarpetasCaja = this.carpetasLista.length || 0;
         this.cdr.detectChanges();
       },
@@ -417,6 +659,56 @@ export class CrearLugarDocumentoComponent implements OnInit {
         console.error('Error listando carpetas:', err);
       }
     });
+  }
+
+  // Inicia la edición inline del nombre de una carpeta
+  startEditNombreCarpeta(carpeta: any, event?: Event) {
+    if (event) { try { event.preventDefault(); } catch {} }
+    // Seleccionar carpeta para contexto (no hay panel inferior, pero mantenemos consistencia)
+    carpeta._originalName = carpeta._originalName ?? carpeta.nombre;
+    // desactivar edición de otras carpetas
+    this.carpetasLista.forEach((r: any) => { if (r !== carpeta) r.isEditingName = false; });
+    carpeta.isEditingName = true;
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      const selector = `[data-ca-id="${carpeta.id}"]`;
+      const inp = document.querySelector(selector) as HTMLInputElement | null;
+      if (inp) { inp.focus(); inp.select(); }
+    }, 50);
+  }
+
+  guardarNombreCarpeta(carpeta: any) {
+    if (!carpeta) return;
+    const nuevo = String(carpeta.nombre || '').trim();
+    if (nuevo === '') { this.toast.error('El nombre no puede quedar vacío', 'Error'); return; }
+    if (carpeta._originalName === nuevo) { carpeta.isEditingName = false; return; }
+
+    const payload: any = {
+      id_carpeta: carpeta.id,
+      numero_documentos: carpeta.numero_documentos ?? 0,
+      usuario_registro: this.usuario_id,
+      nombre: nuevo
+    };
+
+    this.seccionesService.actualizarCarpeta(payload).subscribe({
+      next: (resp: any) => {
+        this.toast.success('Nombre de carpeta actualizado', 'Éxito');
+        carpeta.isEditingName = false;
+        // refrescar carpetas
+        this.cargarCarpetasPorCaja();
+      },
+      error: (err: any) => {
+        console.error('Error actualizando carpeta:', err);
+        this.toast.error('No se pudo actualizar el nombre', 'Error');
+        carpeta.nombre = carpeta._originalName ?? carpeta.nombre;
+        carpeta.isEditingName = false;
+      }
+    });
+  }
+
+  cancelarEditNombreCarpeta(carpeta: any) {
+    carpeta.nombre = carpeta._originalName ?? carpeta.nombre;
+    carpeta.isEditingName = false;
   }
 
   crearCarpetasParaCaja() {

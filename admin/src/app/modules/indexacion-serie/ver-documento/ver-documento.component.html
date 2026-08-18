@@ -1,5 +1,5 @@
 <div class="modal-header">
-  <h5 class="modal-title">Vista del Expediente</h5>
+  <h5 class="modal-title">{{ nombreArchivo || 'Vista del Expediente' }}</h5>
   <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
 </div>
 
@@ -19,7 +19,7 @@
       </div>
     </div>
     <div class="right">
-      <div class="btn-group btn-group-sm" role="group" aria-label="Limpieza por recorte">
+      <div class="btn-group btn-group-sm" role="group" aria-label="Limpieza por recorte" *ngIf="!modoUrl && !modoAnexo && !soloLectura">
         <button type="button" class="btn" [ngClass]="recorteActivo ? 'btn-danger' : 'btn-outline-danger'"
                 (click)="toggleRecorte()" [disabled]="!paginaMostrada" title="Limpieza por selección">
           <i class="fa fa-eraser"></i>
@@ -29,17 +29,21 @@
           <i class="fa fa-rotate-left"></i>
         </button>
       </div>
-      <button class="btn btn-warning btn-sm" (click)="ingresarSeparadores()" [disabled]="!totalPaginas" title="Ingresar separadores">
+      <button class="btn btn-info btn-sm" *ngIf="!modoUrl && !modoAnexo && !soloLectura" (click)="ingresarHoja()" [disabled]="!totalPaginas" title="Ingresar una hoja a este documento">
+        <i class="fa fa-file-circle-plus"></i>
+        <span class="d-none d-sm-inline">Ingresar hoja</span>
+      </button>
+      <button class="btn btn-warning btn-sm" *ngIf="!modoUrl && !modoAnexo && !soloLectura" (click)="ingresarSeparadores()" [disabled]="!totalPaginas" title="Ingresar separadores">
         <i class="fa fa-bookmark"></i>
         <span class="d-none d-sm-inline">Separadores</span>
       </button>
-      <button class="btn btn-primary btn-sm" (click)="imprimirPaginaActual()" [disabled]="!paginaMostrada" title="Imprimir página actual">
+      <button class="btn btn-primary btn-sm" *ngIf="permitirImprimir" (click)="imprimirPaginaActual()" [disabled]="!paginaMostrada" title="Imprimir página actual">
         <i class="fa fa-print"></i>
         <span class="d-none d-sm-inline">Imprimir</span>
       </button>
-      <button class="btn btn-success btn-sm" (click)="guardarCambios()" [disabled]="!paginaMostrada" title="Guardar cambios">
+      <button class="btn btn-success btn-sm" *ngIf="!modoUrl && !modoAnexo && !soloLectura" (click)="guardarCambios()" [disabled]="!paginaMostrada" title="Guardar como nueva versión">
         <i class="fa fa-floppy-disk"></i>
-        <span class="d-none d-sm-inline">Guardar</span>
+        <span class="d-none d-sm-inline">Guardar versión</span>
       </button>
     </div>
   </div>
@@ -54,7 +58,7 @@
          [title]="s.name + ' · Pág. ' + s.from + ' a ' + s.to">
       <span class="sep-name">{{ s.name }}</span>
       <span class="sep-range">{{ s.from }}–{{ s.to }}</span>
-      <span class="sep-actions ms-2">
+      <span class="sep-actions ms-2" *ngIf="!soloLectura">
         <button type="button" class="btn btn-light btn-xs" title="Editar" (click)="$event.stopPropagation(); editarSeparador(i)">
           <i class="fa fa-pen"></i>
         </button>

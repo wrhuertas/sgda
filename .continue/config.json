@@ -1,0 +1,15 @@
+{
+  "models": [
+    {
+      "title": "GPT-5 Pro",
+      "provider": "openai",
+      "model": "gpt-5"
+    }
+  ],
+  "mcpServers": {
+    "codebase-memory": {
+      "command": "npx",
+      "args": ["-y", "codebase-memory-mcp"]
+    }
+  }
+}

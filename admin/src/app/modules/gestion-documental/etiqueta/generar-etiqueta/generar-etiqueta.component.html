@@ -1,0 +1,219 @@
+<div class="modal-header">
+  <h2 class="fw-bold m-0">
+    <i class="ki-duotone ki-barcode fs-1 text-primary me-3">
+      <span class="path1"></span><span class="path2"></span>
+      <span class="path3"></span><span class="path4"></span>
+    </i>
+    Generar etiqueta
+  </h2>
+  <button type="button" class="btn btn-sm btn-icon btn-active-light-primary" (click)="activeModal.dismiss()">
+    <i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span class="path2"></span></i>
+  </button>
+</div>
+
+<div class="modal-body">
+
+  <div class="text-center py-10" *ngIf="cargando">
+    <span class="spinner-border text-primary"></span>
+  </div>
+
+  <ng-container *ngIf="!cargando && datos">
+
+    <!--begin::Ruta-->
+    <div class="d-flex align-items-center justify-content-between bg-light rounded p-4 mb-6">
+      <div class="d-flex align-items-center">
+        <i class="ki-duotone ki-geolocation fs-2x text-gray-500 me-4">
+          <span class="path1"></span><span class="path2"></span>
+        </i>
+        <div>
+          <span class="text-muted fs-8 d-block">Ruta</span>
+          <span class="fw-bold text-gray-800">{{ datos.ruta }}</span>
+        </div>
+      </div>
+      <span class="badge badge-light-primary text-uppercase">{{ datos.nivel }}</span>
+    </div>
+    <!--end::Ruta-->
+
+    <div class="row g-6">
+
+      <!--begin::QR-->
+      <div class="col-md-7 border-end">
+        <h4 class="fw-bold text-primary mb-4">
+          <span class="badge badge-circle badge-primary me-2">1</span>
+          {{ usaPlantilla ? (esCarpeta ? 'Rótulo de carpeta' : 'Rótulo de caja') : 'Código QR' }}
+        </h4>
+
+        <!-- Plantilla completa: cuando la ruta llega a caja o a carpeta -->
+        <div class="overflow-auto" *ngIf="usaPlantilla || usaPlantillaSimple">
+         <div #rotulo>
+          <div class="etiqueta-carpeta" *ngIf="usaPlantilla">
+
+            <!--begin::Bloque superior-->
+            <div class="fila-superior">
+
+              <!-- Fondo documental -->
+              <div class="columna">
+                <div class="celda titulo">Fondo Documental</div>
+
+                <div class="celda logo">
+                  <img *ngIf="datos.logo" [src]="datos.logo" alt="Logo" />
+                </div>
+
+                <div class="celda titulo">Sección Documental</div>
+                <div class="celda valor">{{ datos.seccion || '---' }}</div>
+
+                <div class="celda titulo">Subsección</div>
+                <div class="celda valor">{{ datos.subseccion || '---' }}</div>
+
+                <div class="celda titulo">Subsección</div>
+                <div class="celda valor">{{ datos.subseccion2 || '---' }}</div>
+
+                <div class="celda titulo">Carpeta</div>
+                <div class="celda valor">{{ datos.ubicacion?.carpeta || '---' }}</div>
+              </div>
+
+              <!-- Contenido -->
+              <div class="columna">
+                <div class="celda titulo">Contenido</div>
+                <div class="celda qr">
+                  <qrcode
+                    [qrdata]="contenidoQr"
+                    [width]="230"
+                    [errorCorrectionLevel]="'M'"
+                    [margin]="0">
+                  </qrcode>
+                </div>
+              </div>
+
+              <!-- Caja -->
+              <div class="columna">
+                <div class="celda titulo">Caja N°</div>
+                <div class="celda caja-numero">{{ datos.ubicacion?.caja || '---' }}</div>
+              </div>
+            </div>
+            <!--end::Bloque superior-->
+
+            <!--begin::Bloque inferior-->
+            <!-- Los cinco primeros títulos ocupan las dos filas; sólo Fechas
+                 Extremas se parte en Apertura y Cierre -->
+            <div class="fila-inferior encabezado">
+              <div class="celda titulo abarca-filas">Serie Documental</div>
+              <div class="celda titulo abarca-filas">Subserie Documental</div>
+              <div class="celda titulo abarca-filas">Fojas</div>
+              <div class="celda titulo abarca-filas">Cantidad de Expedientes</div>
+              <div class="celda titulo abarca-filas">Número de Bibliorato</div>
+              <div class="celda titulo abarca-2">Fechas Extremas (dd/mm/aa)</div>
+              <div class="celda titulo">Apertura</div>
+              <div class="celda titulo">Cierre</div>
+            </div>
+
+            <div class="fila-inferior">
+              <div class="celda valor">{{ datos.serie || '---' }}</div>
+              <div class="celda valor">{{ datos.subserie || '---' }}</div>
+              <div class="celda valor">{{ resumen.fojas || '---' }}</div>
+              <div class="celda valor">{{ resumen.expedientes || '---' }}</div>
+              <div class="celda valor">{{ resumen.bibliorato || '---' }}</div>
+              <div class="celda valor">{{ (resumen.apertura | date:'dd/MM/yyyy') || '---' }}</div>
+              <div class="celda valor">{{ (resumen.cierre | date:'dd/MM/yyyy') || '---' }}</div>
+            </div>
+            <!--end::Bloque inferior-->
+          </div>
+
+          <!--begin::Rótulo simple para edificio, sala, estantería y fila-->
+          <div class="etiqueta-simple" *ngIf="usaPlantillaSimple">
+            <div class="celda titulo">Contenido</div>
+
+            <div class="celda qr">
+              <qrcode
+                [qrdata]="contenidoQr"
+                [width]="230"
+                [errorCorrectionLevel]="'M'"
+                [margin]="0">
+              </qrcode>
+              <span class="codigo" *ngIf="datos.codigo">{{ datos.codigo }}</span>
+            </div>
+
+            <div class="celda titulo">Ubicación — {{ nivelTexto }}</div>
+
+            <div class="celda detalle" *ngFor="let f of filasUbicacion">
+              <strong>{{ f.etiqueta }}:</strong> {{ f.valor }}
+            </div>
+          </div>
+          <!--end::Rótulo simple-->
+         </div>
+
+          <div class="d-grid mt-4">
+            <button type="button" class="btn btn-primary" (click)="imprimir()">
+              <i class="ki-duotone ki-printer fs-2 me-1">
+                <span class="path1"></span><span class="path2"></span>
+                <span class="path3"></span><span class="path4"></span><span class="path5"></span>
+              </i>
+              Imprimir
+            </button>
+          </div>
+        </div>
+
+        <!-- Sin ubicación no hay rótulo que dibujar -->
+        <div class="alert alert-light-warning d-flex align-items-center"
+             *ngIf="!usaPlantilla && !usaPlantillaSimple">
+          <i class="ki-duotone ki-information fs-2x text-warning me-4">
+            <span class="path1"></span><span class="path2"></span><span class="path3"></span>
+          </i>
+          <span class="text-gray-700 fs-7">
+            Esta etiqueta no tiene una ubicación asignada, así que no hay rótulo para generar.
+          </span>
+        </div>
+      </div>
+      <!--end::QR-->
+
+      <!--begin::Campos-->
+      <div class="col-md-5">
+        <h4 class="fw-bold text-primary mb-4">
+          <span class="badge badge-circle badge-primary me-2">2</span> Campos a elegir
+        </h4>
+
+        <!-- Lista seleccionable: gris lo que queda fuera, azul lo elegido -->
+        <div class="lista-campos mb-5">
+          <div class="campo"
+               *ngFor="let c of campos"
+               [class.activo]="c.seleccionado"
+               (click)="alternarCampo(c)">
+            <span class="marca">
+              <i class="ki-duotone" [ngClass]="c.seleccionado ? 'ki-check-circle' : 'ki-abstract-11'">
+                <span class="path1"></span><span class="path2"></span>
+              </i>
+            </span>
+            <span class="etiqueta">{{ c.etiqueta }}</span>
+            <span class="valor">{{ c.valor }}</span>
+          </div>
+        </div>
+
+        <div class="d-grid mb-5">
+          <button type="button" class="btn btn-primary" (click)="actualizarContenido()" [disabled]="actualizando">
+            <span *ngIf="!actualizando">
+              <i class="ki-duotone ki-arrows-circle fs-2 me-1"><span class="path1"></span><span class="path2"></span></i>
+              Actualizar contenido
+            </span>
+            <span *ngIf="actualizando">
+              Actualizando... <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+            </span>
+          </button>
+        </div>
+
+        <div class="alert alert-light-primary d-flex align-items-center py-3" *ngIf="!usaPlantilla">
+          <i class="ki-duotone ki-information fs-2 text-primary me-3">
+            <span class="path1"></span><span class="path2"></span><span class="path3"></span>
+          </i>
+          <span class="text-gray-700 fs-8">
+            El formato completo del rótulo es sólo para etiquetas de caja o carpeta.
+          </span>
+        </div>
+      </div>
+      <!--end::Campos-->
+    </div>
+  </ng-container>
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-light" (click)="activeModal.dismiss()">Cerrar</button>
+</div>

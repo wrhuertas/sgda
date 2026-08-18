@@ -1,44 +1,53 @@
-<div class="card">
-  <div class="card-header border-0 pt-6">
-    <h2 class="card-title fw-bold fs-1 text-dark">📊 Reportes</h2>
-  </div>
+<div class="row justify-content-center">
+  <div class="col-md-6">
 
-  <div class="card-body pt-4">
-    <div class="row justify-content-center">
-      <div class="col-md-6">
+    <!-- Card 1: solo el select del tipo de reporte -->
+    <div class="card mb-6">
+      <div class="card-header border-0 pt-6">
+        <h2 class="card-title fw-bold fs-1 text-dark">📊 Reportes</h2>
+      </div>
 
-        <div class="form-group mb-4">
+      <div class="card-body pt-4">
+        <div class="form-group">
           <label class="form-label fw-bold fs-4">Tipo de Reporte</label>
-          <select 
-            id="tipoReporte" 
-            [(ngModel)]="tipoReporte" 
+          <select
+            id="tipoReporte"
+            [(ngModel)]="tipoReporte"
             class="form-control form-control-lg"
           >
             <option value="1">--CUADRO DE CLASIFICACIÓN--</option>
             <option value="2">--TABLA DE PLAZOS--</option>
             <option value="3">--INVENTARIO DE TRAMITES--</option>
+            <option value="4">--ORGANIZACIÓN POSICIONAL--</option>
+            <option value="5">--ORGANIZACIÓN ESTRUCTURAL--</option>
           </select>
         </div>
+      </div>
+    </div>
 
-        <div *ngIf="tipoReporte == '3'" class="card mt-4 p-4 border border-primary">
-          <h4 class="fw-bold mb-3">Opciones de Inventario</h4>
+    <!-- Card 2: opciones del reporte seleccionado y acciones -->
+    <div class="card">
+      <div class="card-body py-6">
+
+        <ng-container *ngIf="tipoReporte == '3'">
+          <h4 class="fw-bold mb-4">Opciones de Inventario</h4>
 
           <div class="mb-3">
-            <label class="form-label fw-bold">Sección</label>
+            <label class="form-label fw-bold">Sección <span class="text-danger">*</span></label>
             <select [(ngModel)]="seccionId" (change)="onSeccionChange()" class="form-control">
               <option value="">-- SELECCIONE SECCIÓN --</option>
               <option *ngFor="let sec of secciones" [value]="sec.id_proyecto">{{ sec.nombre }}</option>
             </select>
           </div>
-          
+
           <div class="mb-3" *ngIf="subsecciones.length > 0">
-            <label class="form-label fw-bold">Subsección</label>
+            <label class="form-label fw-bold">Subsección <span class="text-danger">*</span></label>
             <select [(ngModel)]="subseccionId" (change)="onSubseccionChange()" class="form-control">
               <option value="">-- SELECCIONE SUBSECCIÓN --</option>
               <option *ngFor="let sub of subsecciones" [value]="sub.id_proyecto">{{ sub.nombre }}</option>
             </select>
           </div>
-          
+
           <div class="mb-3" *ngIf="subsubsecciones.length > 0">
             <label class="form-label fw-bold">Sub-Subsección</label>
             <select [(ngModel)]="subsubseccionId" (change)="onSubSubseccionChange()" class="form-control">
@@ -46,15 +55,15 @@
               <option *ngFor="let sub2 of subsubsecciones" [value]="sub2.id_proyecto">{{ sub2.nombre }}</option>
             </select>
           </div>
-          
+
           <div class="mb-3" *ngIf="series.length > 0">
-            <label class="form-label fw-bold text-primary">Serie Documental</label>
+            <label class="form-label fw-bold text-primary">Serie Documental <span class="text-danger">*</span></label>
             <select [(ngModel)]="serieId" (change)="onSerieChange()" class="form-control border-primary">
               <option value="">-- SELECCIONE SERIE --</option>
               <option *ngFor="let s of series" [value]="s.id_serie">{{ s.nombre }}</option>
             </select>
           </div>
-          
+
           <div class="mb-3" *ngIf="subseries.length > 0">
             <label class="form-label fw-bold text-success">Sub-Serie</label>
             <select [(ngModel)]="subserieId" class="form-control border-success">
@@ -62,17 +71,36 @@
               <option *ngFor="let ss of subseries" [value]="ss.id_serie">{{ ss.nombre }}</option>
             </select>
           </div>
-        </div>
 
-        <div class="d-flex justify-content-center gap-3 mt-4">
-         <!-- <button 
+          <div class="separator my-5"></div>
+        </ng-container>
+
+        <!-- Organización Posicional y Estructural: sólo se elige la Sección -->
+        <ng-container *ngIf="tipoReporte == '4' || tipoReporte == '5'">
+          <h4 class="fw-bold mb-4">
+            Opciones de Organización {{ tipoReporte == '4' ? 'Posicional' : 'Estructural' }}
+          </h4>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Sección <span class="text-danger">*</span></label>
+            <select [(ngModel)]="seccionId" (change)="onSeccionChange()" class="form-control">
+              <option value="">-- SELECCIONE SECCIÓN --</option>
+              <option *ngFor="let sec of secciones" [value]="sec.id_proyecto">{{ sec.nombre }}</option>
+            </select>
+          </div>
+
+          <div class="separator my-5"></div>
+        </ng-container>
+
+        <div class="d-flex justify-content-center gap-3">
+         <!-- <button
             class="btn btn-danger btn-lg px-5"
             (click)="exportarPDF()"
           >
             <i class="fas fa-file-pdf me-2"></i> PDF
           </button>-->
 
-          <button 
+          <button
             class="btn btn-success btn-lg px-5"
             (click)="exportarExcel()"
           >
@@ -82,5 +110,6 @@
 
       </div>
     </div>
+
   </div>
 </div>

@@ -93,8 +93,8 @@
               <td>
                 <div class="d-flex align-items-center">
                   <i class="fas fa-file-pdf text-danger me-2"></i>
-                  <span class="text-truncate" style="max-width: 400px;" [title]="doc.nombre">
-                    {{ doc.nombre }}
+                  <span class="text-truncate" style="max-width: 400px;" [title]="doc.nombre || doc.nombre_archivo">
+                    {{ doc.nombre || doc.nombre_archivo }}
                   </span>
                 </div>
               </td>

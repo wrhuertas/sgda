@@ -190,7 +190,7 @@ generarPDF() {
         { text: '\n' },
 
         // Título del Acta
-        { text: 'ACTA DE PRÉSTAMO DOCUMENTAL', style: 'tituloPrincipal' },
+        { text: 'MEMORANDUM DE PRÉSTAMO DOCUMENTAL', style: 'tituloPrincipal' },
         { text: `No. ${this.data.numero_acta || 'REG-S/N'}`, style: 'subTituloActa' },
         // 📑 Si tiene número de trámite, lo pintamos aquí abajo con un estilo sutil
         this.data.numero_tramite ? {

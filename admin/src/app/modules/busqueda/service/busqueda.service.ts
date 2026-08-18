@@ -43,18 +43,19 @@ buscarDocumentos(data: { texto: string; id_empresa: number }, page: number = 1):
 }
     
     
+    /**
+     * Trae el documento para el visor.
+     * El endpoint responde JSON con el PDF en base64 dentro de data.ruta
+     * (ya descifrado por el backend si estaba cifrado en el servidor).
+     */
     obtenerDocumentoPorId(payload: any) {
       const headers = new HttpHeaders({
         'Authorization': 'Bearer ' + this.authservice.token
       });
-    
+
       const url = `${URL_SERVICIOS}/documentos/obtener-documento`;
-    
-      // ⚠️ CRUCIAL: Agregar responseType 'blob'
-      return this.http.post(url, payload, { 
-        headers, 
-        responseType: 'blob' 
-      });
+
+      return this.http.post<any>(url, payload, { headers });
     }
 
 

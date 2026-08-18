@@ -1,0 +1,232 @@
+<div class="modal-header">
+  <h2 class="fw-bold">
+      Crear Trámite: <span class="text-primary">{{ nombre_tipo_documento || 'Memorandum' }}</span>
+  </h2>
+  <div class="btn btn-icon btn-sm btn-active-icon-primary" (click)="activeModal.dismiss()">
+      <i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span class="path2"></span></i>
+  </div>
+</div>
+
+<div class="modal-body scroll-y mx-5 mx-xl-10 my-7">
+  <!-- Sin pestaña de Seguimiento: el trámite todavía no existe -->
+  <div class="d-flex flex-row mb-5">
+      <div class="quipux-tab" [ngClass]="{'active': tab_active === 1}" (click)="changeTab(1)">
+          Información del Docu.
+      </div>
+      <div class="quipux-tab" [ngClass]="{'active': tab_active === 2}" (click)="changeTab(2)">
+          Anexos ({{ archivos?.length || 0 }})
+      </div>
+  </div>
+
+  <form id="kt_modal_crear_tramite_form" class="form">
+      <div *ngIf="tab_active === 1">
+
+          <div class="mb-7 mt-5">
+             <h3 class="text-gray-800 fw-bold d-flex align-items-center">
+               <span>Creación de trámite</span>
+               <span class="ms-3 fs-7 fw-semibold text-gray-700">Memorandum:
+                  <span class="align-middle ms-1 fs-5 fw-bold text-primary">{{ numero_documento_input || 'S/N' }}</span>
+               </span>
+             </h3>
+             <span class="text-muted fs-7">Complete los datos para crear el trámite</span>
+          </div>
+
+          <div class="d-flex flex-stack mb-5">
+              <div class="d-flex align-items-center">
+                  <button type="button" class="btn btn-sm btn-light-primary me-3" (click)="BuscarUsuario()">
+                      <i class="ki-duotone ki-magnifier fs-2">
+                          <span class="path1"></span>
+                          <span class="path2"></span>
+                      </i>
+                      Buscar Usuario
+                  </button>
+                  <button type="button" class="btn btn-sm btn-light-info me-3" (click)="abrirVistaPrevia()">
+                      <i class="ki-duotone ki-eye fs-2">
+                          <span class="path1"></span>
+                          <span class="path2"></span>
+                      </i>
+                      Vista Previa
+                  </button>
+              </div>
+          </div>
+
+          <div class="table-responsive border mb-8">
+            <table class="table table-bordered align-middle gs-4 gy-2">
+                <thead>
+                    <tr class="fw-bold fs-7 text-gray-800 border-bottom-2 border-gray-200 bg-light">
+                        <th class="min-w-50px"></th>
+                        <th class="min-w-200px text-center">Nombre</th>
+                        <th class="min-w-100px text-center">Título</th>
+                        <th class="min-w-200px text-center">Puesto / Sección</th>
+                        <th class="min-w-250px text-center">Institución</th>
+                    </tr>
+                </thead>
+                <tbody class="fs-7">
+
+                    <ng-container *ngIf="usuarios_para.length > 0">
+                        <tr *ngFor="let p of usuarios_para; let i = index">
+                            <td *ngIf="i === 0" [attr.rowspan]="usuarios_para.length" class="fw-bold bg-light text-primary text-center">
+                                Para:
+                            </td>
+                            <td><span class="text-muted" *ngIf="!p.es_cliente && !p.id_cliente">(Serv.)</span> {{ p.nombre_completo }}<span *ngIf="p.sigla" class="text-muted ms-1">({{ p.sigla }})</span></td>
+                            <td class="text-center">{{ p.titulo || '-' }}</td>
+                            <td>{{ p.area || p.proyecto || p.subseccion || '-' }}</td>
+                            <td>{{ p.institucion || p.empresa || '-' }}</td>
+                        </tr>
+                    </ng-container>
+
+                    <ng-container *ngIf="usuarios_de.length > 0">
+                        <tr *ngFor="let p of usuarios_de; let i = index">
+                            <td *ngIf="i === 0" [attr.rowspan]="usuarios_de.length" class="fw-bold bg-light text-success text-center">
+                                De:
+                            </td>
+                            <td><span class="text-muted" *ngIf="!p.es_cliente && !p.id_cliente">(Serv.)</span> {{ p.nombre_completo }}<span *ngIf="p.sigla" class="text-muted ms-1">({{ p.sigla }})</span></td>
+                            <td class="text-center">{{ p.titulo || '-' }}</td>
+                            <td>{{ p.area || p.proyecto || p.subseccion || '-' }}</td>
+                            <td>{{ p.institucion || p.empresa || '-' }}</td>
+                        </tr>
+                    </ng-container>
+
+                    <ng-container *ngIf="usuarios_copia.length > 0">
+                        <tr *ngFor="let p of usuarios_copia; let i = index">
+                            <td *ngIf="i === 0" [attr.rowspan]="usuarios_copia.length" class="fw-bold bg-light text-gray-600 text-center">
+                                Copia a:
+                            </td>
+                            <td><span class="text-muted" *ngIf="!p.es_cliente && !p.id_cliente">(Serv.)</span> {{ p.nombre_completo }}<span *ngIf="p.sigla" class="text-muted ms-1">({{ p.sigla }})</span></td>
+                            <td class="text-center">{{ p.titulo || '-' }}</td>
+                            <td>{{ p.area || p.proyecto || p.subseccion || '-' }}</td>
+                            <td>{{ p.institucion || p.empresa || '-' }}</td>
+                        </tr>
+                    </ng-container>
+
+                    <tr *ngIf="usuarios_para.length === 0 && usuarios_de.length === 0 && usuarios_copia.length === 0">
+                        <td colspan="5" class="text-center py-10">
+                            <div class="d-flex flex-column">
+                                <i class="fa fa-users fs-2x text-gray-300 mb-2"></i>
+                                <span class="text-muted fs-6 italic">No se han seleccionado destinatarios para este trámite.</span>
+                            </div>
+                        </td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+
+          <div class="row g-9 mb-8">
+              <div class="col-md-6 fv-row">
+                  <label class="fs-7 fw-bold mb-2">Tipo de Documento:</label>
+                  <select class="form-select form-select-sm form-select-solid" [(ngModel)]="id_tipo_documento_sel" (ngModelChange)="onTipoDocumentoChange($event)" name="id_tipo_documento_sel">
+                    <option [ngValue]="null">Seleccione Tipo de Documento</option>
+                    <option *ngFor="let td of tipo_documentos" [ngValue]="td.id_tipodocumento">{{ td.nombre }}</option>
+                  </select>
+              </div>
+              <div class="col-md-6 fv-row">
+                  <label class="fs-7 fw-bold mb-2">Tipo de Trámite:</label>
+                  <select class="form-select form-select-sm form-select-solid" [(ngModel)]="id_tipo_tramite_sel" name="id_tipo_tramite_sel">
+                    <option [ngValue]="null">Seleccione Tipo de Trámite</option>
+                    <option *ngFor="let tt of tipo_tramites" [ngValue]="tt.id_tipo_tramite">{{ tt.nombre }}</option>
+                  </select>
+              </div>
+
+              <div class="col-md-6 fv-row">
+                <label class="fs-7 fw-bold mb-2">Categoría</label>
+                <select class="form-select form-select-sm form-select-solid" [(ngModel)]="categoria_sel" name="categoria_sel">
+                  <option [ngValue]="''">Seleccione Categoría</option>
+                  <option [ngValue]="'Urgente'">Urgente</option>
+                  <option [ngValue]="'Especial'">Especial</option>
+                  <option [ngValue]="'Normal'">Normal</option>
+                </select>
+              </div>
+          </div>
+
+          <div class="fv-row mb-8">
+              <label class="fs-7 fw-bold mb-2 required">Asunto:</label>
+              <textarea class="form-control form-control-sm form-control-solid" rows="2" placeholder="Asunto del trámite..." [(ngModel)]="asunto" name="asunto"></textarea>
+          </div>
+
+          <div class="fv-row mb-8">
+               <label class="fs-7 fw-bold mb-2">Cuerpo del Documento:</label>
+               <ckeditor
+                   #editor
+                   [editor]="Editor"
+                   [config]="editorConfig"
+                   [(ngModel)]="contenidoCuerpo"
+                   (ready)="onEditorReady($event)"
+                   name="cuerpo_doc">
+               </ckeditor>
+          </div>
+      </div>
+
+      <div *ngIf="tab_active === 2">
+          <div class="dropzone d-flex flex-center border-dashed p-10 mb-5">
+              <div class="text-center">
+                  <i class="ki-duotone ki-file-up fs-3x text-primary"><span class="path1"></span><span class="path2"></span></i>
+                  <p class="fs-6 fw-semibold text-gray-600 mt-4 mb-2">Subir anexos del trámite</p>
+                  <div class="d-flex flex-column align-items-center gap-3">
+                    <label class="btn btn-sm btn-primary">
+                      Seleccionar archivos
+                      <input type="file" class="d-none" multiple
+                             (change)="onFilesSelected($event)"
+                             accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif" />
+                    </label>
+                    <small class="text-muted">Formatos: PDF, Word (doc, docx), Excel (xls, xlsx), JPG, JPEG, PNG, GIF. Tamaño máximo: 50 MB por archivo.</small>
+                  </div>
+              </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header py-3">
+              <h5 class="mb-0 fw-bold">Archivos seleccionados ({{ archivos.length }})</h5>
+            </div>
+            <div class="card-body p-0">
+              <div *ngIf="archivos.length === 0" class="text-center text-muted py-8">
+                No hay archivos seleccionados.
+              </div>
+              <ul class="list-group list-group-flush" *ngIf="archivos.length > 0">
+                <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let f of archivos; let i = index">
+                  <div class="d-flex align-items-start w-100">
+                    <i class="ki-duotone ki-file fs-2 me-3 mt-1" [ngClass]="getFileColor(f)"></i>
+                    <div class="flex-grow-1">
+                      <div class="fw-semibold d-flex align-items-center gap-2">
+                        <span class="text-break">{{ f.name }}</span>
+                        <span class="badge" [ngClass]="getFileBadgeClass(f)">{{ getFileLabel(f) }}</span>
+                      </div>
+                      <small class="text-muted d-block mb-2">{{ f.size / 1024 | number:'1.0-0' }} KB</small>
+                      <input type="text"
+                             class="form-control form-control-sm"
+                             placeholder="Descripción del anexo"
+                             [(ngModel)]="anexosDescripcion[i]"
+                             [name]="'anexo_desc_'+i" />
+                    </div>
+                  </div>
+                  <button class="btn btn-sm btn-icon btn-light-danger" (click)="removeFile(i)" title="Quitar">
+                    <i class="ki-duotone ki-trash fs-3">X</i>
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
+      </div>
+
+  </form>
+</div>
+
+<div class="modal-footer flex-center">
+  <button type="button" class="btn btn-sm btn-light-info me-3" (click)="abrirVistaPrevia()">
+      <i class="ki-duotone ki-eye fs-2">
+          <span class="path1"></span>
+          <span class="path2"></span>
+      </i>
+      Vista Previa
+  </button>
+
+  <button
+    type="button"
+    (click)="confirmarCreacion()"
+    class="btn btn-primary"
+    [disabled]="isCrearDisabled()"
+    title="Seleccione al menos un destinatario en 'Para'"
+  >
+    {{ guardando ? 'Creando...' : 'Crear Trámite' }}
+  </button>
+</div>

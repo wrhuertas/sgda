@@ -50,6 +50,46 @@ export class UsersService {
     );
   }
 
+  // Listado de Super Usuarios (solo usuarios con super_usuario = 1)
+  listSuperUsuarios(search: string = ''){
+    this.isLoadingSubject.next(true);
+    let headers = new HttpHeaders({'Authorization': 'Bearer '+ this.authservice.token});
+    let URL = URL_SERVICIOS+"/super-usuarios?search="+search;
+    return this.http.get(URL,{headers: headers}).pipe(
+      finalize(() => this.isLoadingSubject.next(false))
+    );
+  }
+
+  // Crear un Super Usuario (super_usuario = 1)
+  createSuperUsuario(data: any){
+    this.isLoadingSubject.next(true);
+    let headers = new HttpHeaders({'Authorization': 'Bearer '+ this.authservice.token});
+    let URL = URL_SERVICIOS+"/super-usuarios";
+    return this.http.post(URL, data, {headers: headers}).pipe(
+      finalize(() => this.isLoadingSubject.next(false))
+    );
+  }
+
+  // Actualizar un Super Usuario
+  updateSuperUsuario(id: any, data: any){
+    this.isLoadingSubject.next(true);
+    let headers = new HttpHeaders({'Authorization': 'Bearer '+ this.authservice.token});
+    let URL = URL_SERVICIOS+"/super-usuarios/"+id;
+    return this.http.post(URL, data, {headers: headers}).pipe(
+      finalize(() => this.isLoadingSubject.next(false))
+    );
+  }
+
+  // Eliminar un Super Usuario
+  deleteSuperUsuario(id: any){
+    this.isLoadingSubject.next(true);
+    let headers = new HttpHeaders({'Authorization': 'Bearer '+ this.authservice.token});
+    let URL = URL_SERVICIOS+"/super-usuarios/"+id;
+    return this.http.delete(URL, {headers: headers}).pipe(
+      finalize(() => this.isLoadingSubject.next(false))
+    );
+  }
+
   configAll(){
     this.isLoadingSubject.next(true);
     let headers = new HttpHeaders({'Authorization': 'Bearer '+ this.authservice.token});
@@ -209,6 +249,13 @@ listarSeriesRaiz(id_subseccion: any, id_user: any): Observable<any> {
     const headers = new HttpHeaders({'Authorization': 'Bearer ' + this.authservice.token});
     const URL = URL_SERVICIOS + "/users/permisos-documentales/" + id_user;
     // Backend espera POST en esta ruta
+    return this.http.post(URL, {}, { headers });
+  }
+
+  // Devuelve qué nodos del árbol hay que abrir para dejar a la vista los permisos ya marcados
+  getRutasPermisosDocumentales(id_user: any): Observable<any> {
+    const headers = new HttpHeaders({'Authorization': 'Bearer ' + this.authservice.token});
+    const URL = URL_SERVICIOS + "/users/permisos-documentales/" + id_user + "/rutas";
     return this.http.post(URL, {}, { headers });
   }
 

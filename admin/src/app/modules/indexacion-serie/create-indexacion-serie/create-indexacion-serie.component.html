@@ -10,45 +10,52 @@
         </div>
     </div>
     <div class="card mb-5 bg-light border-0">
-  <div class="card-body py-3 d-flex align-items-center flex-wrap gap-1 fs-6 fw-semibold">
+ 
+</div>
+<div class="card mb-5 bg-light border-0">
+  <div class="card-body py-3 d-flex align-items-center flex-wrap gap-1 fs-6 fw-semibold" style="min-height: 50px;">
     
-    <span class="text-muted" *ngIf="serieRespuesta?.data?.padre?.proyecto?.parent?.nombre">
-      <i class="ki-duotone ki-folder text-warning fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>
-      {{ serieRespuesta?.data?.padre?.proyecto?.parent?.nombre }}
-    </span>
+    <ng-container *ngIf="serieRutaJerarquica">
+        
+        <span class="text-muted" *ngIf="serieRutaJerarquica.seccion_superior">
+            <i class="ki-duotone ki-folder text-warning fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>
+            {{ serieRutaJerarquica.seccion_superior }}
+        </span>
+        <i class="ki-duotone ki-right text-gray-500 fs-7 mx-1" *ngIf="serieRutaJerarquica.seccion_superior"></i>
 
-    <i class="ki-duotone ki-right text-gray-500 fs-7 mx-1" *ngIf="serieRespuesta?.data?.padre?.proyecto?.parent?.nombre"></i>
+        <span class="text-muted" *ngIf="serieRutaJerarquica.subseccion?.nombre">
+            <i class="ki-duotone ki-folder text-warning fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>
+            {{ serieRutaJerarquica.subseccion.nombre }}
+        </span>
+        <i class="ki-duotone ki-right text-gray-500 fs-7 mx-1" *ngIf="serieRutaJerarquica.subseccion?.nombre"></i>
 
-    <span class="text-muted" *ngIf="serieRespuesta?.data?.padre?.proyecto?.nombre">
-      <i class="ki-duotone ki-folder text-warning fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>
-      {{ serieRespuesta?.data?.padre?.proyecto?.nombre }}
-    </span>
+        <span class="text-muted" *ngIf="serieRutaJerarquica.padre?.nombre">
+            <i class="ki-duotone ki-folder text-warning fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>
+            {{ serieRutaJerarquica.padre.nombre }}
+        </span>
+        <i class="ki-duotone ki-right text-gray-500 fs-7 mx-1" *ngIf="serieRutaJerarquica.padre?.nombre"></i>
 
-    <i class="ki-duotone ki-right text-gray-500 fs-7 mx-1" *ngIf="serieRespuesta?.data?.padre?.proyecto?.nombre"></i>
-
-    <span class="text-muted" *ngIf="serieRespuesta?.data?.padre?.nombre">
-      <i class="ki-duotone ki-folder text-warning fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>
-      {{ serieRespuesta?.data?.padre?.nombre }}
-    </span>
-
-    <i class="ki-duotone ki-right text-gray-500 fs-7 mx-1" *ngIf="serieRespuesta?.data?.nombre"></i>
-
-    <span class="text-primary fw-bold" *ngIf="serieRespuesta?.data?.nombre">
-      <i class="ki-duotone ki-folder text-danger fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>
-      {{ serieRespuesta?.data?.nombre }}
-    </span>
+        <span class="text-primary fw-bold" *ngIf="serieRutaJerarquica.serie?.nombre">
+            <i class="ki-duotone ki-folder text-danger fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>
+            {{ serieRutaJerarquica.serie.nombre }}
+        </span>
+    </ng-container>
 
   </div>
 </div>
-
+<
   <div class="modal-body py-10 px-lg-17 pt-5">
-        
+         
         <div class="row">
             
               <div class="col-lg-3">
                 <div class="card h-100 border">
-                  <div class="card-header py-3">
-                    <h6 class="mb-0 fw-bold text-primary"><i class="bi bi-diagram-3-fill me-2"></i>Ubicación Topográfica</h6>
+                  <div class="card-header py-3 d-flex flex-column align-items-start">
+                    <h6 class="mb-1 fw-bold text-primary"><i class="bi bi-diagram-3-fill me-2"></i>Ubicación Topográfica</h6>
+                    <div class="d-flex align-items-center gap-2">
+                      <span class="fw-semibold text-gray-700 small">Total de documentos :</span>
+                      <span class="badge badge-primary fw-bold">{{ totalDocumentosSerie }}</span>
+                    </div>
                   </div>
                   <div class="card-body" style="max-height: 75vh; overflow-y: auto;">
                     <ng-container *ngIf="serieRespuesta?.data?.length; else byEdificiosTpl">
@@ -66,42 +73,35 @@
                               </button>
                               <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei+'s0']">
                                 <li *ngFor="let est of s.estanterias; let ti = index">
-                                  <button type="button" class="btn btn-link p-0 text-start text-decoration-none" (click)="selectEstanteria(est); toggle('e'+ei+'s0t'+ti)">
+                                  <button type="button" class="btn btn-link p-0 text-start text-decoration-none" (click)="selectEstanteria(est, l.edificio, s); toggle('e'+ei+'s0t'+ti)">
                                     <i class="bi" [ngClass]="expandKeys['e'+ei+'s0t'+ti] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
                                     <i class="bi bi-grid-3x3-gap text-secondary me-1"></i> {{ est.nombre || est.codigo }}
+                                      <span class="badge badge-light-primary ms-1">{{ contarDocsEstanteria(est) }} doc(s)</span>
                                   </button>
                                   <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei+'s0t'+ti]">
                                     <li *ngFor="let f of est.filas; let fi = index">
                                       <button type="button" class="btn btn-link p-0 text-start text-decoration-none" (click)="selectFila(f); toggle('e'+ei+'s0t'+ti+'f'+fi)">
                                         <i class="bi" [ngClass]="expandKeys['e'+ei+'s0t'+ti+'f'+fi] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
                                         <i class="bi bi-list-ol text-warning me-1"></i> {{ f.nombre || ('Fila ' + (fi + 1)) }}
+                                          <span class="badge badge-light-primary ms-1">{{ contarDocsFila(f) }} doc(s)</span>
                                       </button>
                                       <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei+'s0t'+ti+'f'+fi]">
                                         <li *ngFor="let c of f.cajas; let ci = index">
                                           <button type="button" class="btn btn-link p-0 text-start text-decoration-none" (click)="selectCaja(c); toggle('e'+ei+'s0t'+ti+'f'+fi+'c'+ci)">
                                             <i class="bi" [ngClass]="expandKeys['e'+ei+'s0t'+ti+'f'+fi+'c'+ci] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
-                                            <i class="bi bi-box-seam text-dark me-1"></i> {{ c.nombre || ('Caja ' + (c.numero_caja || (ci + 1))) }}
+                                            <i class="bi bi-box-seam text-dark me-1"></i>
+                                            {{ c.nombre || ('Caja ' + (c.numero_caja || (ci + 1))) }}
+                                              <span class="badge badge-light-primary ms-1">{{ contarDocsCaja(c) }} doc(s)</span>
                                           </button>
                                           <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei+'s0t'+ti+'f'+fi+'c'+ci]">
                                             <li *ngFor="let k of c.carpetas; let ki = index">
                                               <button type="button"
                                                       class="btn btn-link p-0 text-start text-decoration-none"
-                                                      (click)="selectCarpeta(k); toggle('e'+ei+'s0t'+ti+'f'+fi+'c'+ci+'k'+ki)">
-                                                <i class="bi" [ngClass]="expandKeys['e'+ei+'s0t'+ti+'f'+fi+'c'+ci+'k'+ki] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
+                                                      (click)="selectCarpeta(k)">
                                                 <i class="bi bi-folder2-open text-warning me-1"></i>
-                                                <span class="text-muted small">{{ k.nombre }} ({{ k.numero_documentos || 0 }})</span>
+                                                <span class="small">{{ k.nombre }}</span>
+                                                <span class="badge badge-light-primary ms-1">{{ contarDocsCarpeta(k) }} doc(s)</span>
                                               </button>
-                                              <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei+'s0t'+ti+'f'+fi+'c'+ci+'k'+ki]">
-                                                <li *ngIf="k?.documentos?.length; else sinDocsTpl">
-                                                  <div *ngFor="let d of k.documentos" class="ps-3">
-                                                    <i class="bi bi-file-earmark-text me-1"></i>
-                                                    <span class="small">{{ d.nombre || d.titulo || 'Documento' }}</span>
-                                                  </div>
-                                                </li>
-                                                <ng-template #sinDocsTpl>
-                                                  <div class="text-muted small ps-3">Sin documentos.</div>
-                                                </ng-template>
-                                              </ul>
                                             </li>
                                           </ul>
                                           </li>
@@ -134,30 +134,34 @@
                                 </button>
                                 <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei+'s'+si]">
                                   <li *ngFor="let est of s.estanterias; let ti = index">
-                                    <button type="button" class="btn btn-link p-0 text-start text-decoration-none" (click)="selectEstanteria(est); toggle('e'+ei+'s'+si+'t'+ti)">
+                                    <button type="button" class="btn btn-link p-0 text-start text-decoration-none" (click)="selectEstanteria(est, e, s); toggle('e'+ei+'s'+si+'t'+ti)">
                                       <i class="bi" [ngClass]="expandKeys['e'+ei+'s'+si+'t'+ti] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
                                       <i class="bi bi-grid-3x3-gap text-secondary me-1"></i> {{ est.nombre || est.codigo }}
+                                      <span class="badge badge-light-primary ms-1">{{ contarDocsEstanteria(est) }} doc(s)</span>
                                     </button>
                                     <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei+'s'+si+'t'+ti]">
                                       <li *ngFor="let f of est.filas; let fi = index">
                                         <button type="button" class="btn btn-link p-0 text-start text-decoration-none" (click)="selectFila(f); toggle('e'+ei+'s'+si+'t'+ti+'f'+fi)">
                                           <i class="bi" [ngClass]="expandKeys['e'+ei+'s'+si+'t'+ti+'f'+fi] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
                                           <i class="bi bi-list-ol text-warning me-1"></i> {{ f.nombre || ('Fila ' + (fi + 1)) }}
+                                          <span class="badge badge-light-primary ms-1">{{ contarDocsFila(f) }} doc(s)</span>
                                         </button>
                                         <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei+'s'+si+'t'+ti+'f'+fi]">
                                           <li *ngFor="let c of f.cajas; let ci = index">
                                             <button type="button" class="btn btn-link p-0 text-start text-decoration-none" (click)="selectCaja(c); toggle('e'+ei+'s'+si+'t'+ti+'f'+fi+'c'+ci)">
                                               <i class="bi" [ngClass]="expandKeys['e'+ei+'s'+si+'t'+ti+'f'+fi+'c'+ci] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
-                                              <i class="bi bi-box-seam text-dark me-1"></i> {{ c.nombre || ('Caja ' + (c.numero_caja || (ci + 1))) }}
+                                              <i class="bi bi-box-seam text-dark me-1"></i>
+                                              {{ c.nombre || ('Caja ' + (c.numero_caja || (ci + 1))) }}
+                                              <span class="badge badge-light-primary ms-1">{{ contarDocsCaja(c) }} doc(s)</span>
                                             </button>
                                             <ul class="list-unstyled ms-3" *ngIf="expandKeys['e'+ei+'s'+si+'t'+ti+'f'+fi+'c'+ci]">
                                               <li *ngFor="let k of c.carpetas; let ki = index">
                                                 <button type="button"
                                                         class="btn btn-link p-0 text-start text-decoration-none"
-                                                        (click)="selectCarpeta(k); toggle('e'+ei+'s'+si+'t'+ti+'f'+fi+'c'+ci+'k'+ki)">
-                                                  <i class="bi" [ngClass]="expandKeys['e'+ei+'s'+si+'t'+ti+'f'+fi+'c'+ci+'k'+ki] ? 'bi-caret-down-fill' : 'bi-caret-right-fill'"></i>
+                                                        (click)="selectCarpeta(k)">
                                                   <i class="bi bi-folder2-open text-warning me-1"></i>
-                                                  <span class="text-muted small">{{ k.nombre }} ({{ k.numero_documentos || 0 }})</span>
+                                                  <span class="small">{{ k.nombre }}</span>
+                                                  <span class="badge badge-light-primary ms-1">{{ contarDocsCarpeta(k) }} doc(s)</span>
                                                 </button>
                                               </li>
                                             </ul>
@@ -190,8 +194,12 @@
                           <ng-template ngbNavContent>
                         <div class="card card-flush p-4 border">
                             <h5 class="fw-bold mb-1 text-primary">Expedientes de la SubSerie</h5>
-                            <div class="text-muted small mb-3" *ngIf="rutaDisplay">
-                              Ruta seleccionada: {{ rutaDisplay }}
+                            <div class="small mb-3" *ngIf="rutaDisplayParts.length">
+                              <span class="fw-semibold text-dark">Ruta seleccionada:</span>
+                              <ng-container *ngFor="let parte of rutaDisplayParts; let i = index; let last = last">
+                                <span [ngClass]="last ? 'text-primary fw-bold' : 'text-dark'">{{ parte }}</span>
+                                <span *ngIf="!last" class="text-dark mx-1">&gt;</span>
+                              </ng-container>
                             </div>
                     
                             <input type="file" #fileInputPdf accept=".pdf" multiple style="display: none;" (change)="handleFileSelection($event, 'simple')" />
@@ -222,47 +230,69 @@
                                     </button>
                                 </div>
                                 
-                                <button type="button" class="btn btn-primary btn-sm text-white" (click)="abrirCargaExcel()">
+                                <button type="button" class="btn btn-primary btn-sm text-white"
+                                        *ngIf="puedeSubirExcelSerie || puedeSubirExcelSubSerie"
+                                        (click)="abrirCargaExcel()">
                                     <i class="fas fa-file-excel me-1 text-white"></i> Subir Excel Masivo
                                 </button>
                     
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-primary btn-sm" 
-                                            *ngIf="puedeIndexarMasivoSerie || puedeIndexarMasivoSubSerie" 
-                                            (click)="abrirModalOCR(idSerie)"> 
-                                        <i class="fas fa-tags me-1"></i> Indexación Local
-                                    </button>
-                                    <button class="btn btn-dark btn-sm text-white" 
-                                            *ngIf="puedeIndexarMasivoSerie || puedeIndexarMasivoSubSerie" 
-                                            (click)="abrirModalOCRIA(idSerie)">
-                                        <i class="fas fa-robot me-1 text-white"></i> 
-                                        Indexación IA
-                                    </button>
-                                </div>
+                                 <div class="d-flex gap-2 align-items-center">
+                                     <button class="btn btn-primary btn-sm" 
+                                             *ngIf="puedeIndexarMasivoSerie || puedeIndexarMasivoSubSerie" 
+                                             (click)="abrirModalOCR(idSerie)"> 
+                                         <i class="fas fa-tags me-1"></i> Indexación Local
+                                     </button>
+                                     <button class="btn btn-dark btn-sm text-white" 
+                                             *ngIf="puedeIndexarMasivoSerie || puedeIndexarMasivoSubSerie" 
+                                             (click)="abrirModalOCRIA(idSerie)">
+                                         <i class="fas fa-robot me-1 text-white"></i> 
+                                         Indexación IA
+                                     </button>
+                                 </div>
                     
 
                                 <div class="d-flex gap-2">
-                                    <button class="btn btn-primary btn-sm text-white" (click)="eliminarPDFSMasivo(idSerie)"> 
-                                        <i class="fas fa-trash me-1 text-white"></i> 
+                                    <button class="btn btn-primary btn-sm text-white"
+                                            *ngIf="puedeEliminarDocumentoSerie || puedeEliminarDocumentoSubSerie"
+                                            (click)="eliminarPDFSMasivo(idSerie)">
+                                        <i class="fas fa-trash me-1 text-white"></i>
                                         Eliminar PDFS Masivo
                                     </button>
                                 </div>
 
                                  
                                 <div class="d-flex gap-2">
-                                    <button class="btn btn-primary btn-sm text-white" (click)="AbrirControlCalidad(idSerie)"> 
-                                        <i class="fas fa-tags me-1 text-white"></i> 
+                                    <button class="btn btn-primary btn-sm text-white"
+                                            *ngIf="puedeControlCalidadSerie || puedeControlCalidadSubSerie"
+                                            (click)="AbrirControlCalidad(idSerie)">
+                                        <i class="fas fa-tags me-1 text-white"></i>
                                         Control de Calidad
+                                    </button>
+                                </div>
+                                <!-- Botón para trasladar documentos seleccionados -->
+                                <div class="d-flex gap-2" *ngIf="(documentosSeleccionados?.length ?? 0) > 0">
+                                    <button class="btn btn-success btn-sm text-white" (click)="trasladarDocumentos($event)">
+                                        <i class="fas fa-exchange-alt me-1 text-white"></i>
+                                        Trasladar documentos
                                     </button>
                                 </div>
                             </div>
                     
                             <div class="row g-3">
-                              <div class="col-lg-9">
+                              <div class="col-12">
+                                <!-- Buscador de documentos -->
+                                <div class="d-flex align-items-center position-relative mb-3">
+                                  <i class="fas fa-search position-absolute ms-3 text-muted"></i>
+                                  <input type="text" class="form-control form-control-sm ps-10"
+                                         style="max-width: 320px;"
+                                         [(ngModel)]="busquedaDocumento"
+                                         placeholder="Buscar expediente por nombre..." />
+                                </div>
                                 <table class="table table-striped table-hover">
                               <thead class="text-center fw-bold">
-                                  <tr>
+                              <tr>
                                       <th>#</th>
+                                      <th class="text-center"><input type="checkbox" [(ngModel)]="selectAllDocs" (change)="toggleSelectAll()" /></th>
                                       <th>Páginas</th>
                                       <th>Nombre del Expediente</th>
                                       <th>Fecha de Carga</th>
@@ -273,16 +303,19 @@
                                   </tr>
                               </thead>
                               <tbody>
-                                    <tr *ngFor="let doc of documentos; let i = index"
+                                    <tr *ngFor="let doc of documentosFiltrados; let i = index"
                                          [ngClass]="{ 'table-primary text-white': (doc.id || doc.id_documento) === selectedDocId }"
                                          [attr.aria-selected]="(doc.id || doc.id_documento) === selectedDocId">
                                         <td class="text-center">{{ (paginaActual - 1) * 25 + (i + 1) }}</td>
-                                        <td class="text-center"
-                                            (mouseenter)="onRowEnter(doc, $event)"
-                                            (mousemove)="onRowMove($event)"
-                                            (mouseleave)="onRowLeave()">
-                                          {{ doc.total_paginas }}
-                                        </td>
+                                         <td class="text-center">
+                                           <input type="checkbox" class="form-check-input" [(ngModel)]="doc._checked" (click)="$event.stopPropagation()" (change)="onToggleDocSelected(doc)" />
+                                         </td>
+                                         <td class="text-center"
+                                             (mouseenter)="onRowEnter(doc, $event)"
+                                             (mousemove)="onRowMove($event)"
+                                             (mouseleave)="onRowLeave()">
+                                           {{ doc.total_paginas }}
+                                         </td>
                                         <td>{{ doc.nombre }}</td>
                                         <td class="text-center">{{ doc.fecha | date:'yyyy-MM-dd HH:mm' }}</td>
                                         <td class="text-center">{{ doc.tipo_documento || '-' }}</td>
@@ -317,21 +350,48 @@
                                                         style="background-color: #0056b3; border-color: #004a9b;">
                                                     <i class="fas fa-cog me-1 text-white"></i> Acciones
                                                 </button>
-                                                 <ul class="dropdown-menu">
-                                                    <li><a class="dropdown-item" (click)="verDocumento(doc)">👁 Ver Expediente</a></li>
-                                                    <li><a class="dropdown-item" (click)="ingresarInformacion(doc)">📝 Datos de inventario</a></li>
-                                                    <li><a class="dropdown-item" (click)="indexarDocumento(doc)">📌 Indexar Y firmar</a></li>
+                                                 <ul class="dropdown-menu menu-acciones">
                                                     <li>
-                                                        <a class="dropdown-item" (click)="subirAnexos(doc)">
-                                                            <i class="fas fa-file-medical me-2"></i> Anexos
-                                                        </a>
+                                                      <a class="dropdown-item" (click)="verDocumento(doc)">
+                                                        <i class="fas fa-eye fa-fw"></i><span>Ver Expediente</span>
+                                                      </a>
+                                                    </li>
+                                                    <li>
+                                                      <a class="dropdown-item" (click)="ingresarInformacion(doc)">
+                                                        <i class="fas fa-clipboard-list fa-fw"></i><span>Datos de inventario</span>
+                                                      </a>
+                                                    </li>
+                                                    <li>
+                                                      <a class="dropdown-item" (click)="indexarDocumento(doc)">
+                                                        <i class="fas fa-thumbtack fa-fw"></i><span>Indexar y firmar</span>
+                                                      </a>
+                                                    </li>
+                                                    <li>
+                                                      <a class="dropdown-item" (click)="subirAnexos(doc)">
+                                                        <i class="fas fa-file-medical fa-fw"></i><span>Anexos</span>
+                                                      </a>
                                                     </li>
                                                     <li>
                                                       <a class="dropdown-item" (click)="compartirDocumento(doc)">
-                                                        <i class="fas fa-link me-2"></i> Compartir (solo lectura)
+                                                        <i class="fas fa-link fa-fw"></i><span>Compartir (solo lectura)</span>
                                                       </a>
                                                     </li>
-                                                    <li><a class="dropdown-item text-danger" (click)="eliminarDocumento(doc.id)">🗑 Eliminar</a></li>
+                                                    <li>
+                                                      <a class="dropdown-item" (click)="verVersiones(doc)">
+                                                        <i class="fas fa-code-branch fa-fw"></i><span>Versión</span>
+                                                      </a>
+                                                    </li>
+                                                    <li>
+                                                      <a class="dropdown-item" (click)="descargarDocumento(doc)">
+                                                        <i class="fas fa-download fa-fw"></i><span>Descargar</span>
+                                                      </a>
+                                                    </li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                      <a class="dropdown-item item-eliminar" (click)="eliminarDocumento(doc.id)">
+                                                        <i class="fas fa-trash-alt fa-fw"></i><span>Eliminar</span>
+                                                      </a>
+                                                    </li>
                                                  </ul>
                                             </div>
                                         </td>

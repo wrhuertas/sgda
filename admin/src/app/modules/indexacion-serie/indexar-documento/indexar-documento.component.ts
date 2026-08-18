@@ -76,10 +76,11 @@ campoActivo: string | null = null;
     console.log('📥 ID Empresa recibido:', this.id_empresa);
 
 
-  // Apenas se abre el modal, llama al método
+  // Los valores ya indexados se cargan recién cuando existen los campos y el
+  // formulario (lo hace obtenerCamposDelDocumento), si no no habría dónde
+  // ponerlos y se perderían.
   this.obtenerCamposDelDocumento();
   this.enviarAlServicio();
-  this.datosDocumento();
 }
 
   // Auditoría simple (INDEXACION)
@@ -150,6 +151,9 @@ obtenerCamposDelDocumento() {
         this.paginasPorCampo = new Array(this.camposExtraTitulos.length).fill(0);
 
         this.loading = false;
+
+        // Con el formulario ya armado se traen los valores guardados antes
+        this.datosDocumento();
       },
 
       error: (err) => {
@@ -400,17 +404,36 @@ setCampoActivo(nombreCampo: string) {
 async hacerOCDelRecorte() {
   if (!this.recorte) return;
 
-  const worker = createWorker({ logger: (m) => console.log(m) });
-  await worker.load();
-  await worker.loadLanguage('spa');
-  await worker.initialize('spa');
+  // El OCR tarda unos segundos y no se ve nada mientras corre, así que se
+  // avisa y se bloquea la pantalla hasta que termine
+  Swal.fire({
+    title: 'Procesando OCR',
+    text: 'Leyendo el texto seleccionado...',
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    didOpen: () => { Swal.showLoading(); }
+  });
 
-  // OCR directo sobre la imagen base64
-  const { data: { text } } = await worker.recognize(this.recorte);
+  let textoLimpio = '';
 
-  await worker.terminate();
+  try {
+    const worker = createWorker({ logger: (m) => console.log(m) });
+    await worker.load();
+    await worker.loadLanguage('spa');
+    await worker.initialize('spa');
 
-  const textoLimpio = text.trim();
+    // OCR directo sobre la imagen base64
+    const { data: { text } } = await worker.recognize(this.recorte);
+
+    await worker.terminate();
+
+    textoLimpio = text.trim();
+  } catch (e) {
+    console.error('❌ Error en el OCR:', e);
+    await Swal.fire('Error', 'No se pudo leer el texto seleccionado', 'error');
+    return;
+  }
+
   if (!textoLimpio) {
     await Swal.fire('Sin texto', 'No se detectó texto en el recorte', 'info');
     return;
@@ -453,6 +476,20 @@ guardar() {
     return;
   }
 
+  // La serie no siempre llega desde la pantalla que abre el modal, así que se
+  // toma la del propio documento. Sin esto el guardado se cortaba en silencio.
+  const idSerie = this.idSerieSubserie ?? this.documentoSeleccionado?.id_serie_subserie ?? null;
+
+  if (!idSerie) {
+    Swal.fire('Error', 'No se pudo identificar la serie del documento', 'error');
+    return;
+  }
+
+  if (!this.idDocumento || !this.id_empresa) {
+    Swal.fire('Error', 'Faltan datos del documento para poder guardar', 'error');
+    return;
+  }
+
   const datosFormulario = this.form.value; // { campo_0: '1220643442', campo_1: '123456', campo_2: '02/08/2025' }
 
   // Construimos el array de campos con nombres reales de la serie
@@ -472,9 +509,12 @@ guardar() {
   // Creamos FormData para enviar al backend
   const payload = new FormData();
   payload.append('id_documento', this.idDocumento.toString());
-  payload.append('id_serie', this.idSerieSubserie.toString());
+  payload.append('id_serie', idSerie.toString());
   payload.append('id_empresa', this.id_empresa.toString());
   payload.append('campos', JSON.stringify(camposIndexados));
+
+  // Usuario logeado (necesario para la auditoría de la indexación)
+  if (this.usuario_id) { payload.append('usuario_id', this.usuario_id.toString()); }
 
   console.log('Payload a enviar:', camposIndexados);
 
@@ -498,6 +538,12 @@ guardar() {
 datosDocumento() {
   if (!this.idDocumento) return;
 
+  // Sin formulario no hay dónde escribir los valores
+  if (!this.form) {
+    console.warn('⚠️ Todavía no está armado el formulario, no se cargan los valores');
+    return;
+  }
+
   this.indexacionService.getDocumentoById(this.idDocumento).subscribe({
     next: (resp: any) => {
       console.log('✅ RESPUESTA BD:', resp);
@@ -510,29 +556,40 @@ datosDocumento() {
         ruta: documento.ruta_archivo
       };
 
+      // Si la pantalla que abrió el modal no mandó la serie, se usa la del
+      // documento, que es la que vale de todas formas
+      if (!this.idSerieSubserie && documento.id_serie_subserie) {
+        this.idSerieSubserie = documento.id_serie_subserie;
+      }
+
       if (!documento.parametros_indexados_values) return;
 
-      let valoresIndexados: any[] = [];
+      // El campo puede llegar como arreglo o como texto JSON, y a veces
+      // codificado más de una vez, así que se desarma hasta dar con la lista
+      let valoresIndexados: any = documento.parametros_indexados_values;
 
-      // 🚩 CAMBIO CLAVE: Detectar si es string o si ya es objeto/array
-      if (typeof documento.parametros_indexados_values === 'string') {
+      for (let i = 0; i < 3 && typeof valoresIndexados === 'string'; i++) {
         try {
-          valoresIndexados = JSON.parse(documento.parametros_indexados_values);
+          valoresIndexados = JSON.parse(valoresIndexados);
         } catch (e) {
           console.error('❌ Error parseando JSON string:', e);
           return;
         }
-      } else {
-        // Si ya es un array (como se ve en tu consola), lo asignamos directamente
-        valoresIndexados = documento.parametros_indexados_values;
+      }
+
+      if (!Array.isArray(valoresIndexados)) {
+        console.warn('⚠️ Los parámetros guardados no son una lista:', valoresIndexados);
+        return;
       }
 
       console.log('📊 Valores a procesar:', valoresIndexados);
 
       // ✅ Llenado del formulario
       valoresIndexados.forEach((item: any) => {
+        if (!item || !item.nombre) { return; }
+
         const index = this.camposExtraTitulos.findIndex(
-          campo => campo.trim().toUpperCase() === item.nombre.trim().toUpperCase()
+          campo => campo.trim().toUpperCase() === String(item.nombre).trim().toUpperCase()
         );
 
         if (index !== -1) {

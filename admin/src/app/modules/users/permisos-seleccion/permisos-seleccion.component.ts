@@ -1,6 +1,6 @@
 import { Component, OnInit, Input, TemplateRef, ViewChild } from '@angular/core';
 import { UsersService } from '../service/users.service';
-import { forkJoin } from 'rxjs';
+import { firstValueFrom, forkJoin } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 
 // Interfaz para definir la estructura de permisos y permitir acceso dinámico
@@ -21,7 +21,79 @@ interface Permisos {
   eliminar_documento: boolean;
   firmar_documento: boolean;
   limpiar_documento: boolean;
+  // Acciones documentales adicionales
+  subir_por_carpeta: boolean;
+  subir_por_zip: boolean;
+  subir_excel: boolean;
+  ocr_local: boolean;
+  ocr_masivo_ia: boolean;
+  subir_anexos: boolean;
+  eliminar_anexos: boolean;
+  compartir_documento: boolean;
+  ver_versiones: boolean;
+  trasladar_documentos: boolean;
+  imprimir_documento: boolean;
+  separadores_documento: boolean;
+  controlo_calidad: boolean;
 }
+
+// Permisos que sólo aplican a Series/Subseries, agrupados por tipo de acción.
+// Se usa para pintar los checkboxes y para armar el payload sin repetir la lista.
+const PERMISOS_SERIE_GRUPOS: Array<{ grupo: string; items: Array<{ campo: string; etiqueta: string }> }> = [
+  {
+    grupo: 'Consulta',
+    items: [
+      { campo: 'buscar',        etiqueta: 'Buscar' },
+      { campo: 'ver_documento', etiqueta: 'Ver documento' },
+      { campo: 'ver_versiones', etiqueta: 'Ver versiones' },
+    ]
+  },
+  {
+    grupo: 'Carga de documentos',
+    items: [
+      { campo: 'subir_documentos', etiqueta: 'Subir documentos (uno a uno)' },
+      { campo: 'subir_por_carpeta', etiqueta: 'Subir PDF por carpeta' },
+      { campo: 'subir_por_zip',     etiqueta: 'Subir PDF por ZIP' },
+      { campo: 'subir_excel',       etiqueta: 'Subir Excel (indexación masiva)' },
+      { campo: 'subir_anexos',      etiqueta: 'Subir anexos' },
+    ]
+  },
+  {
+    grupo: 'Indexación',
+    items: [
+      { campo: 'registrar_datos',  etiqueta: 'Registrar datos de inventario' },
+      { campo: 'indexar',          etiqueta: 'Indexar' },
+      { campo: 'indexar_masivo',   etiqueta: 'Indexar masivo' },
+      { campo: 'controlo_calidad', etiqueta: 'Control de calidad' },
+      { campo: 'ocr_local',        etiqueta: 'Hacer OCR local' },
+      { campo: 'ocr_masivo_ia',    etiqueta: 'OCR masivo con IA' },
+      { campo: 'firmar_documento', etiqueta: 'Firmar documento' },
+    ]
+  },
+  {
+    grupo: 'Dentro del visor',
+    items: [
+      { campo: 'imprimir_documento',    etiqueta: 'Imprimir' },
+      { campo: 'limpiar_documento',     etiqueta: 'Limpiar' },
+      { campo: 'separadores_documento', etiqueta: 'Separadores' },
+    ]
+  },
+  {
+    grupo: 'Gestión',
+    items: [
+      { campo: 'compartir_documento',  etiqueta: 'Compartir enlace' },
+      { campo: 'trasladar_documentos', etiqueta: 'Transferir documentos' },
+      { campo: 'eliminar_anexos',      etiqueta: 'Eliminar anexos' },
+      { campo: 'eliminar_documento',   etiqueta: 'Eliminar documento' },
+    ]
+  },
+];
+
+// Lista plana, para recorrer todos los campos de una sola pasada
+const PERMISOS_SERIE = PERMISOS_SERIE_GRUPOS.reduce(
+  (acc, g) => acc.concat(g.items),
+  [] as Array<{ campo: string; etiqueta: string }>
+);
 
 @Component({
   selector: 'app-permisos-seleccion',
@@ -37,6 +109,9 @@ export class PermisosSeleccionComponent implements OnInit {
 
   secciones: any[] = [];
   isLoading = false;
+
+  // Permisos de serie que se pintan en el modal, agrupados por tipo de acción
+  permisosSerieGrupos = PERMISOS_SERIE_GRUPOS;
 
   // Cambios agrupados por nodo (no por campo)
   cambiosPendientes: any[] = [];
@@ -57,22 +132,94 @@ seleccionarNodo(nodo: any) {
 
   constructor(private usersService: UsersService, private toast: ToastrService) {}
 
-  ngOnInit(): void {
-    if (this.USER_SELECTED) {
-      this.id_empresa = this.id_empresa || this.USER_SELECTED.id_empresa;
-      console.log('[PERMISOS] Modal abierto para usuario:', this.USER_SELECTED.id, 'empresa:', this.id_empresa);
-      // Primero traer permisos del usuario para precargar checks
-      this.usersService.getPermisosDocumentalesUsuario(this.USER_SELECTED.id).subscribe((resp: any) => {
-        this.permisosBD = resp?.permissions || [];
-        this.permisoLookup = this.buildPermisoLookup(this.permisosBD);
-        console.log('[PERMISOS] Permisos cargados desde BD:', this.permisosBD);
-        this.cargarSeccionesRaiz();
-      }, () => {
-        // En caso de error, continuar sin lookup
-        console.warn('[PERMISOS] No se pudieron cargar permisos BD, continuando sin lookup');
-        this.cargarSeccionesRaiz();
-      });
+  async ngOnInit(): Promise<void> {
+    if (!this.USER_SELECTED) { return; }
+
+    this.id_empresa = this.id_empresa || this.USER_SELECTED.id_empresa;
+    console.log('[PERMISOS] Modal abierto para usuario:', this.USER_SELECTED.id, 'empresa:', this.id_empresa);
+
+    this.isLoading = true;
+
+    // Permisos ya guardados, para precargar los checks
+    try {
+      const resp: any = await firstValueFrom(
+        this.usersService.getPermisosDocumentalesUsuario(this.USER_SELECTED.id)
+      );
+      this.permisosBD = resp?.permissions || [];
+      this.permisoLookup = this.buildPermisoLookup(this.permisosBD);
+      console.log('[PERMISOS] Permisos cargados desde BD:', this.permisosBD);
+    } catch {
+      console.warn('[PERMISOS] No se pudieron cargar permisos BD, continuando sin lookup');
     }
+
+    // Rutas del árbol que hay que abrir para que se vean los permisos marcados
+    try {
+      const rutas: any = await firstValueFrom(
+        this.usersService.getRutasPermisosDocumentales(this.USER_SELECTED.id)
+      );
+      this.rutasExpandir = {
+        proyectos: (rutas?.proyectos || []).map((n: any) => Number(n)),
+        series: (rutas?.series || []).map((n: any) => Number(n))
+      };
+    } catch {
+      console.warn('[PERMISOS] No se pudieron cargar las rutas a expandir');
+    }
+
+    await this.cargarSeccionesRaiz();
+
+    // cargarSeccionesRaiz apaga el loader, pero aún falta abrir las ramas
+    this.isLoading = true;
+    await this.autoExpandir(this.secciones);
+    this.seleccionarPrimerNodoConPermisos(this.secciones);
+
+    this.isLoading = false;
+  }
+
+  // Nodos que deben quedar abiertos al abrir el modal
+  private rutasExpandir: { proyectos: number[]; series: number[] } = { proyectos: [], series: [] };
+
+  /** ¿Este nodo tiene al menos un permiso marcado? */
+  tienePermisos(nodo: any): boolean {
+    const p = nodo?.permisos;
+    if (!p) { return false; }
+    return Object.keys(p).some(k => k !== 'checkGeneral' && !!p[k]);
+  }
+
+  /**
+   * Abre las ramas que llevan a los nodos con permisos. El árbol es perezoso,
+   * así que hay que ir cargando cada nivel antes de poder seguir bajando.
+   */
+  private async autoExpandir(nodos: any[]): Promise<void> {
+    for (const nodo of nodos || []) {
+      if (nodo.isSerie) {
+        if (!this.rutasExpandir.series.includes(Number(nodo.id_serie))) { continue; }
+        await this.cargarHijosSerie(nodo);
+        nodo.abierto = true;
+        await this.autoExpandir(nodo.subseries || []);
+      } else {
+        if (!this.rutasExpandir.proyectos.includes(Number(nodo.id_proyecto))) { continue; }
+        await this.cargarHijosSeccion(nodo);
+        nodo.abierto = true;
+        await this.autoExpandir([...(nodo.subsecciones || []), ...(nodo.series || [])]);
+      }
+    }
+  }
+
+  /** Deja seleccionado el primer nodo que ya tenga permisos, para no abrir el panel vacío */
+  private seleccionarPrimerNodoConPermisos(nodos: any[]): boolean {
+    for (const nodo of nodos || []) {
+      if (this.tienePermisos(nodo)) {
+        this.itemSeleccionado = nodo;
+        return true;
+      }
+
+      const hijos = nodo.isSerie
+        ? (nodo.subseries || [])
+        : [...(nodo.subsecciones || []), ...(nodo.series || [])];
+
+      if (this.seleccionarPrimerNodoConPermisos(hijos)) { return true; }
+    }
+    return false;
   }
 
   // Etiqueta amigable del tipo de nodo (mayúsculas)
@@ -91,18 +238,19 @@ seleccionarNodo(nodo: any) {
 
   // --- Inicialización de permisos por defecto ---
   private crearPermisosVacios(): Permisos {
-    return {
-      checkGeneral: false, ver: false, crear: false, editar: false, eliminar: false,
-      buscar: false, subir_documentos: false, ver_documento: false, registrar_datos: false,
-      indexar: false, indexar_masivo: false, eliminar_documento: false, firmar_documento: false, limpiar_documento: false
-    };
+    const base: any = { checkGeneral: false, ver: false, crear: false, editar: false, eliminar: false };
+    PERMISOS_SERIE.forEach(p => base[p.campo] = false);
+    return base as Permisos;
   }
 
   // --- Carga Inicial (Nivel 1) ---
-  cargarSeccionesRaiz() {
+  async cargarSeccionesRaiz(): Promise<void> {
     this.isLoading = true;
-    this.usersService.listarSeccionesRaiz(this.id_empresa, this.USER_SELECTED.id).subscribe((resp: any) => {
-      this.secciones = resp.secciones.map((s: any) => ({
+    try {
+      const resp: any = await firstValueFrom(
+        this.usersService.listarSeccionesRaiz(this.id_empresa, this.USER_SELECTED.id)
+      );
+      this.secciones = (resp?.secciones || []).map((s: any) => ({
         ...s,
         isSerie: false,
         nivel: 'seccion',
@@ -113,23 +261,32 @@ seleccionarNodo(nodo: any) {
         cargado: false,
         permisos: this.findPermisosForNodo('seccion', s.id_proyecto) || s.permisos || this.crearPermisosVacios()
       }));
+    } finally {
       this.isLoading = false;
-    });
+    }
   }
 
   // --- Expansión de Proyectos ---
 // --- Carga Hijos (Proyectos y Series Raíz) ---
   toggleSeccion(seccion: any) {
-  seccion.abierto = !seccion.abierto;
-  console.log(`[CLICK] Seccion ${seccion?.nombre} (${seccion?.id_proyecto}) abierto=:`, seccion.abierto);
-  if (seccion.abierto && !seccion.cargado) {
+    seccion.abierto = !seccion.abierto;
+    console.log(`[CLICK] Seccion ${seccion?.nombre} (${seccion?.id_proyecto}) abierto=:`, seccion.abierto);
+    if (seccion.abierto) { this.cargarHijosSeccion(seccion); }
+  }
+
+  /** Carga subsecciones y series de una sección. Reutilizable por el clic y por el auto-expandir. */
+  private async cargarHijosSeccion(seccion: any): Promise<void> {
+    if (seccion.cargado) { return; }
+
     seccion.cargando = true;
-    forkJoin({
-      proyectosHijos: this.usersService.listarHijos(seccion.id_proyecto, this.USER_SELECTED.id),
-      seriesRaiz: this.usersService.listarSeriesRaiz(seccion.id_proyecto, this.USER_SELECTED.id)
-    }).subscribe((resp: any) => {
+    try {
+      const resp: any = await firstValueFrom(forkJoin({
+        proyectosHijos: this.usersService.listarHijos(seccion.id_proyecto, this.USER_SELECTED.id),
+        seriesRaiz: this.usersService.listarSeriesRaiz(seccion.id_proyecto, this.USER_SELECTED.id)
+      }));
+
       // Mapeo hijos (Subsecciones)
-      seccion.subsecciones = resp.proyectosHijos.hijos.map((h: any) => ({
+      seccion.subsecciones = (resp?.proyectosHijos?.hijos || []).map((h: any) => ({
         ...h,
         isSerie: false, // Es subsección
         nivel: (h.nivel || 'subseccion'),
@@ -140,8 +297,9 @@ seleccionarNodo(nodo: any) {
         cargado: false,
         permisos: this.findPermisosForNodo('subseccion', h.id_proyecto) || h.permisos || this.crearPermisosVacios()
       }));
+
       // Mapeo series raíz
-      seccion.series = resp.seriesRaiz.series.map((s: any) => ({
+      seccion.series = (resp?.seriesRaiz?.series || []).map((s: any) => ({
         ...s,
         isSerie: true, // Es serie
         nivel: 'serie',
@@ -151,40 +309,53 @@ seleccionarNodo(nodo: any) {
         cargado: false,
         permisos: this.findPermisosForNodo('serie', s.id_serie) || s.permisos || this.crearPermisosVacios()
       }));
-      seccion.cargando = false;
+
       seccion.cargado = true;
       console.log('[LOAD] Subsecciones y series raíz cargadas para sección:', seccion?.nombre);
-    });
+    } catch {
+      console.warn('[LOAD] No se pudieron cargar los hijos de la sección:', seccion?.nombre);
+    } finally {
+      seccion.cargando = false;
+    }
   }
-}
 
 // --- Carga Series Hijas (Recursivo) ---
   toggleSerie(serie: any) {
-  serie.abierto = !serie.abierto;
-  const tipoSerie = serie.nivel === 'subserie' ? 'subserie' : 'serie';
-  console.log(`[CLICK] ${tipoSerie} ${serie?.nombre} (${serie?.id_serie}) abierto=:`, serie.abierto);
-  if (serie.abierto && !serie.cargado) {
-    serie.cargando = true;
-    this.usersService.listarSeriesHijas(serie.id_serie, this.USER_SELECTED.id).subscribe({
-      next: (resp: any) => {
-        serie.subseries = (resp.hijas || []).map((h: any) => ({
-          ...h,
-          isSerie: true, // Es subserie
-          nivel: 'subserie',
-          subseries: [],
-          abierto: false,
-          cargando: false,
-          cargado: false,
-          permisos: this.findPermisosForNodo('subserie', h.id_serie) || h.permisos || this.crearPermisosVacios()
-        }));
-        serie.cargando = false;
-        serie.cargado = true;
-        console.log('[LOAD] Subseries cargadas para serie:', serie?.nombre);
-      },
-      error: () => { serie.cargando = false; }
-    });
+    serie.abierto = !serie.abierto;
+    const tipoSerie = serie.nivel === 'subserie' ? 'subserie' : 'serie';
+    console.log(`[CLICK] ${tipoSerie} ${serie?.nombre} (${serie?.id_serie}) abierto=:`, serie.abierto);
+    if (serie.abierto) { this.cargarHijosSerie(serie); }
   }
-}
+
+  /** Carga las subseries de una serie. Reutilizable por el clic y por el auto-expandir. */
+  private async cargarHijosSerie(serie: any): Promise<void> {
+    if (serie.cargado) { return; }
+
+    serie.cargando = true;
+    try {
+      const resp: any = await firstValueFrom(
+        this.usersService.listarSeriesHijas(serie.id_serie, this.USER_SELECTED.id)
+      );
+
+      serie.subseries = (resp?.hijas || []).map((h: any) => ({
+        ...h,
+        isSerie: true, // Es subserie
+        nivel: 'subserie',
+        subseries: [],
+        abierto: false,
+        cargando: false,
+        cargado: false,
+        permisos: this.findPermisosForNodo('subserie', h.id_serie) || h.permisos || this.crearPermisosVacios()
+      }));
+
+      serie.cargado = true;
+      console.log('[LOAD] Subseries cargadas para serie:', serie?.nombre);
+    } catch {
+      console.warn('[LOAD] No se pudieron cargar las subseries de:', serie?.nombre);
+    } finally {
+      serie.cargando = false;
+    }
+  }
   // --- Lógica de Checkbox "Marcar todo" ---
  // Lógica principal de cambios (lo que pediste)
   addPermission(item: any, campo: string, event: any): void {
@@ -258,15 +429,7 @@ seleccionarNodo(nodo: any) {
     p.crear = !!raw.crear;
     p.editar = !!raw.editar;
     p.eliminar = !!raw.eliminar;
-    p.buscar = !!raw.buscar;
-    p.subir_documentos = !!raw.subir_documentos;
-    p.ver_documento = !!raw.ver_documento;
-    p.registrar_datos = !!raw.registrar_datos;
-    p.indexar = !!raw.indexar;
-    p.indexar_masivo = !!raw.indexar_masivo;
-    p.eliminar_documento = !!raw.eliminar_documento;
-    p.firmar_documento = !!raw.firmar_documento;
-    p.limpiar_documento = !!raw.limpiar_documento;
+    PERMISOS_SERIE.forEach(item => p[item.campo] = !!raw[item.campo]);
     return p;
   }
 
@@ -281,23 +444,17 @@ seleccionarNodo(nodo: any) {
       const algunTrue = Object.keys(p).some(k => k !== 'checkGeneral' && !!p[k]);
       if (!algunTrue) return;
 
+      const permisosPlanos: any = {
+        ver: !!p.ver,
+        crear: !!p.crear,
+        editar: !!p.editar,
+        eliminar: !!p.eliminar,
+      };
+      PERMISOS_SERIE.forEach(campo => permisosPlanos[campo.campo] = !!p[campo.campo]);
+
       const item: any = {
         id_empresa: this.id_empresa,
-        permisos: {
-          ver: !!p.ver,
-          crear: !!p.crear,
-          editar: !!p.editar,
-          eliminar: !!p.eliminar,
-          buscar: !!p.buscar,
-          subir_documentos: !!p.subir_documentos,
-          ver_documento: !!p.ver_documento,
-          registrar_datos: !!p.registrar_datos,
-          indexar: !!p.indexar,
-          indexar_masivo: !!p.indexar_masivo,
-          eliminar_documento: !!p.eliminar_documento,
-          firmar_documento: !!p.firmar_documento,
-          limpiar_documento: !!p.limpiar_documento,
-        }
+        permisos: permisosPlanos
       };
 
       const nivel = this.detectarNivel(nodo);

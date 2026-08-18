@@ -381,7 +381,17 @@ usuario_despacho_anterior: boolean = false;
     this.type_document = this.USER_SELECTED.type_document;
     this.n_document = this.USER_SELECTED.n_document;
     this.address = this.USER_SELECTED.address;
-    this.imagen_previzualiza = this.USER_SELECTED.avatar;
+    // Sigla y título profesional: si no se cargan aquí, el input sale vacío
+    // y al guardar se termina borrando el valor que ya tenía el usuario.
+    this.sigla = this.USER_SELECTED.sigla || '';
+    this.titulo = this.USER_SELECTED.titulo || '';
+    // El backend manda un avatar por defecto (una URL de flaticon) cuando el
+    // usuario no tiene foto. Se ignora para que se vea el recuadro con las
+    // dimensiones recomendadas, igual que al crear.
+    const avatar = this.USER_SELECTED.avatar;
+    this.imagen_previzualiza = (avatar && !String(avatar).includes('cdn-icons-png.flaticon.com'))
+      ? avatar
+      : null;
     this.sucursale_id = this.USER_SELECTED.sucursale_id;
     this.area_id = this.USER_SELECTED.id_area;
      this.contrasena_firma = this.USER_SELECTED.password_firma || '';
@@ -730,7 +740,12 @@ initPermisosDesdeDB() {
     this.file_name = $event.target.files[0];
     let reader = new FileReader();
     reader.readAsDataURL(this.file_name);
-    reader.onloadend = () => this.imagen_previzualiza = reader.result;
+
+    reader.onloadend = () => {
+      this.imagen_previzualiza = reader.result;
+      // El componente es OnPush: sin esto la vista previa no se redibuja
+      this.cdr.detectChanges();
+    };
   }
 
 
@@ -1390,9 +1405,11 @@ preseleccionarJerarquia(idTarget: any) {
     formData.append("id_area", this.area_id);
     formData.append("estado", String(this.estado));
     if (this.address) formData.append("address", this.address);
-    // Nuevos campos: sigla y titulo profesional
-    if (this.sigla) formData.append('sigla', this.sigla.trim());
-    if (this.titulo) formData.append('titulo', this.titulo.trim());
+    // Nuevos campos: sigla y titulo profesional.
+    // Se envían siempre (aunque estén vacíos) para que el backend guarde
+    // exactamente lo que el usuario ve en el formulario.
+    formData.append('sigla', (this.sigla || '').trim());
+    formData.append('titulo', (this.titulo || '').trim());
     if (this.password) formData.append("password", this.password);
     // Enviar avatar con la clave esperada por el backend
     if (this.file_name) formData.append("avatar", this.file_name);
@@ -1431,6 +1448,13 @@ preseleccionarJerarquia(idTarget: any) {
    if (idProyectoFinal) {
     formData.append("id_proyecto", idProyectoFinal);
   }
+
+  // Marcar director/subdirector según el nivel seleccionado en los selects
+  // - Si hay una SECCIÓN seleccionada  -> director = 1
+  // - Si hay una SUBSECCIÓN seleccionada -> subdirector = 1
+  formData.append('director', this.id_proyecto_seleccionado ? '1' : '0');
+  formData.append('subdirector', this.id_subseccion_seleccionada ? '1' : '0');
+
     // Llamada al servicio
     this.usersService.updateUser(this.USER_SELECTED.id, formData).subscribe(
         (resp: any) => {

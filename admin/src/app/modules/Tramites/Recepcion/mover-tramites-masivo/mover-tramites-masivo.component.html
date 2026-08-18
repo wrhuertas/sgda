@@ -1,0 +1,151 @@
+<div class="modal-header">
+  <h4 class="modal-title">Mover Trámites</h4>
+  <button type="button" class="btn-close" aria-label="Close" (click)="modalService.dismissAll()"></button>
+</div>
+
+
+<div class="modal-body">
+    <div class="d-flex align-items-start mb-3">
+      <div class="me-2">
+        <input #ciudadInput type="text" class="form-control form-control-sm" placeholder="Ciudad" (input)="ciudad = ciudadInput.value" />
+      </div>
+      <div>
+        <button type="button" class="btn btn-sm btn-light-primary me-3" (click)="BuscarUsuario()">
+        <i class="ki-duotone ki-magnifier fs-2">
+          <span class="path1"></span>
+          <span class="path2"></span>
+        </i>
+        Buscar Usuario
+        </button>
+      </div>
+      
+    <div class="ms-3">
+      <div class="small text-muted">PARA</div>
+      <div class="mb-1 small">
+        <ng-container *ngIf="usuarios_para?.length; else nonePara">
+          <div *ngFor="let u of usuarios_para">{{ u.nombre_completo }}</div>
+        </ng-container>
+        <ng-template #nonePara>—</ng-template>
+      </div>
+
+      <div class="small text-muted">DE</div>
+      <div class="mb-1 small">
+        <ng-container *ngIf="usuarios_de?.length; else noneDe">
+          <div *ngFor="let u of usuarios_de">{{ u.nombre_completo }}</div>
+        </ng-container>
+        <ng-template #noneDe>—</ng-template>
+      </div>
+
+      <div class="small text-muted">COPIA</div>
+      <div class="small">
+        <ng-container *ngIf="usuarios_copia?.length; else noneCopia">
+          <div *ngFor="let u of usuarios_copia">{{ u.nombre_completo }}</div>
+        </ng-container>
+        <ng-template #noneCopia>—</ng-template>
+      </div>
+    </div>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-row-dashed table-row-gray-300 align-middle gs-0 gy-4">
+      <thead>
+        <tr class="fw-bold text-muted">
+          <th>#</th>
+          <th>Número de Trámite</th>
+          <th>Fecha</th>
+          <th>Tiempo Trámite</th>
+          <th>No. Documento</th>
+          <th>No. Memorandum</th>
+          <th>Tipo Documento</th>
+          <th>Tipo Trámite</th>
+          <th>Asunto</th>
+          <th>Vista Previa</th>
+        </tr>
+        <tr class="fw-bold text-muted">
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th>
+            <select #hdrTipoDoc class="form-select form-select-sm" (change)="applyHeaderTipoDocumento(hdrTipoDoc.value)">
+              <option [value]="''">-- Todos --</option>
+              <option *ngFor="let opt of tiposDocumentoOptions" [value]="opt.id_tipo_documento">{{ opt.nombre || ('Tipo ' + opt.id_tipo_documento) }}</option>
+            </select>
+          </th>
+          <th>
+            <select #hdrTipoTra class="form-select form-select-sm" (change)="applyHeaderTipoTramite(hdrTipoTra.value)">
+              <option [value]="''">-- Todos --</option>
+              <option *ngFor="let opt of tiposTramiteOptions" [value]="opt.id_tipo_tramite">{{ opt.nombre || ('Trámite ' + opt.id_tipo_tramite) }}</option>
+            </select>
+          </th>
+          <th>
+            <input #hdrAsunto class="form-control form-control-sm" type="text" placeholder="Asunto (cabecera)" (input)="applyHeaderAsunto(hdrAsunto.value)" />
+          </th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let t of tramites; let i = index">
+          <td>{{ i + 1 }}</td>
+          <td>
+            <span class="fw-bolder text-dark">{{ t.numero_tramite }}</span>
+          </td>
+          <td>{{ t.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+          
+          <td>
+            <span class="badge" [ngClass]="getBadgeClass(t)">{{ getTiempo(t) }}</span>
+          </td>
+          <td>
+            <span class="text-dark">{{ t.num_documento_interno || '-' }}</span>
+          </td>
+          <td>
+            <span class="text-dark">{{ t.numero_memorandum || t.num_documento_interno_asig || (t.asignacion && t.asignacion.num_documento_interno) || numero_documento_input || '-' }}</span>
+          </td>
+          
+          <td>
+            <select #tipoDoc class="form-select form-select-sm" (change)="onTipoDocumentoChange(t, tipoDoc.value)">
+              <option [value]="''">-- Seleccionar --</option>
+              <option *ngFor="let opt of tiposDocumentoOptions" [value]="opt.id_tipo_documento" [selected]="opt.id_tipo_documento == (selectedTipoDocumento[t.id_tramite])">{{ opt.nombre || ('Tipo ' + opt.id_tipo_documento) }}</option>
+            </select>
+          </td>
+          <td>
+            <select #tipoTra class="form-select form-select-sm" (change)="onTipoTramiteChange(t, tipoTra.value)">
+              <option [value]="''">-- Seleccionar --</option>
+              <option *ngFor="let opt of tiposTramiteOptions" [value]="opt.id_tipo_tramite" [selected]="opt.id_tipo_tramite == (selectedTipoTramite[t.id_tramite])">{{ opt.nombre || ('Trámite ' + opt.id_tipo_tramite) }}</option>
+            </select>
+          </td>
+          <td>
+            <input #asuntoInput type="text" class="form-control form-control-sm" [value]="selectedAsunto[t.id_tramite] || t.asunto || ''" (input)="onAsuntoInput(t, asuntoInput.value)" />
+          </td>
+          <td>
+            <button class="btn btn-icon btn-sm btn-light-primary" (click)="verDetalle(t)">
+              <i class="fa fa-eye"></i>
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="tramites.length === 0">
+          <td colspan="10" class="text-center text-muted">No hay trámites disponibles</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal-footer">
+  <div class="w-100 d-flex align-items-center">
+    <div class="me-auto">
+      <button type="button" class="btn btn-secondary" (click)="modalService.dismissAll()">
+        Cerrar
+      </button>
+    </div>
+
+    <div class="mx-auto">
+      <button type="button" class="btn btn-primary" (click)="enviarTramites()">
+        <i class="fa fa-paper-plane"></i> Enviar Trámites
+      </button>
+    </div>
+
+    <div class="ms-auto"></div>
+  </div>
+</div>

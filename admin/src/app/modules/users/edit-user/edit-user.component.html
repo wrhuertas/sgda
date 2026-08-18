@@ -73,7 +73,7 @@
                                 <label class="required fw-bold fs-6 mb-2">Apellido</label>
                                 <input
                                     type="text"
-                                    name="name"
+                                    name="surname"
                                     class="form-control form-control-solid"
                                     placeholder="Apellido del Usuario"
                                     [(ngModel)]="surname"
@@ -181,26 +181,45 @@
                                     [(ngModel)]="address"
                                     name="address">
                                 </textarea>
-                            </div>
 
-                            <!-- Avatar oculto -->
-                            <div class="col-md-6" *ngIf="false">
-                                <label class="fw-bold fs-6 mb-2">Avatar:</label>
-                                <input
-                                    type="file"
-                                    class="custom-file-input"
-                                    accept=".jpeg,.bmp,.jpg,.png,.gif,.webp"
-                                    (change)="processFile($event)"
-                                />
-                                <div *ngIf="imagen_previzualiza" class="mt-2 text-center">
-                                    <img
-                                        [src]="imagen_previzualiza"
-                                        class="rounded"
-                                        style="height:80px;width:80px;object-fit:cover;border:1px solid #ddd;"
+                                <!-- Foto del usuario -->
+                                <div class="mt-4">
+                                    <label class="fw-bold fs-6 mb-2">Imagen</label>
+                                    <input
+                                        type="file"
+                                        class="form-control form-control-solid"
+                                        accept=".jpeg,.bmp,.jpg,.png,.gif,.webp"
+                                        (change)="processFile($event)"
                                     />
+
+                                    <div class="mt-3 d-flex flex-column align-items-center">
+                                        <ng-container *ngIf="imagen_previzualiza; else placeholderFotoEditar">
+                                            <!-- Si la imagen guardada no carga se cae al círculo vacío -->
+                                            <img
+                                                [src]="imagen_previzualiza"
+                                                (error)="imagen_previzualiza = null"
+                                                class="rounded-circle"
+                                                style="height:110px; width:110px; object-fit:cover; border:1px solid #eee;"
+                                                alt="Imagen del usuario"
+                                            />
+                                        </ng-container>
+
+                                        <ng-template #placeholderFotoEditar>
+                                            <div class="rounded-circle bg-light border border-gray-300 d-flex align-items-center justify-content-center"
+                                                 style="height:110px; width:110px;">
+                                                <i class="ki-duotone ki-user fs-3x text-gray-400">
+                                                    <span class="path1"></span><span class="path2"></span>
+                                                </i>
+                                            </div>
+                                        </ng-template>
+
+                                        <small class="text-muted mt-2" *ngIf="!imagen_previzualiza">
+                                            Tamaño recomendado: <b>300 x 300 px</b>
+                                        </small>
+                                    </div>
                                 </div>
                             </div>
-                            
+
                             <!-- Teléfono junto a dirección con adorno visual +593 (no se guarda el +) -->
                             <div class="col-md-6">
                               <label class="required fw-bold fs-6 mb-2">Teléfono Móvil:</label>
@@ -342,8 +361,9 @@
                                         {{ item.nombre }}
                                     </option>
                                 </select>
+                                <span *ngIf="id_proyecto_seleccionado" class="badge badge-light-primary mt-2">Director</span>
                             </div>
-                
+
                             <!-- SUBSECCIÓN -->
                             <div class="col-md-4">
                                 <label class="fs-6 fw-bold mb-2">Subsección</label>
@@ -358,6 +378,7 @@
                                         {{ item.nombre }}
                                     </option>
                                 </select>
+                                <span *ngIf="id_subseccion_seleccionada" class="badge badge-light-primary mt-2">Subdirector</span>
                             </div>
                 
                             <!-- SUB-SUBSECCIÓN -->
@@ -615,7 +636,7 @@
                             <div class="card-body bg-gray-100 p-7">
                                 <div class="row">
                                     <ng-container *ngFor="let item of availablePermissions">
-                                        <div class="col-md-4 mb-6" *ngIf="['Sección Docuemntal', 'Busqueda de documentos', 'Reporte', 'Prestamo Expediente', 'Certifiados Expediente'].includes(item.name)">
+                                        <div class="col-md-4 mb-6" *ngIf="['Sección Docuemntal', 'Busqueda de documentos', 'Reporte', 'Prestamo Expediente', 'Certifiados Expediente', 'Scan', 'Etiquetas'].includes(item.name)">
                                             
                                             <div class="card h-100 bg-white border border-gray-300 shadow-sm" style="border-radius: 8px;">
                                                 <div class="card-header border-bottom border-primary border-2 justify-content-center pt-4 pb-3" style="background-color: #fafcff; min-height: auto;">

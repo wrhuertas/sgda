@@ -1,4 +1,5 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
+import { URL_SERVICIOS, URL_BACKEND } from 'src/app/config/config';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
 import { RecepcionService } from '../service/recepcion.service';
@@ -8,6 +9,8 @@ import { VerDatosComponent } from '../ver-datos/ver-datos.component';
 import { SeguimientoComponent } from '../seguimiento/seguimiento.component';
 import { NuevoTramiteComponent } from '../nuevo-tramite/nuevo-tramite.component';
 import Swal from 'sweetalert2';
+import { MoverTramitesMasivoComponent } from '../mover-tramites-masivo/mover-tramites-masivo.component';
+import { DocumentoViewerService } from 'src/app/modules/indexacion-serie/ver-documento/documento-viewer.service';
 
 @Component({
   selector: 'app-listar-tramite',
@@ -19,6 +22,41 @@ export class ListarTramiteComponent {
   search: string = '';
   tramites: any[] = [];
   isLoading$: any;
+
+  // Controla la visibilidad del botón "Enviar Trámites"
+  showEnviarButton: boolean = false;
+
+  // Selección de filas
+  selectedTramites: Set<number> = new Set<number>();
+  selectAllChecked: boolean = false;
+
+  isSelected(item: any): boolean {
+    return this.selectedTramites.has(Number(item?.id_tramite));
+  }
+
+  toggleSelection(item: any, checked: boolean) {
+    const id = Number(item?.id_tramite);
+    if (!id) return;
+    if (checked) this.selectedTramites.add(id);
+    else this.selectedTramites.delete(id);
+
+    // Actualizar estado de select all
+    this.selectAllChecked = this.tramites && this.tramites.length > 0 && this.tramites.every((t: any) => this.selectedTramites.has(Number(t.id_tramite)));
+    // Mostrar el botón de enviar sólo si hay más de 1 seleccionado
+    this.showEnviarButton = this.selectedTramites.size > 1;
+  }
+
+  toggleSelectAll(checked: boolean) {
+    this.selectAllChecked = checked;
+    this.selectedTramites.clear();
+    if (checked && this.tramites && this.tramites.length) {
+      for (const t of this.tramites) {
+        if (t && t.id_tramite) this.selectedTramites.add(Number(t.id_tramite));
+      }
+    }
+    // Actualizar visibilidad del botón según la cantidad seleccionada
+    this.showEnviarButton = this.selectedTramites.size > 1;
+  }
 
   id_empresa!: number;
 @Input() TRAMITE_SELECTED: any;
@@ -37,6 +75,9 @@ export class ListarTramiteComponent {
   showAnexosModal = false;
   anexosSeleccionados: any[] = [];
   tituloAnexos = '';
+  oficioAnexos = '';
+  usuario_id: number | null = null;
+  // (no preview state) sólo lista de anexos
 
   constructor(
       
@@ -45,12 +86,39 @@ export class ListarTramiteComponent {
         public toast: ToastrService,
         private cdr: ChangeDetectorRef,
         public authService: AuthService,
+        private documentoViewer: DocumentoViewerService,
       ) { }
+
+    // Ver un anexo en el modal-plantilla (VerDocumentoComponent).
+    // Se trae el PDF como base64 vía API para evitar problemas de CORS con /storage.
+    verAnexo(a: any) {
+      const ruta = (a?.ruta || '').toString().trim();
+      if (!ruta) { this.toast.warning('No se encontró la ruta del anexo'); return; }
+
+      Swal.fire({ title: 'Cargando anexo...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      this.RecepcionService.verAnexoBase64(ruta).subscribe({
+        next: (resp: any) => {
+          try { Swal.close(); } catch {}
+          if (resp?.success && resp?.base64) {
+            this.documentoViewer.abrirVer({ pdfBase64: resp.base64 });
+          } else {
+            this.toast.error(resp?.message || 'No se pudo obtener el anexo');
+          }
+        },
+        error: (err) => {
+          try { Swal.close(); } catch {}
+          console.error('Error trayendo anexo:', err);
+          this.toast.error('No se pudo cargar el anexo');
+        }
+      });
+    }
   
       ngOnInit(): void {
       
         
         const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        this.usuario_id = user?.id ?? null;
 
         if (user && user.id_empresa) {
           this.id_empresa = user.id_empresa;
@@ -69,20 +137,25 @@ export class ListarTramiteComponent {
 
 
       listatramites(page = 1) {
-        if (!this.id_empresa) return;
-      
+        // El listado se muestra a todo usuario con usuario_recepcionista = 1,
+        // aunque no tenga empresa asignada.
+
         // Opcional: limpiar la lista actual para dar feedback visual de carga
         // this.tramites = []; 
       
         this.RecepcionService
-          .listTramites(this.id_empresa, page, this.search)
+          .listTramites(this.id_empresa, page, this.search, this.usuario_id)
           .subscribe((resp: any) => {
             this.tramites = resp.data || [];
             this.totalPages = resp.total;
             this.currentPage = resp.current_page;
-            
+
+            // Usuario no autorizado (no es recepcionista): aviso claro
+            if (resp?.message) {
+              this.toast.warning(resp.message);
+            }
             // Si el usuario buscó algo y no hay resultados en ninguna categoría
-            if (this.search && this.tramites.length === 0) {
+            else if (this.search && this.tramites.length === 0) {
               this.toast.info('No se encontraron trámites con esos criterios');
             }
       
@@ -137,10 +210,23 @@ export class ListarTramiteComponent {
       }
 
       calcularDiasRestantes(item: any): number | null {
-        const diasTipo = item?.tipo_tramite_dias;
+        // Buscar el número de días en varias ubicaciones que puede enviar el backend
+        // Prioridad: item.info_tipo.dias -> item.dias -> item.tipo_tramite_dias
+        let diasTipo: any = null;
+        if (item?.info_tipo && (item.info_tipo.dias !== undefined && item.info_tipo.dias !== null && item.info_tipo.dias !== '')) {
+          diasTipo = item.info_tipo.dias;
+        } else if (item?.dias !== undefined && item.dias !== null && item.dias !== '') {
+          diasTipo = item.dias;
+        } else if (item?.tipo_tramite_dias !== undefined && item.tipo_tramite_dias !== null && item.tipo_tramite_dias !== '') {
+          diasTipo = item.tipo_tramite_dias;
+        }
+
         if (diasTipo === null || diasTipo === undefined || diasTipo === '') return null;
+
         const totalDias = Number(diasTipo);
         if (!Number.isFinite(totalDias)) return null;
+        // Si el backend indica 0 días, consideramos que no tiene tiempo asignado
+        if (totalDias === 0) return null;
 
         const createdAt = item?.created_at;
         if (!createdAt) return null;
@@ -156,8 +242,9 @@ export class ListarTramiteComponent {
 
       calcularVigencia(item: any): { label: string; colorClass: string; bloqueado: boolean } {
         const dias = this.calcularDiasRestantes(item);
+        // Si no hay información de tiempo en el backend, mostrar texto claro
         if (dias === null) {
-          return { label: '-', colorClass: 'badge-light', bloqueado: false };
+          return { label: 'NO TIENE TIEMPO', colorClass: 'badge-light-dark', bloqueado: false };
         }
 
         if (dias >= 3) return { label: 'Vigente', colorClass: 'badge-light-success', bloqueado: false };
@@ -283,11 +370,13 @@ export class ListarTramiteComponent {
     }
 
     // Abrir modal local para ver anexos
-    abrirAnexos(tramite: any) {
+  abrirAnexos(tramite: any) {
       const anexos = Array.isArray(tramite?.anexos) ? tramite.anexos : [];
       this.anexosSeleccionados = anexos;
       this.tituloAnexos = `Anexos del Trámite ${tramite?.numero_tramite || ''}`.trim();
+      this.oficioAnexos = `${tramite?.num_documento_interno || ''}`.trim();
       this.showAnexosModal = true;
+      // no preview behavior; sólo abrir modal con lista de anexos
       try { this.cdr.detectChanges(); } catch {}
     }
 
@@ -295,8 +384,42 @@ export class ListarTramiteComponent {
       this.showAnexosModal = false;
       this.anexosSeleccionados = [];
       this.tituloAnexos = '';
+      this.oficioAnexos = '';
       try { this.cdr.detectChanges(); } catch {}
     }
+
+  // Construye la URL pública del anexo usando la base de servicios backend
+  getAnexoUrl(anexo: any): string {
+    try {
+      const raw = (anexo?.ruta || '').toString().trim();
+      if (!raw) return '';
+
+      // Si ya es una URL absoluta, devolverla tal cual
+      if (/^https?:\/\//i.test(raw)) return raw;
+
+      // Si la ruta ya contiene 'storage/', evitar duplicarlo
+      let cleanRuta = raw.replace(/^\/+/, '');
+      if (cleanRuta.includes('/storage/')) {
+        // Puede venir como 'storage/...' o '/storage/...'
+        cleanRuta = cleanRuta.replace(/^(?:storage\/)+/, '');
+        const base = (URL_BACKEND || URL_SERVICIOS || '').toString().replace(/\/+$/, '');
+        const url = `${base}/storage/${cleanRuta}`;
+        console.debug('[ListarTramite] anexo URL (normalized storage):', url);
+        return encodeURI(url);
+      }
+
+      // Ruta relativa normal: unir con la base del backend (no el prefijo /api)
+      const base = (URL_BACKEND || URL_SERVICIOS || '').toString().replace(/\/+$/, '');
+      const url = `${base}/storage/${cleanRuta}`;
+      console.debug('[ListarTramite] anexo URL:', url);
+      return encodeURI(url);
+    } catch (e) {
+      console.warn('[ListarTramite] error building anexo url', e, anexo);
+      return (anexo?.ruta || '');
+    }
+  }
+
+  
 
 
 
@@ -319,7 +442,59 @@ export class ListarTramiteComponent {
 
 
 
+  enviarTramitesMasivo() {
+  // Recolectar IDs seleccionados y validar
+  const ids = Array.from(this.selectedTramites || []).map(x => Number(x)).filter(Boolean);
+  // Mostrar solo si hay más de 1 seleccionado
+  if (!ids || ids.length === 0) {
+    this.toast.info('Seleccione al menos un trámite para mover');
+    return;
+  }
 
+  
+
+  if (ids.length === 1) {
+    // No permitimos abrir el modal con solo 1 trámite seleccionado
+    this.toast.info('Seleccione al menos 2 trámites para enviar de forma masiva');
+    return;
+  }
+
+  const modalRef = this.modalService.open(MoverTramitesMasivoComponent, {
+    // Definimos la clase para identificar el modal
+    windowClass: 'modal-ancho-personalizado', 
+    centered: true,
+    backdrop: 'static'
+  });
+
+  // Ajuste directo del ancho:
+  // Al usar setTimeout aseguramos que el modal ya se haya renderizado en el DOM
+  setTimeout(() => {
+    const modalElement = document.querySelector('.modal-ancho-personalizado .modal-dialog') as HTMLElement;
+    if (modalElement) {
+      modalElement.style.maxWidth = '95%'; // Aquí ajustas el ancho que quieras
+      modalElement.style.width = '95%';
+    }
+  });
+  
+  // Pasamos únicamente las áreas al componente hijo
+  modalRef.componentInstance.areas = this.areas;
+  // Pasamos los IDs seleccionados al componente de mover masivo
+  modalRef.componentInstance.selectedTramitesIds = ids;
+
+  // Nos suscribimos de forma segura
+  modalRef.componentInstance.tramiteC.subscribe(() => {
+    setTimeout(() => {
+      this.listatramites(this.currentPage);
+      // Limpiar selección y ocultar botón al regresar de registro
+      try {
+        this.selectedTramites.clear();
+        this.selectAllChecked = false;
+        this.showEnviarButton = false;
+        this.cdr.detectChanges();
+      } catch (e) {}
+    });
+  });
+}
 
 
     loadPage($event: any) {

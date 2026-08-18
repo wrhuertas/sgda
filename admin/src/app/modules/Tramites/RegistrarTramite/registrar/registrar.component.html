@@ -12,7 +12,7 @@
           <span class="text-muted mt-1 fw-semibold fs-7">Complete la información para iniciar el proceso</span>
         </h3>
         <div class="ms-3">
-          <img src="assets/logo_cotopaxi.png" alt="Logo Cotopaxi" style="height:32px; width:auto;" />
+          <img [src]="getEmpresaLogoUrl()" (error)="onLogoError($event)" alt="Logo Empresa" style="height:32px; width:auto;" />
         </div>
       </div>
 
@@ -147,7 +147,7 @@
                       <span class="fs-3 fw-bolder">{{ n_tramite_siguiente }}</span>
                     </div>
                   </div>
-
+                  <!--
                   <div class="col-md-12">
                     <label class="form-label fw-bold">Ciudad <span class="text-danger fw-bold">*</span></label>
                     <div class="input-group input-group-solid">
@@ -161,7 +161,7 @@
                       <input type="date" class="form-control form-control-solid" name="fecha" [(ngModel)]="fecha" />
                     </div>
                   </div>
-
+                    -->
                    <div class="col-md-12">
                      <label class="form-label fw-bold">Tipo de Documento <span class="text-danger fw-bold">*</span></label>
                      <div class="input-group input-group-solid">

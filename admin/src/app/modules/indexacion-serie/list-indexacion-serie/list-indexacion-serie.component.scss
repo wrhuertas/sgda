@@ -18,3 +18,17 @@
 :host ::ng-deep .modal-indexacion-compact .modal-body {
   overflow: auto;
 }
+
+// Botón Observación: tomate. Metronic no trae ese color, así que se define
+// acá en vez de usar una de sus clases btn-light-*
+.btn-observacion {
+  background-color: #fff1ec;
+  color: #ff6347;
+  border: 1px solid transparent;
+}
+
+.btn-observacion:hover,
+.btn-observacion:focus {
+  background-color: #ff6347;
+  color: #fff;
+}

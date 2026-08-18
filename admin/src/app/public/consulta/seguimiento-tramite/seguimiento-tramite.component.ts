@@ -31,7 +31,12 @@ export class SeguimientoTramiteComponent {
 
   constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
 
-  onCambioCriterio(_v: any) { /* noop */ }
+  onCambioCriterio(_v: any) {
+    // Al cambiar de criterio, limpiar los campos y ocultar resultados previos
+    this.dni = '';
+    this.numeroTramite = '';
+    this.showResultado = false;
+  }
 
   esValidoBusqueda() {
     if (this.criterioBusqueda === 'dni') return !!this.dni?.trim();
@@ -88,8 +93,8 @@ export class SeguimientoTramiteComponent {
          // Historial de trámites encadenados por número_tramite (si viene del backend)
          const hist = resp?.tramites || resp?.data?.tramites || this.cliente?.tramites || [];
          this.historialTramites = Array.isArray(hist) ? [...hist] : [];
-         // Orden cronológico por created_at ascendente
-         this.historialTramites.sort((a: any, b: any) => new Date(a?.created_at || 0).getTime() - new Date(b?.created_at || 0).getTime());
+         // Orden cronológico por created_at descendente (el último registrado primero)
+         this.historialTramites.sort((a: any, b: any) => new Date(b?.created_at || 0).getTime() - new Date(a?.created_at || 0).getTime());
          // Si aún no hay tramite principal, usar el primero del historial
          if (!this.tramite && this.historialTramites.length > 0) {
            this.tramite = this.historialTramites[0];
@@ -167,6 +172,23 @@ export class SeguimientoTramiteComponent {
   getAsignacionesParaTramite(tramite: any): any[] {
     // Retorna las asignaciones (historial de derivaciones) del trámite específico
     return Array.isArray(tramite?.asignaciones) ? tramite.asignaciones : [];
+  }
+
+  // Ubicación actual del trámite según la última derivación:
+  // - Sin derivaciones      => siempre "Recepción" (recién ingresado)
+  // - Primera derivación     => siempre "Despacho"
+  // - Siguientes derivaciones => sección real del destino
+  getUbicacionTramite(tramite: any): string {
+    const asignaciones = this.getAsignacionesParaTramite(tramite);
+    if (asignaciones.length === 0) {
+      return 'Recepción';
+    }
+    if (asignaciones.length === 1) {
+      return 'Despacho';
+    }
+    const ultima = asignaciones[asignaciones.length - 1];
+    const persona = [ultima?.destino_nombre, ultima?.destino_apellido].filter(Boolean).join(' ').trim();
+    return ultima?.destino_seccion || persona || 'Despacho';
   }
 
   getEstadoBadgeClass(tramite: any): string {

@@ -84,12 +84,36 @@ public URL_SERVICIOS: string = URL_SERVICIOS;
       this.listPrestamos($event);
     }
   
-    createPrestamo() {
+    /**
+     * Antes de abrir el acta se pregunta de qué tipo es, porque el acta se
+     * arma distinto según se entregue el papel o el archivo digital.
+     */
+    async createPrestamo() {
+      const { value: tipo } = await Swal.fire({
+        title: '¿Qué tipo de préstamo es?',
+        input: 'select',
+        inputOptions: {
+          FISICO: 'Físico — se entrega el expediente en papel',
+          DIGITAL: 'Digital — se entrega el archivo'
+        },
+        inputPlaceholder: 'Seleccione el tipo de préstamo',
+        inputValidator: (valor) => valor ? null : 'Elija el tipo de préstamo',
+        showCancelButton: true,
+        confirmButtonText: 'Continuar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#3085d6'
+      });
+
+      // Si cerró o canceló, no se abre el acta
+      if (!tipo) { return; }
+
       const modalRef = this.modalService.open(CrearPrestamoComponent, {
         centered: true,
         windowClass: 'modal-ancho-personalizado',
         backdrop: 'static'
       });
+
+      modalRef.componentInstance.TIPO_PRESTAMO = tipo;
 
       // Escuchamos el evento de salida del componente hijo (el modal)
       modalRef.componentInstance.PrestamoC.subscribe((prestamo: any) => {
@@ -232,7 +256,7 @@ public URL_SERVICIOS: string = URL_SERVICIOS;
             
             const nombreArchivo = prestamo.ruta_documento_pdf 
                 ? prestamo.ruta_documento_pdf.split('/').pop() 
-                : `Acta_ACT-${prestamo.id_prestamo}.pdf`;
+                : `Memorandum_PRE-${prestamo.id_prestamo}.pdf`;
             
             link.setAttribute('download', nombreArchivo);
             link.target = '_self';
@@ -243,10 +267,10 @@ public URL_SERVICIOS: string = URL_SERVICIOS;
             document.body.removeChild(link);
             window.URL.revokeObjectURL(data);
             
-            if (this.toast) this.toast.success('Acta descargada correctamente.');
+            if (this.toast) this.toast.success('Memorandum descargado correctamente.');
         },
         error: (err) => {
-            console.error('Error al descargar el acta:', err);
+            console.error('Error al descargar el memorandum:', err);
             // Si el error persiste, te avisará detalladamente si fue por credenciales o archivo faltante
             this.toast.error('Error al descargar el archivo. Verifique su autenticación.');
         }

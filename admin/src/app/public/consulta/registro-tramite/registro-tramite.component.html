@@ -8,307 +8,376 @@
           <i class="fa fa-home fs-2"></i>
         </a>
         <h3 class="card-title align-items-center flex-column m-auto text-center">
-          <span class="card-label fw-bold fs-3 mb-1 text-uppercase">Registro de Trámite</span>
+          <span class="card-label fw-bold fs-3 mb-1 text-uppercase">Bienvenido al registro de trámite</span>
           <span class="text-muted mt-1 fw-semibold fs-7">Complete la información para iniciar el proceso</span>
         </h3>
         <div class="ms-3">
           <img src="assets/logo_cotopaxi.png" alt="Logo Cotopaxi" style="height:32px; width:auto;" />
-            </div>
-            
-            
-           </div>
+        </div>
+      </div>
 
       <div class="px-6 pt-3">
-        <div class="alert alert-light-danger border border-danger d-flex align-items-center py-3">
-          <i class="fa fa-exclamation-circle text-danger fs-3 me-3"></i>
-          <div class="text-danger fw-semibold fs-7">
-            Los campos marcados con <span class="text-danger fw-bold">*</span> son obligatorios
-          </div>
-        </div>
+        <h5 class="text-center mb-0 fw-semibold">Ingrese número de Cédula / RUC para comenzar con el proceso de trámite</h5>
       </div>
 
-  <div class="card-body">
-    <div class="row g-7">
-
-          <div class="col-md-6">
-            <div class="card shadow-sm border border-light">
-              <div class="card-header bg-light-danger min-h-50px">
-                <h3 class="card-title fw-bold text-danger fs-5">Datos del Remitente</h3>
+      <div class="card-body">
+        <!-- SOLO MOSTRAR EL INPUT PRINCIPAL DEL FORMULARIO; OCULTAR EL RESTO DE LOS CAMPOS Y CARDS -->
+        <div class="row g-7">
+          <div class="col-12">
+            <div style="max-width:520px; margin:0 auto;">
+              <div class="input-group input-group-solid">
+                <input type="text" class="form-control form-control-solid" placeholder="Ingrese RUC o Cédula"
+                       name="n_documento" [(ngModel)]="n_documento" (ngModelChange)="onDocumentoChange()" [ngModelOptions]="{standalone: true}"
+                       maxlength="13" (keypress)="soloNumeros($event)"
+                       style="border: 2px solid #0d55f0;" />
+                <!-- Icono condicional: cédula (10) -> id-card, RUC (13) -> building -->
+                <span class="input-group-text bg-transparent border-0">
+                  <i *ngIf="(n_documento || '')?.length === 10" class="fa fa-id-card text-success" title="Cédula"></i>
+                  <i *ngIf="(n_documento || '')?.length === 13" class="fa fa-building text-primary" title="RUC"></i>
+                </span>
               </div>
+            </div>
+          </div>
 
-              <div class="card-body p-6">
-                <div class="row g-4">
-                  <div class="col-md-12">
-                    <label class="form-label fw-bold">
-                      {{ n_documento.length > 10 ? 'Número de RUC' : 'Número de Cédula' }}
-                      <span class="text-danger fw-bold">*</span>
-                    </label>
-                    <div class="input-group input-group-solid">
-                  <input type="text" class="form-control form-control-solid" placeholder="Ingrese el número"
-                         name="n_documento" [(ngModel)]="n_documento" (ngModelChange)="onDocumentoChange()" [ngModelOptions]="{standalone: true}"
-                         maxlength="13" (keypress)="soloNumeros($event)" />
+          <!-- Card grande informativo que aparece debajo del input mientras no hay datos ni formulario -->
+          <div class="col-12 mt-4" *ngIf="!(mostrarNumeroTramite || nombre) && !clienteNoEncontrado">
+            <div class="card shadow-lg border-0 text-center py-6">
+              <div class="card-body">
+                <i class="fa fa-clipboard-list fa-3x text-primary mb-3"></i>
+                <h4 class="fw-bold mb-1">Registro de Trámites</h4>
+                <p class="text-muted mb-0">Ingrese su Cédula o RUC arriba para consultar el estado o iniciar un nuevo trámite</p>
+              </div>
+            </div>
+          </div>
+          <!-- (Nav card moved below Datos del Solicitante) -->
 
-                      <button *ngIf="!isCliente() && n_documento.length <= 10" class="btn btn-success" type="button" (click)="buscarCedula()">
-                        <i class="fa fa-search me-1"></i> Cédula
-                      </button>
+          <!-- Card de Cargar o Crear Oficios ya está arriba -->
 
-                      <button *ngIf="!isCliente() && n_documento.length > 10" class="btn btn-primary" type="button" (click)="buscarRUC()">
-                        <i class="fa fa-building me-1"></i> RUC
-                      </button>
-                      
-                      <button class="btn btn-success" type="button" (click)="consultarClienteEmpresa()" title="Consultar en la base de ciudadanos de la empresa 2">
-                        <i class="fa fa-search me-1"></i> Consultar
-                      </button>
-                    </div>
+          <!-- (Anexos moved below Datos del Solicitante) -->
+
+          <!-- Tarjeta profesional de datos del ciudadano (muestra cuando hay datos cargados) -->
+          <div class="col-12 mt-4" *ngIf="(mostrarNumeroTramite || nombre) && !clienteNoEncontrado">
+            <div style="padding:6px 12px; font-weight:700; color:#000; margin:32px 0; display:flex; justify-content:center; align-items:center; gap:8px;">
+              PASO 1 <span class="badge bg-success" style="color: white !important;">Completo</span>
+            </div>
+              <div class="card shadow-sm border-light">
+               <div class="card-header d-flex align-items-center justify-content-between bg-white">
+                <div class="d-flex align-items-center gap-3">
+                  <i class="fa fa-user-circle fa-2x text-primary"></i>
+                  <div>
+                    <div class="fw-bold">Datos del Solicitante</div>
+                    <div class="text-muted small">Información extraída automáticamente</div>
                   </div>
-                  <div class="col-md-12">
-                    <label class="form-label fw-bold">Nombre Completo / Razón Social <span class="text-danger fw-bold">*</span></label>
-                    <input type="text" class="form-control form-control-solid" name="nombre" [(ngModel)]="nombre" [ngModelOptions]="{standalone: true}" [readonly]="!permitirEdicion" />
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="text-muted small">{{ today | date:'dd/MM/yyyy' }}</div>
+                  <span class="badge bg-primary" style="color: white !important;">Cliente Público</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <div class="text-muted small">Nombre / Razón Social</div>
+                    <div class="fw-semibold">{{ nombre || '-' }}</div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <div class="text-muted small">Documento</div>
+                    <div class="fw-semibold">{{ n_documento || '-' }}</div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <div class="text-muted small">Celular</div>
+                    <div class="fw-semibold">{{ celular || '-' }}</div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <div class="text-muted small">Email</div>
+                    <div class="fw-semibold">{{ email || '-' }}</div>
+                  </div>
+                  <div class="col-12 mb-3">
+                    <div class="text-muted small">Dirección</div>
+                    <div class="fw-semibold">{{ direccion || '-' }}</div>
                   </div>
                   <div class="col-md-6">
-                    <label class="form-label fw-bold">Celular <span class="text-danger fw-bold">*</span></label>
-                    <input type="text" class="form-control form-control-solid" name="celular" [(ngModel)]="celular" [ngModelOptions]="{standalone: true}" [readonly]="!permitirEdicion" />
+                    <div class="text-muted small">Nº Trámite (propuesto)</div>
+                    <div class="fw-semibold text-primary">{{ n_tramite_siguiente || '-' }}</div>
                   </div>
                   <div class="col-md-6">
-                    <label class="form-label fw-bold">Email <span class="text-danger fw-bold">*</span></label>
-                    <input type="email" class="form-control form-control-solid" name="email" [(ngModel)]="email" [ngModelOptions]="{standalone: true}" [readonly]="!permitirEdicion" />
-                  </div>
-                  <div class="col-md-12">
-                    <label class="form-label fw-bold">Dirección <span class="text-danger fw-bold">*</span></label>
-                    <input type="text" class="form-control form-control-solid" name="direccion" [(ngModel)]="direccion" [ngModelOptions]="{standalone: true}" [readonly]="!permitirEdicion" />
-                  </div>
-                  <div class="col-md-12" *ngIf="clienteNoEncontrado && permitirEdicion">
-                    <button class="btn btn-success w-100" type="button" (click)="registrarClienteManual()">
-                      <i class="fa fa-user-plus me-2"></i>Registrar 
-                    </button>
-                  </div>
-
-                  <!-- Sección Anexos justo debajo de 'Registrar Cliente' -->
-                   <div class="col-12" *ngIf="mostrarNumeroTramite">
-                     <div class="col-12 pt-3 mb-3" *ngIf="message">
-                       <div class="alert alert-success" style="background-color: #d4edda; border-color: #c3e6cb; color: #155724;">
-                         {{ message }}
-                       </div>
-                     </div>
-                     <div class="card-header bg-light-primary min-h-50px mb-4">
-                       <h3 class="card-title fw-bold text-primary fs-5 w-100 text-center m-0">Anexos</h3>
-                     </div>
-                    <label class="form-label fw-bold">Adjuntar Anexos</label>
-                    <input type="file" class="form-control form-control-solid"
-                           accept=".pdf,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/*,.doc,.docx,.png,.jpg,.jpeg"
-                           multiple (change)="onAnexosSelected($event)" />
-                    <div class="form-text">Opcional: adjunte documentos de respaldo como anexos.</div>
-
-                    <div class="mt-3" *ngIf="anexos?.length">
-                      <div class="d-flex justify-content-between align-items-center mb-2 small">
-                        <span class="fw-semibold">Anexos ({{ anexos.length }})</span>
-                        <span class="text-muted">Puede eliminar los que no desee enviar</span>
-                      </div>
-                      <ul class="list-group">
-                        <li *ngFor="let f of anexos; let i = index" class="list-group-item py-2">
-                          <div class="d-flex justify-content-between align-items-center">
-                            <div class="text-truncate" style="max-width: 65%">
-                              <i class="fa fa-paperclip me-2 text-gray-600"></i>
-                              <span title="{{f.name}}">{{ f.name }}</span>
-                              <span class="text-muted ms-2">({{ (f.size/1024) | number:'1.0-0' }} KB)</span>
-                            </div>
-                            <div class="d-flex gap-2">
-                              <button type="button" class="btn btn-sm btn-light-primary" (click)="verAnexo(i)">
-                                <i class="fa fa-eye"></i> Ver
-                              </button>
-                              <button type="button" class="btn btn-sm btn-light-danger" (click)="removeAnexo(i)">
-                                <i class="fa fa-times"></i> Eliminar
-                              </button>
-                            </div>
-                          </div>
-                          <div class="w-100 mt-2">
-                            <input type="text" class="form-control form-control-sm" placeholder="Descripción del anexo"
-                                   [(ngModel)]="descripcionesAnexos[i]" [ngModelOptions]="{standalone: true}" />
-                          </div>
-                        </li>
-                      </ul>
-                    </div>
+                    <div class="text-muted small">Nº Documento Interno</div>
+                    <div class="fw-semibold">{{ n_interno || '-' }}</div>
                   </div>
                 </div>
               </div>
-           </div>
+            </div>
           </div>
-
           
+          <!-- Botón Registrar Trámite (moveré al final de los cards) -->
 
-          <div class="col-md-6">
-            <div class="card shadow-sm border border-light">
-              <div class="card-header bg-light-primary min-h-50px">
-                <h3 class="card-title fw-bold text-primary fs-5">Datos del Documento</h3>
-              </div>
-
-              <div class="card-body p-6">
-                <div class="row g-4">
-                  <!-- Número de Trámite que le toca -->
-                  <div class="col-md-12" *ngIf="mostrarNumeroTramite">
-                    <div class="d-flex align-items-center justify-content-between p-3 rounded" style="background:#0d47a1; color:#fff;">
-                      <span class="fw-bold text-uppercase">NUMERO OFICIO</span>
-                      <span class="fs-3 fw-bolder">{{ n_tramite_siguiente }}</span>
-                    </div>
-                  </div>
-
-                  <div class="col-md-12">
-                    <label class="form-label fw-bold">Ciudad <span class="text-danger fw-bold">*</span></label>
-                    <div class="input-group input-group-solid">
-                      <input type="text" class="form-control form-control-solid" name="ciudad" [(ngModel)]="ciudad" placeholder="Ingrese la ciudad" />
-                    </div>
-                  </div>
-
-                  <div class="col-md-12">
-                    <label class="form-label fw-bold">Fecha <span class="text-danger fw-bold">*</span></label>
-                    <div class="input-group input-group-solid">
-                      <input type="date" class="form-control form-control-solid" name="fecha" [(ngModel)]="fecha" />
-                    </div>
-                  </div>
-                  <div class="col-md-12">
-                    <label class="form-label fw-bold">Nº de Documento </label>
-                    <input type="text" class="form-control form-control-solid" readonly name="n_interno" [(ngModel)]="n_interno" [ngModelOptions]="{standalone: true}" />
-                  </div>
-                   <div class="col-md-12">
-                     <label class="form-label fw-bold">Asunto<span class="text-danger fw-bold">*</span></label>
-                     <textarea id="asunto" name="asunto" class="form-control form-control-solid" rows="3" style="resize:none"
-                               placeholder="Describa el asunto del trámite..." [(ngModel)]="asunto" [ngModelOptions]="{standalone: true}"></textarea>
-                   </div>
-                   <!-- Cuerpo del Documento (CKEditor) -->
-                  <div class="col-md-12" *ngIf="modoAjuste === 'acta'">
-                    <div class="fv-row mb-8">
-                      <label class="fs-7 fw-bold mb-2">Cuerpo del Documento:</label>
-                      <ckeditor 
-                        #editor
-                        [editor]="Editor"
-                        [config]="editorConfig"
-                        [(ngModel)]="contenidoCuerpo"
-                        (ready)="onEditorReady($event)"
-                        name="cuerpo_doc">
-                      </ckeditor>
-                    </div>
-                  </div>
-
-                  <!-- Selector de modo: Acta vs Documento Electrónico -->
-                  <div class="col-md-12">
-                    <label class="form-label fw-bold">Subir Archivo</label>
-                    <div class="btn-group w-100" role="group" aria-label="Modo de ajuste">
-                      
-                      <button type="button"
-                              class="btn"
-                              [ngClass]="modoAjuste === 'acta' ? 'btn-primary' : 'btn-light-primary'"
-                              (click)="setModoAjuste('acta')">
-                        1) Crear Oficio
-                      </button>
-
-                      <button type="button"
-                              class="btn"
-                              [ngClass]="modoAjuste === 'electronico' ? 'btn-primary' : 'btn-light-primary'"
-                              (click)="setModoAjuste('electronico')">
-                        2) Documento Electrónico Firmado
-                      </button>
-
-                      <button type="button"
-                              class="btn"
-                              [ngClass]="modoAjuste === 'fisico' ? 'btn-primary' : 'btn-light-primary'"
-                              (click)="setModoAjuste('fisico')">
-                        3) Subir Documento Firmado Físicamente
-                      </button>
-                      
-                    </div>
-                  </div>
-
-                  <!-- Vista 1: Mostrar Acta -->
-                  <div class="col-md-12 mt-3" *ngIf="modoAjuste === 'acta'">
-                    <div class="card border border-dashed">
-                      <div class="card-body d-flex flex-column align-items-center justify-content-center py-10">
-                        <i class="fa fa-file-text fs-1 text-primary mb-4"></i>
-                        <button type="button" class="btn btn-primary btn-lg" (click)="openActaModal()">Mostrar Oficio</button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Vista 2: Subir Documento Electrónico -->
-                 <div class="col-md-12 mt-3" *ngIf="modoAjuste === 'electronico' || modoAjuste === 'fisico'">
-  
-                  <div class="card p-4 border-primary" *ngIf="modoAjuste === 'electronico'">
-                    <label class="form-label fw-bold">
-                      <i class="fa fa-file-signature text-primary"></i> Seleccionar PDF Electrónico <span class="text-danger fw-bold">*</span>
-                    </label>
-                    <input #inpElec type="file" class="form-control form-control-solid" accept="application/pdf" (change)="onFileSelectedElectronico($event)" />
-                    
-                    <div *ngIf="archivoElectronico" class="mt-3 small">
-                      <div class="alert alert-primary p-2 d-flex justify-content-between">
-                        <span><i class="fa fa-file-pdf me-2"></i>{{ archivoElectronico?.name }}</span>
-                        <div class="d-flex gap-2">
-                          <button type="button" class="btn btn-sm btn-light-primary" (click)="verElectronico()"><i class="fa fa-eye"></i></button>
-                          <button type="button" class="btn btn-sm btn-light-danger" (click)="clearElectronico(inpElec)"><i class="fa fa-times"></i></button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="card p-4 border-warning" *ngIf="modoAjuste === 'fisico'">
-                    <label class="form-label fw-bold">
-                      <i class="fa fa-file-alt text-warning"></i> Seleccionar PDF Físico Escaneado <span class="text-danger fw-bold">*</span>
-                    </label>
-                    <input #inpFis type="file" class="form-control form-control-solid" accept="application/pdf" (change)="onFileSelectedFisico($event)" />
-                    
-                    <div *ngIf="archivoFisico" class="mt-3 small">
-                      <div class="alert alert-warning p-2 d-flex justify-content-between align-items-center">
-                        <span><i class="fa fa-file-pdf me-2"></i>{{ archivoFisico?.name }}</span>
-                        <div class="d-flex gap-2">
-                          <button type="button" class="btn btn-sm btn-light-primary" (click)="verFisico()"><i class="fa fa-eye"></i></button>
-                          <button type="button" class="btn btn-sm btn-light-danger" (click)="clearFisico(inpFis)"><i class="fa fa-times"></i></button>
-                        </div>
-                    </div>
-                    </div>
-                  </div>
-
-                  <div class="text-muted small mt-1">Solo se permite subir 1 archivo PDF.</div>
+          <!-- Mostrar formulario de registro en la misma área si NO se encontraron datos -->
+          <div class="col-12 mt-4" *ngIf="clienteNoEncontrado">
+            <div style="padding:6px 12px; font-weight:700; color:#000; margin-bottom:6px;"></div>
+            <div class="card shadow-sm border-light">
+               <div class="card-header d-flex align-items-center gap-3 bg-white">
+                <i class="fa fa-user-plus fa-2x text-primary"></i>
+                <div>
+                  <div class="fw-bold">Registrar ciudadano</div>
+                  <div class="text-muted small">Complete los datos para registrar</div>
                 </div>
-
-                  
-                  <div class="col-md-12 mt-4">
-                    <div class="form-check form-check-custom form-check-solid">
-                      <input id="declaracion" name="declaracion" class="form-check-input me-3" type="checkbox" [(ngModel)]="declaracion" [ngModelOptions]="{standalone: true}" />
-                      <label class="form-check-label fs-7 text-gray-700" for="declaracion">Declaro bajo penalidad de perjurio que la información es correcta</label>
-                    </div>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label small">Cédula / RUC</label>
+                    <input type="text" class="form-control" [(ngModel)]="n_documento" [ngModelOptions]="{standalone:true}" maxlength="13" (keypress)="soloNumeros($event)" />
                   </div>
-                   <div class="col-md-12 text-center pt-5">
-                     <button class="btn btn-primary btn-lg w-100 py-4" (click)="registrarTramite()" [disabled]="!declaracion">
-                       <span class="fs-4 fw-bold text-uppercase">Registrar Trámite</span>
-                     </button>
-                   </div>
+                  <div class="col-md-6">
+                    <label class="form-label small">Nombre</label>
+                    <input type="text" class="form-control" [(ngModel)]="nombre" [ngModelOptions]="{standalone:true}" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small">Celular</label>
+                    <input type="text" class="form-control" [(ngModel)]="celular" [ngModelOptions]="{standalone:true}" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small">Email</label>
+                    <input type="email" class="form-control" [(ngModel)]="email" [ngModelOptions]="{standalone:true}" />
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label small">Dirección</label>
+                    <input type="text" class="form-control" [(ngModel)]="direccion" [ngModelOptions]="{standalone:true}" />
+                  </div>
+                  <div class="col-12 text-end mt-2">
+                    <button class="btn btn-success" (click)="registrarClienteManual()">Registrar</button>
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+<style>
+.step-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border-radius: 50%;
+  background-color: #0d6efd;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Mejorar visibilidad de las tabs: destacar la activa y aumentar legibilidad */
+.nav-tabs .nav-link {
+  color: #24324a; /* tono oscuro para texto */
+  font-weight: 700;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  margin-right: 6px;
+}
+.nav-tabs .nav-link:hover { background-color: rgba(13,110,253,0.06); }
+.nav-tabs .nav-link.active {
+  background-color: #0d6efd;
+  color: #fff !important;
+  box-shadow: 0 6px 18px rgba(13,110,253,0.12);
+}
+
+/* Cuando una tab está activa, invertir colores del step-circle para contraste */
+.nav-tabs .nav-link.active .step-circle {
+  background-color: #fff;
+  color: #0d6efd;
+  font-weight: 800;
+}
+
+/* Asegurar buena visual en móviles */
+@media (max-width: 576px) {
+  .nav-tabs .nav-link { font-size: 14px; padding: 8px 10px; }
+  .step-circle { width:20px; height:20px; font-size:12px; }
+}
+</style>
+
+          <!-- NAV card adicional: aparece debajo del card "Datos del Solicitante" cuando este está visible -->
+          <div class="col-12 mt-4" *ngIf="(mostrarNumeroTramite || nombre) && !clienteNoEncontrado">
+  <div style="padding:6px 12px; font-weight:700; color:#000; margin:32px 0; display:flex; justify-content:center; align-items:center; gap:10px;">
+    PASO 2
+    <span class="badge bg-success" style="color: white !important;" *ngIf="archivoElectronico || archivoFisico">
+      Completo
+    </span>
+  </div>
+  <div class="card shadow-sm border-light">
+    <div class="card-header bg-white" style="display:flex; flex-direction:column; align-items:flex-start; padding:24px 24px;">
+      <div class="d-flex align-items-center gap-3">
+        <i class="fa fa-file-alt fa-2x text-primary"></i>
+        <div>
+          <div class="fw-bold">Carga o Crea Oficios</div>
+          <div class="text-muted small">Opciones para generar o adjuntar oficios</div>
+        </div>
       </div>
 
+      <div style="width:100%; font-size:20px; font-weight:800; text-align:center; margin:28px 0 8px 0; color:#000;">
+        Elija una de las 3 opciones para cargar un oficio, o crear uno y firmarlo digitalmente
+      </div>
     </div>
-    
-    <!-- Card adicional: Registrador de trámites GADPC -->
-    <div class="row g-7 mt-4">
-      <div class="col-12">
-        <div class="card shadow-sm border border-light">
-          <div class="card-header bg-light min-h-50px">
-            <h3 class="card-title fw-bold fs-5">Registrador de trámites del Gobierno Autónomo Descentralizado Provincial de Cotopaxi</h3>
-          </div>
-          <div class="card-body p-6 d-flex align-items-center justify-content-between flex-wrap gap-4">
-            <div class="flex-grow-1">
-              <div class="text-muted">Registre y dé inicio a sus trámites en la institución.</div>
-            </div>
-            <div>
-              <img src="assets/logo_cotopaxi.png" alt="Logo Cotopaxi" style="max-height:60px; width:auto;" />
-            </div>
-          </div>
+
+    <div class="px-3 pt-3 pb-2">
+      <ul class="nav nav-tabs">
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center gap-2" href="#" [ngClass]="{ 'active': modoAjuste === 'fisico' }" (click)="setModoAjuste('fisico'); $event.preventDefault();">
+            <span class="step-circle">1</span> Subir Documento Firmado Físicamente
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center gap-2" href="#" [ngClass]="{ 'active': modoAjuste === 'electronico' }" (click)="setModoAjuste('electronico'); $event.preventDefault();">
+            <span class="step-circle">2</span> Documento Electrónico Firmado
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link d-flex align-items-center gap-2" href="#" [ngClass]="{ 'active': modoAjuste === 'acta' }" (click)="setModoAjuste('acta'); $event.preventDefault();">
+            <span class="step-circle">3</span> Crear Oficio
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="card-body" style="padding-top:20px;">
+      <div *ngIf="modoAjuste === 'acta'">
+        <label class="fs-7 fw-bold mb-2">Cuerpo del Documento (Oficio)</label>
+        <ckeditor #editorTab [editor]="Editor" [config]="editorConfig" [(ngModel)]="contenidoCuerpo" (ready)="onEditorReady($event)" name="cuerpo_doc_tab2"></ckeditor>
+        <div class="mt-3 text-center"><button class="btn btn-primary" (click)="openActaModal()">Mostrar Oficio</button></div>
+      </div>
+      <div *ngIf="modoAjuste === 'electronico'" class="mt-2">
+        <label class="form-label fw-bold">Subir Documento Electrónico Firmado</label>
+        <input #inpElecNav2 type="file" class="form-control" accept="application/pdf" (change)="onFileSelectedElectronico($event)" />
+        <div *ngIf="archivoElectronico" class="mt-3 alert alert-primary d-flex justify-content-between align-items-center">
+          <div><i class="fa fa-file-pdf me-2"></i>{{ archivoElectronico?.name }}</div>
+          <div class="d-flex gap-2"><button class="btn btn-sm btn-light-primary" (click)="verElectronico()"><i class="fa fa-eye"></i></button><button class="btn btn-sm btn-light-danger" (click)="clearElectronico(inpElecNav2)"><i class="fa fa-times"></i></button></div>
+        </div>
+      </div>
+      <div *ngIf="modoAjuste === 'fisico'" class="mt-2">
+        <label class="form-label fw-bold">Subir Documento Firmado Físicamente</label>
+        <input #inpFisNav2 type="file" class="form-control" accept="application/pdf" (change)="onFileSelectedFisico($event)" />
+        <div *ngIf="archivoFisico" class="mt-3 alert alert-warning d-flex justify-content-between align-items-center">
+          <div><i class="fa fa-file-pdf me-2"></i>{{ archivoFisico?.name }}</div>
+          <div class="d-flex gap-2"><button class="btn btn-sm btn-light-primary" (click)="verFisico()"><i class="fa fa-eye"></i></button><button class="btn btn-sm btn-light-danger" (click)="clearFisico(inpFisNav2)"><i class="fa fa-times"></i></button></div>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+          <!-- PASO 3: Asunto (movido arriba) -->
+          <div *ngIf="(mostrarNumeroTramite || nombre) && !clienteNoEncontrado" style="padding:6px 12px; font-weight:700; color:#000; margin:32px 0; display:flex; justify-content:center; align-items:center;">
+            PASO 3
+            <span *ngIf="asunto && (asunto || '').toString().trim().length > 0" class="badge bg-success" style="color: white !important; margin-left:8px;">Completo</span>
+          </div>
+
+          <!-- Nuevo card: Asunto (input) -->
+          <div class="col-12 mt-3" *ngIf="(mostrarNumeroTramite || nombre) && !clienteNoEncontrado">
+            <div class="card shadow-sm border-light">
+              <div class="card-header bg-white">
+                <div class="d-flex align-items-center gap-3">
+                  <i class="fa fa-align-left fa-2x text-primary"></i>
+                  <div>
+                    <div class="fw-bold">Asunto</div>
+                    <div class="text-muted small">Indique el asunto del trámite</div>
+                  </div>
+                </div>
+              </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-8">
+                <label class="form-label small">Asunto</label>
+                <input type="text" class="form-control form-control-solid" placeholder="Ingrese el asunto" [(ngModel)]="asunto" [ngModelOptions]="{standalone: true}" />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small">Ciudad</label>
+                <input type="text" class="form-control form-control-solid" placeholder="Ingrese la ciudad" [(ngModel)]="ciudad" [ngModelOptions]="{standalone: true}" />
+              </div>
+            </div>
+          </div>
+            </div>
+          </div>
+
+          <!-- PASO 4: Cargar Anexos (movido debajo del Asunto) -->
+          <div class="col-12 mt-3" *ngIf="(mostrarNumeroTramite || nombre) && !clienteNoEncontrado">
+            <div style="padding:6px 12px; font-weight:700; color:#000; margin:32px 0; display:flex; justify-content:center; align-items:center;">
+              PASO 4 <span style="color:red; margin-left:8px;">(REGISTRO Y CARGA OPCIONAL)</span>
+              <span *ngIf="anexos?.length" class="badge bg-success" style="color:white!important; margin-left:8px;">Completo</span>
+            </div>
+            <div class="card shadow-sm border-light">
+               <div class="card-header bg-white">
+                <div class="d-flex align-items-center gap-3">
+                  <i class="fa fa-paperclip fa-2x text-primary"></i>
+                  <div>
+                    <div class="fw-bold">Cargar Anexos</div>
+                    <div class="text-muted small">Adjunte documentos de respaldo</div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body">
+                <div *ngIf="mostrarNumeroTramite">
+
+                  <div class="card-header bg-light-primary min-h-50px mb-4">
+                    <h3 class="card-title fw-bold text-primary fs-5 w-100 text-center m-0">Anexos</h3>
+                  </div>
+                  <label class="form-label fw-bold">Adjuntar Anexos</label>
+                  <input type="file" class="form-control form-control-solid"
+                         accept=".pdf,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/*,.doc,.docx,.png,.jpg,.jpeg"
+                         multiple (change)="onAnexosSelected($event)" />
+                  <div class="form-text">Opcional: adjunte documentos de respaldo como anexos.</div>
+
+                  <div class="mt-3" *ngIf="anexos?.length">
+                    <div class="d-flex justify-content-between align-items-center mb-2 small">
+                      <span class="fw-semibold">Anexos ({{ anexos.length }})</span>
+                      <span class="text-muted">Puede eliminar los que no desee enviar</span>
+                    </div>
+                    <ul class="list-group">
+                      <li *ngFor="let f of anexos; let i = index" class="list-group-item py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                          <div class="text-truncate" style="max-width: 65%">
+                            <i class="fa fa-paperclip me-2 text-gray-600"></i>
+                            <span title="{{f.name}}">{{ f.name }}</span>
+                            <span class="text-muted ms-2">({{ (f.size/1024) | number:'1.0-0' }} KB)</span>
+                          </div>
+                          <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-light-primary" (click)="verAnexo(i)"><i class="fa fa-eye"></i> Ver</button>
+                            <button type="button" class="btn btn-sm btn-light-danger" (click)="removeAnexo(i)"><i class="fa fa-times"></i> Eliminar</button>
+                          </div>
+                        </div>
+                        <div class="w-100 mt-2">
+                          <input type="text" class="form-control form-control-sm" placeholder="Descripción del anexo"
+                                 [(ngModel)]="descripcionesAnexos[i]" [ngModelOptions]="{standalone: true}" />
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+      </div>
+        <!-- Botón Registrar Trámite: al final de los cards -->
+    <div class="row">
+      <div class="col-12 text-center mt-4 mb-4" *ngIf="(mostrarNumeroTramite || nombre) && !clienteNoEncontrado">
+        <div class="form-check form-check-custom form-check-solid mb-3 d-flex justify-content-center">
+          <input id="declaracion" name="declaracion" class="form-check-input me-3" type="checkbox" [(ngModel)]="declaracion" [ngModelOptions]="{standalone: true}" />
+          <label class="form-check-label fs-7 text-gray-700 align-self-center" for="declaracion">Declaro bajo penalidad de perjurio que la información es correcta</label>
+        </div>
+        <button class="btn btn-primary btn-lg px-5" (click)="registrarTramite()" [disabled]="!declaracion">Registrar Trámite</button>
+      </div>
+    </div>
+
+    </div>
+
+  
+
+
   </div>
 </div>
+
+
 
 <!-- Modal Acta: vista previa del documento -->
 <div *ngIf="showActaModal" class="modal fade show" style="display:block; background: rgba(0,0,0,0.5);">

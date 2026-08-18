@@ -13,7 +13,10 @@
           Información del Docu.
       </div>
       <div class="quipux-tab" [ngClass]="{'active': tab_active === 2}" (click)="changeTab(2)">
-          Anexos
+          Anexos ({{ (anexosGuardados?.length || 0) + (archivos?.length || 0) }})
+      </div>
+      <div class="quipux-tab" [ngClass]="{'active': tab_active === 3}" (click)="changeTab(3)">
+          Seguimiento
       </div>
       
   </div>
@@ -25,22 +28,27 @@
               <div class="mb-3 mb-md-0 fw-semibold">
                   <h4 class="text-gray-900 fw-bold">Información del Trámite: {{ tramiteDatos?.asignacion?.numero_tramite }}</h4>
                   <div class="fs-7 text-gray-700 pe-7">
-                      <span class="me-5">
-                          <strong>Ciudadano:</strong> {{ tramiteDatos?.cliente?.nombre || 'Sin nombre' }} 
+                      <!-- Un memorandum es interno: no hay ciudadano que mostrar -->
+                      <span class="me-5" *ngIf="!id_asignacion_padre">
+                          <strong>Ciudadano:</strong> {{ tramiteDatos?.cliente?.nombre || 'Sin nombre' }}
                           <small class="text-muted">({{ tramiteDatos?.cliente?.cedula_ruc }})</small>
                       </span>
-                      
+
                       <span class="me-5">
                           <strong>Fecha Ingreso:</strong> {{ tramiteDatos?.asignacion?.fecha_registro | date:'dd/MM/yyyy HH:mm' }}
                       </span>
-                      
+
                       <span>
                           <strong>De:</strong> {{ tramiteDatos?.usuario_origen?.nombre_completo || '-' }}
                       </span>
                   </div>
-                  
+
+                  <!-- Sin trámite el asunto vive en la asignación -->
                   <div class="fs-7 text-gray-600 mt-1">
-                      <strong>Asunto:</strong> {{ tramiteDatos?.tramite?.asunto }}
+                      <strong>Asunto:</strong>
+                      {{ id_asignacion_padre
+                          ? (tramiteDatos?.asignacion?.asunto_asignar || '-')
+                          : tramiteDatos?.tramite?.asunto }}
                   </div>
               </div>
               <!--
@@ -57,26 +65,25 @@
           </div>
       </div>
        <div class="mb-7 mt-5">
-         <h3 class="text-gray-800 fw-bold d-flex align-items-center">
-           <span>Creación de asignación de trámite</span>
-           <span class="ms-3 fs-7 fw-semibold text-gray-700">Memorandum:
-             <span class="align-middle ms-1 fs-5 fw-bold text-primary">{{ numeroMemorandumCompleto }}</span>
-           </span>
-           <span 
-             class="ms-3 fs-7 fw-semibold px-3 py-1 rounded text-white"
-             [ngClass]="{
-               'bg-primary': accion === 'DERIVAR',
-               'bg-success': accion === 'FINALIZAR',
-               'bg-danger': accion === 'RECHAZAR'
-             }"
-           >
-             {{ accion === 'DERIVAR' ? 'Asignando' : (accion === 'FINALIZAR' ? 'Finalizando' : 'Rechazando') }}
-           </span>
-         </h3>
-        <span class="text-muted fs-7">Complete los datos para la derivación del documento</span>
-        <!-- Input oculto con el número de memorandum completo -->
-        <input type="hidden" [(ngModel)]="numeroMemorandumCompleto" name="numeroMemorandumCompleto" />
-    </div>
+          <h3 class="text-gray-800 fw-bold d-flex align-items-center">
+            <span>Creación de asignación de trámite</span>
+            <span class="ms-3 fs-7 fw-semibold text-gray-700">Memorandum:
+               <span class="align-middle ms-1 fs-5 fw-bold text-primary">{{ numero_documento_input || tramiteDatos?.num_documento_interno || 'S/N' }}</span>
+            </span>
+            <span 
+              class="ms-3 fs-7 fw-semibold px-3 py-1 rounded text-white"
+              [ngClass]="{
+                'bg-primary': accion === 'DERIVAR',
+                'bg-danger': accion === 'RECHAZAR'
+              }"
+            >
+              {{ accion === 'DERIVAR' ? 'Asignando' : 'Rechazando' }}
+            </span>
+          </h3>
+         <span class="text-muted fs-7">Complete los datos para la derivación del documento</span>
+         <!-- Input oculto con el número de memorandum completo -->
+         <input type="hidden" [(ngModel)]="numeroMemorandumCompleto" name="numeroMemorandumCompleto" />
+     </div>
           <div class="d-flex flex-stack mb-5">
               <div class="d-flex align-items-center">
                   <button type="button" class="btn btn-sm btn-light-primary me-3" (click)="BuscarUsuario()">
@@ -86,14 +93,35 @@
                       </i>
                       Buscar Usuario
                   </button>
-                  <button type="button" class="btn btn-sm btn-light-info me-3" (click)="abrirVistaPrevia()">
+                    <button *ngIf="!sumillar" type="button" class="btn btn-sm btn-light-info me-3" (click)="abrirVistaPrevia()">
+                      <i class="ki-duotone ki-eye fs-2">
+                          <span class="path1"></span>
+                          <span class="path2"></span>
+                      </i>
+                      Vista Previa
+                  </button>
+                  <button *ngIf="sumillar" type="button" class="btn btn-sm btn-light-info me-3" (click)="verActa()">
                     <i class="ki-duotone ki-eye fs-2">
                         <span class="path1"></span>
                         <span class="path2"></span>
                     </i>
-                    Vista Previa
-                </button>
-                
+                    Ver Sumilla
+                  </button>
+                  <!-- Se reemplazó el botón 'Sumillar' por un checkbox según solicitud -->
+                  <!-- Al finalizar el trámite no aplican Sumillar ni Rechazar -->
+                  <!-- Sumillar, rechazar y finalizar no se muestran al subdirector -->
+                  <div class="form-check form-check-inline me-3 d-flex align-items-center" *ngIf="!esSumillado && !finalizarTramite && !esSubdirector">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="sumillarCheckbox"
+                      [(ngModel)]="sumillar"
+                      name="sumillar"
+                      (change)="onSumillarChange()"
+                    />
+                    <label class="form-check-label ms-2 fw-semibold" for="sumillarCheckbox">Sumillar</label>
+                  </div>
+     
                     <!--
 
                   <button type="button" class="btn btn-sm btn-light-success me-3" (click)="verActas()">
@@ -103,11 +131,19 @@
                     </i>
                     Actas
                   </button>
-                  -->
-                   <div class="form-check form-check-inline me-3 d-flex align-items-center">
-                      <input 
-                        class="form-check-input" 
-                        type="checkbox" 
+                  
+                  <button type="button" class="btn btn-sm btn-light-success me-3" (click)="abrirSumillar()" title="Sumillar">
+                    <i class="ki-duotone ki-note-2 fs-2">
+                      <span class="path1"></span>
+                      <span class="path2"></span>
+                      <span class="path3"></span>
+                    </i>
+                    Sumillar
+                  </button>-->
+                   <div class="form-check form-check-inline me-3 d-flex align-items-center" *ngIf="!esSumillado && !finalizarTramite && !esSubdirector">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
                         id="rechazarTramite"
                         [(ngModel)]="rechazarTramite"
                         name="rechazarTramite"
@@ -119,10 +155,10 @@
                       </label>
                     </div>
 
-                    <div class="form-check form-check-inline me-3 d-flex align-items-center">
-                      <input 
-                        class="form-check-input" 
-                        type="checkbox" 
+                    <div class="form-check form-check-inline me-3 d-flex align-items-center" *ngIf="!esSumillado && !esSubdirector">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
                         id="finalizarTramite"
                         [(ngModel)]="finalizarTramite"
                         name="finalizarTramite"
@@ -133,13 +169,11 @@
                        Finalizar trámite
                      </label>
                    </div>
-
+<!--
                    <button type="button" class="btn btn-sm btn-light-dark" (click)="grabar()" [disabled]="guardando">
-                       <i class="ki-duotone ki-dots-horizontal fs-2"><span class="path1"></span><span class="path2"></span></i>
-                       {{ guardando ? 'Guardando...' : 'Grabar' }}
-                   </button>
-                 
-
+                      <i class="ki-duotone ki-dots-horizontal fs-2"><span class="path1"></span><span class="path2"></span></i>
+                      {{ guardando ? 'Guardando...' : 'Grabar' }}
+                  </button>-->
               </div>
           </div>
       
@@ -161,9 +195,9 @@
                             <td *ngIf="i === 0" [attr.rowspan]="usuarios_para.length" class="fw-bold bg-light text-primary text-center">
                                 Para:
                             </td>
-                            <td><span class="text-muted">(Serv.)</span> {{ p.nombre_completo }}<span *ngIf="p.sigla" class="text-muted ms-1">({{ p.sigla }})</span></td>
+                            <td><span class="text-muted" *ngIf="!p.es_cliente && !p.id_cliente">(Serv.)</span> {{ p.nombre_completo }}<span *ngIf="p.sigla" class="text-muted ms-1">({{ p.sigla }})</span></td>
                             <td class="text-center">{{ p.titulo || '-' }}</td>
-                            <td>{{ p.area || p.subseccion || '-' }}</td>
+                            <td>{{ p.area || p.proyecto || p.subseccion || '-' }}</td>
                             <td>{{ p.institucion || p.empresa || '-' }}</td>
                         </tr>
                     </ng-container>
@@ -173,9 +207,9 @@
                             <td *ngIf="i === 0" [attr.rowspan]="usuarios_de.length" class="fw-bold bg-light text-success text-center">
                                 De:
                             </td>
-                            <td><span class="text-muted">(Serv.)</span> {{ p.nombre_completo }}<span *ngIf="p.sigla" class="text-muted ms-1">({{ p.sigla }})</span></td>
+                            <td><span class="text-muted" *ngIf="!p.es_cliente && !p.id_cliente">(Serv.)</span> {{ p.nombre_completo }}<span *ngIf="p.sigla" class="text-muted ms-1">({{ p.sigla }})</span></td>
                             <td class="text-center">{{ p.titulo || '-' }}</td>
-                            <td>{{ p.area || p.subseccion || '-' }}</td>
+                            <td>{{ p.area || p.proyecto || p.subseccion || '-' }}</td>
                             <td>{{ p.institucion || p.empresa || '-' }}</td>
                         </tr>
                     </ng-container>
@@ -185,9 +219,9 @@
                             <td *ngIf="i === 0" [attr.rowspan]="usuarios_copia.length" class="fw-bold bg-light text-gray-600 text-center">
                                 Copia a:
                             </td>
-                            <td><span class="text-muted">(Serv.)</span> {{ p.nombre_completo }}<span *ngIf="p.sigla" class="text-muted ms-1">({{ p.sigla }})</span></td>
+                            <td><span class="text-muted" *ngIf="!p.es_cliente && !p.id_cliente">(Serv.)</span> {{ p.nombre_completo }}<span *ngIf="p.sigla" class="text-muted ms-1">({{ p.sigla }})</span></td>
                             <td class="text-center">{{ p.titulo || '-' }}</td>
-                            <td>{{ p.area || p.subseccion || '-' }}</td>
+                            <td>{{ p.area || p.proyecto || p.subseccion || '-' }}</td>
                             <td>{{ p.institucion || p.empresa || '-' }}</td>
                         </tr>
                     </ng-container>
@@ -207,20 +241,21 @@
       
       
           <div class="row g-9 mb-8">
-              <div class="col-md-6 fv-row">
+              <!-- Los tres selects se muestran u ocultan juntos -->
+              <div class="col-md-6 fv-row" *ngIf="!sumillar && !selectsPrecargados">
                   <label class="fs-7 fw-bold mb-2 d-flex align-items-center justify-content-between">
                     <span>Tipo de Documento:</span>
-                    <span class="badge" [ngClass]="getPrioridadClass()">{{ getPrioridadLabel() }}</span>
+                  <!--  <span class="badge" [ngClass]="getPrioridadClass()">{{ getPrioridadLabel() }}</span>-->
                   </label>
                   <select class="form-select form-select-sm form-select-solid" [(ngModel)]="id_tipo_documento_sel" (ngModelChange)="onTipoDocumentoChange($event)" name="id_tipo_documento_sel">
                     <option [ngValue]="null">Seleccione Tipo de Documento</option>
                     <option *ngFor="let td of tipo_documentos" [ngValue]="td.id_tipodocumento">{{ td.nombre }}</option>
                   </select>
               </div>
-              <div class="col-md-6 fv-row">
+              <div class="col-md-6 fv-row" *ngIf="!sumillar && !selectsPrecargados">
                   <label class="fs-7 fw-bold mb-2 d-flex align-items-center justify-content-between">
                     <span>Tipo de Trámite:</span>
-                    <span class="badge badge-light-info">{{ getTiempoTramiteLabel() }}</span>
+                    <!--   <span class="badge badge-light-info">{{ getTiempoTramiteLabel() }}</span>-->
                   </label>
                   <select class="form-select form-select-sm form-select-solid" [(ngModel)]="id_tipo_tramite_sel" name="id_tipo_tramite_sel">
                     <option [ngValue]="null">Seleccione Tipo de Trámite</option>
@@ -229,7 +264,7 @@
               </div>
 
               <!-- Nueva: Categoría -->
-              <div class="col-md-6 fv-row">
+              <div class="col-md-6 fv-row" *ngIf="!sumillar && !selectsPrecargados">
                 <label class="fs-7 fw-bold mb-2">Categoría</label>
                 <select class="form-select form-select-sm form-select-solid" [(ngModel)]="categoria_sel" name="categoria_sel">
                   <option [ngValue]="''">Seleccione Categoría</option>
@@ -240,7 +275,7 @@
               </div>
           </div>
       
-          <div class="fv-row mb-8">
+          <div class="fv-row mb-8" *ngIf="!sumillar">
               <label class="fs-7 fw-bold mb-2">No. Referencia:</label>
               <input type="text" class="form-control form-control-sm form-control-solid" [value]="referenciaDisplay" readonly />
           </div>
@@ -250,21 +285,25 @@
                <input type="text" class="form-control form-control-sm form-control-solid" [(ngModel)]="numero_documento_input" name="numero_documento_input" placeholder="Ingrese el número de documento" readonly />
            </div>
           -->
-          <div class="fv-row mb-8">
+          <div class="fv-row mb-8" *ngIf="!sumillar">
               <label class="fs-7 fw-bold mb-2 required">Asunto:</label>
               <textarea class="form-control form-control-sm form-control-solid" rows="2" placeholder="Asunto del trámite..." [(ngModel)]="asunto" name="asunto"></textarea>
           </div>
       
-          <div class="fv-row mb-8">
-              <label class="fs-7 fw-bold mb-2">Cuerpo del Documento:</label>
-              <ckeditor 
-                  #editor
-                  [editor]="Editor" 
-                  [config]="editorConfig" 
-                  [(ngModel)]="contenidoCuerpo" 
-                  (ready)="onEditorReady($event)"
-                  name="cuerpo_doc">
-              </ckeditor>
+          <div class="fv-row mb-8" *ngIf="!sumillar">
+               <label class="fs-7 fw-bold mb-2">Cuerpo del Documento:</label>
+               <ckeditor 
+                   #editor
+                   [editor]="Editor" 
+                   [config]="editorConfig" 
+                   [(ngModel)]="contenidoCuerpo" 
+                   (ready)="onEditorReady($event)"
+                   name="cuerpo_doc">
+               </ckeditor>
+          </div>
+          <div class="fv-row mb-8" *ngIf="sumillar">
+               <label class="fs-7 fw-bold mb-2">Texto a Sumillar:</label>
+               <textarea class="form-control form-control-sm form-control-solid" rows="3" placeholder="Ingrese el texto a sumillar..." [(ngModel)]="textoSumillar" name="textoSumillar"></textarea>
           </div>
       </div>
 
@@ -342,30 +381,66 @@
           </div>
       </div>
 
-      
+      <!-- Pestaña Seguimiento: mismo listado que la opción del listado de trámites -->
+      <div *ngIf="tab_active === 3">
+        <div class="mb-7 mt-5">
+          <h3 class="text-gray-800 fw-bold">Seguimiento del trámite</h3>
+          <span class="text-muted fs-7">Historial de movimientos del trámite</span>
+        </div>
+
+        <app-seguimiento
+          [embebido]="true"
+          [id_tramite]="id_tramite"
+          [tramiteDatos]="tramiteDatos"
+          [areas]="areas">
+        </app-seguimiento>
+      </div>
+
   </form>
 </div>
 
 <div class="modal-footer flex-center">
-  <button type="button" (click)="activeModal.dismiss()" class="btn btn-light me-3">Cerrar</button>
+ <!-- <button type="button" (click)="activeModal.dismiss()" class="btn btn-light me-3">Cerrar</button>-->
    <!-- <button type="button" (click)="grabar()" class="btn btn-light-primary me-3" [disabled]="guardando">
       {{ guardando ? 'Guardando...' : 'Grabar Borrador' }}
     </button>-->
 
-      <button type="button" class="btn btn-sm btn-light-info me-3" (click)="abrirVistaPrevia()">
+      <button *ngIf="!sumillar" type="button" class="btn btn-sm btn-light-info me-3" (click)="abrirVistaPrevia()">
                     <i class="ki-duotone ki-eye fs-2">
                         <span class="path1"></span>
                         <span class="path2"></span>
                     </i>
                     Vista Previa
                 </button>
+      <button *ngIf="sumillar" type="button" class="btn btn-sm btn-light-info me-3" (click)="verActa()">
+                    <i class="ki-duotone ki-eye fs-2">
+                        <span class="path1"></span>
+                        <span class="path2"></span>
+                    </i>
+                    Ver Sumilla
+                </button>
+               <!-- <button type="button" class="btn btn-sm btn-light-warning me-3" (click)="abrirSumillar()" title="Sumillar">
+                    <i class="ki-duotone ki-edit fs-2"><span class="path1"></span><span class="path2"></span></i>
+                    Sumillar
+                </button>-->
   <button
+    *ngIf="!sumillar"
     type="button"
     (click)="confirmarAsignacion()"
     class="btn btn-primary"
     [disabled]="isAsignarDisabled()"
     title="Seleccione al menos un destinatario en 'Para'"
   >
-    Asignar Tramite
+    {{ finalizarTramite ? 'Finalizar Trámite' : 'Asignar Trámite' }}
+  </button>
+  <button
+    *ngIf="sumillar"
+    type="button"
+    (click)="EnviarSumillado()"
+    class="btn btn-primary"
+    [disabled]="isAsignarDisabled()"
+    title="Enviar trámite"
+  >
+    Enviar Tramite
   </button>
 </div>

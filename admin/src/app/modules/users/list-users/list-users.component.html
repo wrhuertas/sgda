@@ -93,9 +93,18 @@
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <div class="symbol symbol-50px me-5">
-                                            <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="avatar">
+                                        <div class="symbol symbol-circle symbol-50px me-5">
+                                            <!-- La foto del usuario; si no tiene o no carga, van sus iniciales -->
+                                            <img *ngIf="USER.avatar && !USER.sinFoto"
+                                                 [src]="USER.avatar"
+                                                 (error)="USER.sinFoto = true"
+                                                 style="object-fit: cover;"
+                                                 alt="Foto de {{ USER.full_name }}">
 
+                                            <span *ngIf="!USER.avatar || USER.sinFoto"
+                                                  class="symbol-label bg-light-primary text-primary fw-bold">
+                                                {{ (USER.name || '?').charAt(0) | uppercase }}
+                                            </span>
                                         </div>
                                         
                                         <div class="d-flex justify-content-start flex-column">

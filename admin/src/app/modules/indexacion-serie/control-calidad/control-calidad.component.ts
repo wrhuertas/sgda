@@ -17,7 +17,9 @@ export class ControlCalidadComponent {
   
     documentos: any[] = [];
     filtro: string = '';
-    
+    usuario_id: any = null;
+
+
     // Paginación
     paginaActual: number = 1;
     totalRegistros: number = 0;
@@ -43,6 +45,11 @@ export class ControlCalidadComponent {
       console.log('ID Serie:', this.idSerie);
       console.log('ID SubSerie:', this.idSubSerie);
       console.log('ID Empresa:', this.ID_EMPRESA);
+
+      // Usuario logeado (necesario para la auditoría del OCR)
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      this.usuario_id = user.id ?? null;
+
       // Al iniciar, cargamos la primera página
       this.cargarDocumentosAlInicio();
     }
@@ -295,9 +302,10 @@ export class ControlCalidadComponent {
   
         // CONFIGURACIÓN DEL PAYLOAD PARA LARAVEL
         const payload = {
-          id_documento: idReal, 
+          id_documento: idReal,
           idSerie: this.idSerie,
           id_empresa: this.ID_EMPRESA,
+          usuario_id: this.usuario_id,
           solo_texto: this.opciones.soloTexto || this.opciones.ambos,
           solo_params: this.opciones.soloParametros || this.opciones.ambos
         };

@@ -70,6 +70,16 @@ export class PrestamoService {
         return this.http.get<any>(url, { headers, params });
       }
 
+      /** Acta del memorandum: es el documento en sí */
+      actaMemorandum(id_asignacion_tramite: number | null, num_documento_interno: string) {
+        this.isLoadingSubject.next(true);
+        const headers = new HttpHeaders({'Authorization': 'Bearer ' + this.authservice.token});
+        const URL = URL_SERVICIOS + "/prestamo/acta-memorandum";
+        return this.http.post(URL, { id_asignacion_tramite, num_documento_interno }, { headers }).pipe(
+          finalize(() => this.isLoadingSubject.next(false))
+        );
+      }
+
       buscarTramitePorNumero(id_empresa: number, numero: string) {
         this.isLoadingSubject.next(true);
         const headers = new HttpHeaders({'Authorization': 'Bearer ' + this.authservice.token});
@@ -117,14 +127,59 @@ export class PrestamoService {
       // Agregamos el parámetro page a la URL para que Laravel lo detecte
       const URL = `${URL_SERVICIOS}/buscarDocumentos?page=${page}`;
 
+      const usuario = JSON.parse(localStorage.getItem('user') || '{}');
+
       const body = {
         busqueda: data.texto,
-        id_empresa: data.id_empresa
+        id_empresa: data.id_empresa,
+        // En el préstamo cada usuario sólo puede ver los documentos de su
+        // sección o subsección. La búsqueda general no manda esto.
+        limitar_por_usuario: true,
+        id_usuario: usuario?.id ?? null,
+        // Devuelve en cada documento el acta de préstamo que lo tiene (o null)
+        con_estado_prestamo: true,
+        // Y su ubicación topográfica (estantería / fila / caja / carpeta)
+        con_ubicacion: true
       };
 
       return this.http.post<any>(URL, body, { headers }).pipe(
         finalize(() => this.isLoadingSubject.next(false))
       );
+    }
+
+    /**
+     * Datos del usuario logueado (empresa, proyecto raíz/actual, siglas, firma).
+     * Es el mismo endpoint que usan los módulos de trámites.
+     */
+    datosLogeado(id_usuario: number) {
+      this.isLoadingSubject.next(true);
+
+      const headers = new HttpHeaders({'Authorization': 'Bearer ' + this.authservice.token});
+      const URL = URL_SERVICIOS + "/usuarios/datos-logeado";
+
+      return this.http.post(URL, { id_usuario }, { headers }).pipe(
+        finalize(() => this.isLoadingSubject.next(false))
+      );
+    }
+
+    /**
+     * Datos de la empresa para vistas previas. Trae las imágenes en base64
+     * (imagen_empresa_base64), que es la única forma de meterlas en un PDF:
+     * cargarlas por URL desde /storage lo bloquea el navegador por CORS.
+     */
+    cargarEmpresaVistaPrevia(id_empresa: number) {
+      const headers = new HttpHeaders({'Authorization': 'Bearer ' + this.authservice.token});
+      const URL = `${URL_SERVICIOS}/traerDatosEmpresaVistaPrevia/${id_empresa}`;
+
+      return this.http.get<any>(URL, { headers });
+    }
+
+    /** Descarga el PDF del acta firmada de un préstamo para abrirlo en el visor */
+    verActaFirmada(id_prestamo: number): Observable<Blob> {
+      const headers = new HttpHeaders({'Authorization': 'Bearer ' + this.authservice.token});
+      const URL = `${URL_SERVICIOS}/prestamos/ver-acta-firmada/${id_prestamo}`;
+
+      return this.http.get(URL, { headers, responseType: 'blob' });
     }
 
 

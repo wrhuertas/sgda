@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, Output, QueryList, Renderer2, ViewChild, ViewChildren } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { firstValueFrom, Subscription } from 'rxjs';
 import { DomSanitizer } from '@angular/platform-browser';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastrService } from 'ngx-toastr';
@@ -7,7 +7,6 @@ import Swal from 'sweetalert2';
 import { createWorker } from 'tesseract.js';
 import { IndexacionSerieService } from '../service/indexacion-serie.service';
 
-import { VerDocumentoComponent } from '../ver-documento/ver-documento.component';
 import { IndexarDocumentoComponent } from '../indexar-documento/indexar-documento.component'; // ruta según tu proyecto
 import { HttpEventType } from '@angular/common/http';
 
@@ -21,6 +20,10 @@ import { SubirExcelMasivoComponent } from '../subir-excel-masivo/subir-excel-mas
 import { HacerOcrComponent } from '../hacer-ocr/hacer-ocr.component';
 import { HacerOcrIAComponent } from '../hacer-ocr-ia/hacer-ocr-ia.component';
 import { ControlCalidadComponent } from '../control-calidad/control-calidad.component';
+import { MoverDocumentoComponent } from '../mover-documento/mover-documento.component';
+import { DocumentoVersionComponent } from '../documento-version/documento-version.component';
+import { DocumentoViewerService } from '../ver-documento/documento-viewer.service';
+import { AuthService } from '../../auth';
 // Configurar el worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
@@ -181,14 +184,28 @@ tecnicaSeleccion: string = 'COMPLETA'; // O 'PARCIAL', 'N/A'
     revisadoDigitadoPor: string = '';
 
   documentos: any[] = [];
+  // Búsqueda dentro de la tabla de documentos (filtra los ya cargados)
+  busquedaDocumento: string = '';
 
   cargandoDocumentos: boolean = false;
+
+  // Lista de documentos seleccionados (checkbox)
+  documentosSeleccionados: any[] = [];
+  selectAllDocs: boolean = false;
 
 
   puedeFirmarExpediente: boolean = true;
 
   // Tipo de documento a enviar en subida (DIGITAL / ELECTRONICO)
   private tipoDocSeleccionado: string | null = null;
+  // Marcado en el modal de formato: guarda la ruta cifrada en la base de datos
+  private encriptarRuta = false;
+  // Marcado en el modal de formato: renombra el PDF con los datos de la persona
+  private renombrarPorContenido = false;
+  // Con qué dato se arma ese nombre: 'nombre' | 'cedula' | 'ambos'
+  private modoRenombrado = 'nombre';
+  // Solo la Armada del Ecuador ve esa casilla (hojas de vida)
+  private esArmadaDelEcuador = false;
 
   // Hover preview de la primera página del PDF
   previewImage: string | null = null; // data URL
@@ -227,6 +244,18 @@ tecnicaSeleccion: string = 'COMPLETA'; // O 'PARCIAL', 'N/A'
     return parts.join(' • ');
   }
 
+  // Partes de la ruta para renderizar con separador ">" y resaltar el nivel actual
+  get rutaDisplayParts(): string[] {
+    const parts: string[] = [];
+    if (this.selectedRuta?.edificio) parts.push(`Edificio [${this.selectedRuta.edificio.id}]: ${this.selectedRuta.edificio.nombre}`);
+    if (this.selectedRuta?.sala) parts.push(`Sala [${this.selectedRuta.sala.id}]: ${this.selectedRuta.sala.nombre}`);
+    if (this.selectedRuta?.estanteria) parts.push(`Estantería [${this.selectedRuta.estanteria.id}]: ${this.selectedRuta.estanteria.nombre}`);
+    if (this.selectedRuta?.fila) parts.push(`Fila [${this.selectedRuta.fila.id}]: ${this.selectedRuta.fila.nombre}`);
+    if (this.selectedRuta?.caja) parts.push(`Caja [${this.selectedRuta.caja.id}]: ${this.selectedRuta.caja.nombre}`);
+    if (this.selectedRuta?.carpeta) parts.push(`Carpeta [${this.selectedRuta.carpeta.id}]: ${this.selectedRuta.carpeta.nombre}`);
+    return parts;
+  }
+
   // Setters de selección al hacer click en el árbol
   selectEdificio(e: any) {
     this.selectedRuta = {
@@ -244,7 +273,16 @@ tecnicaSeleccion: string = 'COMPLETA'; // O 'PARCIAL', 'N/A'
     } as any;
     this.listarDocumentosPorSerie(1);
   }
-  selectEstanteria(est: any) {
+  selectEstanteria(est: any, edificio?: any, sala?: any) {
+    // Si viene el contexto (edificio/sala), lo fijamos para completar la ruta.
+    // Esto es necesario porque el árbol se auto-expande hasta estantería y el
+    // usuario puede hacer clic directo en una estantería sin pasar por edificio/sala.
+    if (edificio) {
+      this.selectedRuta.edificio = { id: edificio.id_edificio ?? edificio.id ?? 0, nombre: edificio.nombre ?? '-' };
+    }
+    if (sala) {
+      this.selectedRuta.sala = { id: sala.id_sala ?? sala.id ?? 0, nombre: sala.nombre ?? '-' };
+    }
     this.selectedRuta.estanteria = { id: est.id_estanteria ?? est.id ?? 0, nombre: est.nombre ?? '-' };
     // Limpiar niveles inferiores
     this.selectedRuta.fila = null; this.selectedRuta.caja = null; this.selectedRuta.carpeta = null;
@@ -265,6 +303,44 @@ tecnicaSeleccion: string = 'COMPLETA'; // O 'PARCIAL', 'N/A'
     this.listarDocumentosPorSerie(1);
   }
 
+  // ===== Conteo de documentos por nivel de la ubicación topográfica =====
+  // El backend adjunta 'total_documentos' (real, contado desde la tabla documentos)
+  // en cada nodo, sumando el nivel y todos sus descendientes.
+  contarDocsCarpeta(k: any): number {
+    return Number(k?.total_documentos ?? k?.numero_documentos) || 0;
+  }
+  contarDocsCaja(c: any): number {
+    return Number(c?.total_documentos) || 0;
+  }
+  contarDocsFila(f: any): number {
+    return Number(f?.total_documentos) || 0;
+  }
+  contarDocsEstanteria(est: any): number {
+    return Number(est?.total_documentos) || 0;
+  }
+
+  // Documentos filtrados por el buscador (sobre los ya cargados en la página actual)
+  get documentosFiltrados(): any[] {
+    const lista = Array.isArray(this.documentos) ? this.documentos : [];
+    const term = (this.busquedaDocumento || '').trim().toLowerCase();
+    if (!term) { return lista; }
+    return lista.filter((d: any) => {
+      const nombre = (d?.nombre || d?.nombre_archivo || d?.titulo || '').toString().toLowerCase();
+      return nombre.includes(term);
+    });
+  }
+
+  // Total de documentos de toda la serie (reutiliza los total_documentos del árbol)
+  get totalDocumentosSerie(): number {
+    const lugares = Array.isArray(this.serieRespuesta?.data) ? this.serieRespuesta.data : [];
+    let total = 0;
+    lugares.forEach((l: any) => {
+      const estanterias = Array.isArray(l?.sala?.estanterias) ? l.sala.estanterias : [];
+      estanterias.forEach((est: any) => { total += Number(est?.total_documentos) || 0; });
+    });
+    return total;
+  }
+
   // Retorna el último nivel seleccionado con su tipo e id
   private getUltimoSeleccion(): { tipo: string; id: number; nombre: string } | null {
     if (this.selectedRuta?.carpeta) return { tipo: 'carpeta', id: this.selectedRuta.carpeta.id, nombre: this.selectedRuta.carpeta.nombre };
@@ -278,6 +354,16 @@ tecnicaSeleccion: string = 'COMPLETA'; // O 'PARCIAL', 'N/A'
 
   // Antes de abrir el picker de PDFs, imprime en consola el último id seleccionado
   openPickerAndLog(fileInputEl: HTMLInputElement) {
+
+    if (!this.selectedRuta?.edificio?.id) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Ubicación incompleta',
+        text: 'Por favor, selecciona al menos el Edificio para poder subir documentos.',
+        confirmButtonColor: '#3085d6'
+      });
+      return; // <--- ESTO EVITA QUE LLEGUE AL fileInputEl?.click();
+    }
     const ultimo = this.getUltimoSeleccion();
     const idEdificioSel = this.selectedRuta?.edificio?.id ?? null;
     if (ultimo) {
@@ -288,22 +374,136 @@ tecnicaSeleccion: string = 'COMPLETA'; // O 'PARCIAL', 'N/A'
     fileInputEl?.click();
   }
 
-  private async solicitarTipoDocumento(): Promise<string | null> {
-    const res = await Swal.fire({
+  /**
+   * El renombrado por contenido (hojas de vida) es solo para el GAD del
+   * Armada del Ecuador. Se consulta una vez y se recuerda.
+   */
+  private async verificarEmpresaRenombrado(): Promise<void> {
+    if (!this.id_empresa) { return; }
+
+    try {
+      const empresa: any = await firstValueFrom(this.seccionesService.obtenerEmpresa(this.id_empresa));
+      // Se compara sin tildes y en mayúsculas, para que no falle por cómo
+      // esté escrito el nombre de la empresa
+      const nombre = String(empresa?.nombre_empresa || '')
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .toUpperCase();
+
+      this.esArmadaDelEcuador = nombre.includes('ARMADA DEL ECUADOR');
+    } catch {
+      this.esArmadaDelEcuador = false;
+    }
+  }
+
+  private async solicitarTipoDocumento(): Promise<{ tipo: string; encriptar: boolean; renombrar: boolean; modo: string } | null> {
+    await this.verificarEmpresaRenombrado();
+
+    const res = await Swal.fire<{ tipo: string; encriptar: boolean; renombrar: boolean; modo: string }>({
       title: 'Formato de documento',
-      text: 'Seleccione el Formato de documento que va a subir',
-      input: 'select',
-      inputOptions: {
-        'DIGITAL': 'Digital',
-        'ELECTRONICO': 'Electrónico'
-      },
-      inputPlaceholder: 'Seleccione una opción',
+      html: `
+        <div class="text-start">
+          <label class="form-label fs-7">Seleccione el Formato de documento que va a subir</label>
+          <select id="fd-tipo" class="form-select form-select-solid">
+            <option value="">Seleccione una opción</option>
+            <option value="DIGITAL">Digital</option>
+            <option value="ELECTRONICO">Electrónico</option>
+          </select>
+
+          ${this.esArmadaDelEcuador ? `
+          <div class="form-check form-check-custom form-check-solid mt-5">
+            <input class="form-check-input" type="checkbox" id="fd-encriptar">
+            <label class="form-check-label fw-semibold text-gray-800 ms-3" for="fd-encriptar">
+              Encriptar la ruta del documento
+            </label>
+          </div>
+          <div class="text-muted fs-8 mt-2">
+            Si lo marca, la ubicación del archivo se guarda cifrada en la base de datos.
+            El documento se sigue viendo y descargando igual desde el sistema.
+          </div>
+          ` : ''}
+
+          ${this.esArmadaDelEcuador ? `
+          <div class="form-check form-check-custom form-check-solid mt-5">
+            <input class="form-check-input" type="checkbox" id="fd-renombrar">
+            <label class="form-check-label fw-semibold text-gray-800 ms-3" for="fd-renombrar">
+              Renombrar el archivo
+            </label>
+          </div>
+          <div class="text-muted fs-8 mt-2">
+            Para hojas de vida: el sistema lee el documento y arma el nombre del
+            archivo con los datos de la persona. Si no logra identificarlos,
+            se conserva el nombre original.
+          </div>
+
+          <!-- Con qué dato se arma el nombre. Solo se ve si la casilla está marcada -->
+          <div id="fd-modo-caja" class="ms-8 mt-3 d-none">
+            <div class="form-check form-check-custom form-check-solid form-check-sm mb-2">
+              <input class="form-check-input" type="radio" name="fd-modo" id="fd-modo-nombre" value="nombre" checked>
+              <label class="form-check-label text-gray-700 ms-3" for="fd-modo-nombre">
+                Por nombre <span class="text-muted fs-8">— Cesar Augusto Enriquez Alvarez.pdf</span>
+              </label>
+            </div>
+            <div class="form-check form-check-custom form-check-solid form-check-sm mb-2">
+              <input class="form-check-input" type="radio" name="fd-modo" id="fd-modo-cedula" value="cedula">
+              <label class="form-check-label text-gray-700 ms-3" for="fd-modo-cedula">
+                Por cédula <span class="text-muted fs-8">— 0502983620.pdf</span>
+              </label>
+            </div>
+            <div class="form-check form-check-custom form-check-solid form-check-sm">
+              <input class="form-check-input" type="radio" name="fd-modo" id="fd-modo-ambos" value="ambos">
+              <label class="form-check-label text-gray-700 ms-3" for="fd-modo-ambos">
+                Ambos <span class="text-muted fs-8">— 0502983620 Cesar Augusto Enriquez Alvarez.pdf</span>
+              </label>
+            </div>
+          </div>
+          ` : ''}
+        </div>
+      `,
+      focusConfirm: false,
       showCancelButton: true,
       confirmButtonText: 'Continuar',
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
+      width: '640px',
+      heightAuto: true,
+      didOpen: () => {
+        // Aprovechar el alto de la pantalla para que entre todo el contenido
+        // sin el scroll interno que recortaba las últimas opciones
+        try {
+          const popupEl = Swal.getPopup();
+          if (popupEl) {
+            popupEl.style.maxHeight = '92vh';
+            popupEl.style.maxWidth = '95vw';
+          }
+          const htmlEl = Swal.getHtmlContainer();
+          if (htmlEl) {
+            htmlEl.style.maxHeight = 'calc(92vh - 170px)';
+            htmlEl.style.overflowY = 'auto';
+          }
+        } catch {}
+
+        // Las opciones de renombrado solo aparecen al marcar la casilla
+        const chk = document.getElementById('fd-renombrar') as HTMLInputElement | null;
+        const caja = document.getElementById('fd-modo-caja') as HTMLDivElement | null;
+
+        chk?.addEventListener('change', () => {
+          caja?.classList.toggle('d-none', !chk.checked);
+        });
+      },
+      preConfirm: () => {
+        const tipo = (document.getElementById('fd-tipo') as HTMLSelectElement)?.value || '';
+        if (!tipo) {
+          Swal.showValidationMessage('Seleccione el formato del documento');
+          return null as any;
+        }
+        const encriptar = (document.getElementById('fd-encriptar') as HTMLInputElement)?.checked === true;
+        const renombrar = (document.getElementById('fd-renombrar') as HTMLInputElement)?.checked === true;
+        const modo = (document.querySelector('input[name="fd-modo"]:checked') as HTMLInputElement)?.value || 'nombre';
+        return { tipo, encriptar, renombrar, modo } as any;
+      }
     });
     if (!res.isConfirmed || !res.value) return null;
-    return String(res.value);
+    return res.value;
   }
 
   // ===============================================
@@ -345,11 +545,11 @@ tecnicaSeleccion: string = 'COMPLETA'; // O 'PARCIAL', 'N/A'
       }).then((result) => {
         if (result.isConfirmed) {
           
-          this.seccionesService.eliminarDocumento(id).subscribe({
+          this.seccionesService.eliminarDocumento(id, this.usuario_id).subscribe({
             next: (resp: any) => {
               if (resp.success) {
                 Swal.fire('¡Eliminado!', resp.message, 'success');
-                this.listarDocumentosPorSerie(); // Recargamos la lista para que desaparezca el doc
+                this.listarDocumentosPorSerie();
               }
             },
             error: (err) => {
@@ -400,7 +600,12 @@ tecnicaSeleccion: string = 'COMPLETA'; // O 'PARCIAL', 'N/A'
      listaTitulos: any[] = []; 
 
 
-
+serieRespuesta: any = {
+  seccion_superior: null,
+  subseccion: { nombre: '' },
+  padre: { nombre: '' },
+  serie: { nombre: '' }
+};
 
 
 
@@ -426,6 +631,8 @@ puedeVerDocumentoSerie = false;
 puedeRegistrarDatosSerie = false;
 puedeIndexarSerie = false;
 puedeIndexarMasivoSerie = false;
+puedeSubirExcelSerie = false;
+puedeControlCalidadSerie = false;
 puedeEliminarDocumentoSerie = false;
 puedeFirmarDocumentoSerie = false;
 puedeLimpiarDocumentoSerie = false;
@@ -438,17 +645,21 @@ puedeVerDocumentoSubSerie = false;
 puedeRegistrarDatosSubSerie = false;
 puedeIndexarSubSerie = false;
 puedeIndexarMasivoSubSerie = false;
+puedeSubirExcelSubSerie = false;
+puedeControlCalidadSubSerie = false;
 puedeEliminarDocumentoSubSerie = false;
 puedeFirmarDocumentoSubSerie = false;
 puedeLimpiarDocumentoSubSerie = false;
 mostrarBotonSubirDocumentos = false;
+
+serieRutaJerarquica: any = null;
 
 paginaActual: number = 1;
 totalRegistros: number = 0;
   ultimaPagina: number = 1;
   // Input para ir a una página específica
   jumpPage: number | null = null;
-  serieRespuesta: any = null;
+ // serieRespuesta: any = null;
 
   isLoading: boolean = true;
 
@@ -462,12 +673,23 @@ totalRegistros: number = 0;
     public modalService: NgbModal,
     private sanitizer: DomSanitizer,
   private cdr: ChangeDetectorRef,
-  private renderer: Renderer2
+  private renderer: Renderer2,
+  private documentoViewer: DocumentoViewerService,
+  private authService: AuthService
   ) {}
 
   // (el modal previo a subir PDFs fue retirado a solicitud del usuario)
 
   ngOnInit(): void {
+      // Swal de carga mientras se obtienen los datos de la ubicación
+      Swal.fire({
+        title: 'Cargando datos',
+        text: 'Espere por favor...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
+
+      this.obtenerDatosGenerales();
     console.log('📥 ID Edificio recibido (opcional):', this.idEdificio);
     console.log('📥 ID Sala recibida (opcional):', this.idSala);
     console.log('📥 Serie recibida en modal:', this.serieBackend);
@@ -502,23 +724,38 @@ totalRegistros: number = 0;
 
   // 🔹 Aquí llamamos a PermisosSubSerie enviando el ID de la serie/subserie directamente
   if (this.usuario_id != null) {
-    const idActual = this.idSubSerie ?? this.idSeriePadre ?? 0; // Prioridad: SubSerie > Serie Padre
-    //console.log('📤 Enviando a PermisosSubSerie, ID actual:', idActual);
+    const idActual = this.idSubSerie ?? this.idSeriePadre ?? this.idSerie ?? 0; // Prioridad: SubSerie > Serie Padre > Serie
+    // Logs de diagnóstico adicionales
+    try {
+      console.log('%c[Permisos][Init] IDs recibidos', 'color:#0a58ca;font-weight:bold');
+      console.table({
+        idSerieProp: this.idSerie,
+        idSeriePadre: this.idSeriePadre,
+        idSubSerie: this.idSubSerie,
+        idActual,
+        tipo_idSerie: typeof this.idSerie,
+        tipo_idSeriePadre: typeof this.idSeriePadre,
+        tipo_idSubSerie: typeof this.idSubSerie,
+        tipo_idActual: typeof idActual,
+        usuario_id: this.usuario_id,
+        id_empresa: this.id_empresa
+      });
+    } catch {}
 
     this.PermisosSubSerie(this.usuario_id, idActual);
   } else {
-    //console.error('No se pudo determinar el ID del usuario para permisos.');
+    console.error('No se pudo determinar el ID del usuario para permisos.');
   }
 
   this.inicializarCamposExtra();
   this.cargarIndexacion();
   // Ya no listamos documentos al abrir; se listan al seleccionar en la ruta
-  this.obtenerDatosGenerales();
+
   this.obtenerDatosRuta();
 }
 
 
-obtenerDatosRuta() {
+  obtenerDatosRuta() {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const idUsuario = user.id || null;
   const idEmpresa = user.id_empresa || this.id_empresa || null; 
@@ -526,32 +763,142 @@ obtenerDatosRuta() {
   this.isLoading = true;
   this.error = null;
 
-  const payload = { 
+  const payload = {
     idSerie: this.idSerie,
+    // Serie/Subserie real de los documentos (igual criterio que el listado)
+    id_serie_subserie: this.idSubSerie ?? this.idSerie,
     id_usuario: idUsuario,
     id_empresa: idEmpresa,
     // Aquí agregamos los nuevos parámetros
-    id_edificio: this.idEdificio || null, 
+    id_edificio: this.idEdificio || null,
     id_sala: this.idSala || null,
     id_lugar: this.idLugarRuta || null
   };
 
-  this.seccionesService.obtenerDatosRuta(payload).subscribe({
-    next: (resp: any) => {
+    this.seccionesService.obtenerDatosRuta(payload).subscribe({
+      next: (resp: any) => {
       console.log('RESPUESTA DATOS GENERALES CON UBICACIÓN:', resp);
-      this.serieRespuesta = resp; 
+      this.serieRespuesta = resp;
+      // Asegurar orden consistente en la jerarquía (evita que los nodos aparezcan "desordenados" tras edición)
+      try { this.ensureSerieRespuestaOrdenada(); } catch (e) { console.error('Error ordenando jerarquía:', e); }
+      // Auto-expandir el árbol hasta el nivel de estantería (muestra las estanterías directo)
+      try { this.autoExpandHastaEstanteria(); } catch (e) { console.error('Error auto-expandiendo hasta estantería:', e); }
       this.cdr.detectChanges();
-    },
+      try { Swal.close(); } catch {}
+      },
     error: (err) => {
       console.error('Error en obtenerDatosRuta:', err);
       this.error = 'Error al cargar los datos';
       this.isLoading = false;
+      try { Swal.close(); } catch {}
     },
     complete: () => {
       this.isLoading = false;
+      try { Swal.close(); } catch {}
     }
   });
 }
+
+  // Expande automáticamente el árbol de ubicación hasta el nivel de ESTANTERÍA,
+  // de modo que al entrar ya se muestren las estanterías sin tener que navegar
+  // manualmente por edificio y sala.
+  private autoExpandHastaEstanteria(): void {
+    this.expandKeys = {};
+
+    // Estructura 1: serieRespuesta.data (cada item tiene edificio + una sola sala 's0')
+    if (Array.isArray(this.serieRespuesta?.data) && this.serieRespuesta.data.length) {
+      this.serieRespuesta.data.forEach((l: any, ei: number) => {
+        this.expandKeys['e' + ei] = true;            // expandir edificio
+        if (l?.sala) {
+          this.expandKeys['e' + ei + 's0'] = true;   // expandir sala -> muestra las estanterías
+        }
+      });
+      return;
+    }
+
+    // Estructura 2: serieRespuesta.edificios (edificio -> salas[] -> estanterias[])
+    if (Array.isArray(this.serieRespuesta?.edificios) && this.serieRespuesta.edificios.length) {
+      this.serieRespuesta.edificios.forEach((e: any, ei: number) => {
+        this.expandKeys['e' + ei] = true;            // expandir edificio
+        if (Array.isArray(e?.salas)) {
+          e.salas.forEach((_s: any, si: number) => {
+            this.expandKeys['e' + ei + 's' + si] = true; // expandir cada sala -> muestra las estanterías
+          });
+        }
+      });
+    }
+  }
+
+  // Ordena consistentemente la jerarquía de ruta para evitar reordenamientos inesperados en la UI
+  private ensureSerieRespuestaOrdenada() {
+    // extrae número de una cadena (primera secuencia de dígitos)
+    const extractNum = (v: any) => {
+      if (v === null || v === undefined) return NaN;
+      if (typeof v === 'number') return v;
+      const s = String(v).trim();
+      const m = s.match(/-?\d+/);
+      return m ? Number(m[0]) : NaN;
+    };
+
+    // comparador natural: intenta ordenar por campos preferidos numéricos y si no, por número en nombre, sino por nombre
+    const cmpNatural = (a: any, b: any, preferFields: string[] = []) => {
+      for (const f of preferFields) {
+        const va = a?.[f];
+        const vb = b?.[f];
+        if (va !== undefined && vb !== undefined) {
+          const na = Number(va);
+          const nb = Number(vb);
+          if (!isNaN(na) && !isNaN(nb)) return na - nb;
+        }
+      }
+      const na = extractNum(a?.nombre ?? a?.id ?? '');
+      const nb = extractNum(b?.nombre ?? b?.id ?? '');
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      return (a?.nombre || '').toString().localeCompare((b?.nombre || '').toString());
+    };
+
+    const sortCarpetas = (cajas: any[]) => {
+      if (!Array.isArray(cajas)) return;
+      cajas.forEach((c: any) => {
+        if (Array.isArray(c.carpetas)) c.carpetas.sort((x: any, y: any) => cmpNatural(x, y, ['id_carpeta']));
+      });
+      cajas.sort((x: any, y: any) => cmpNatural(x, y, ['numero_caja', 'id_caja']));
+    };
+
+    const sortFilas = (estanterias: any[]) => {
+      if (!Array.isArray(estanterias)) return;
+      estanterias.forEach((est: any) => {
+        if (Array.isArray(est.filas)) {
+          est.filas.sort((x: any, y: any) => cmpNatural(x, y, ['id_fila']));
+          est.filas.forEach((f: any) => {
+            if (Array.isArray(f.cajas)) sortCarpetas(f.cajas);
+          });
+        }
+      });
+      estanterias.sort((x: any, y: any) => cmpNatural(x, y, ['id_estanteria']));
+    };
+
+    // Caso 1: estructura plana en serieRespuesta.data
+    if (this.serieRespuesta?.data && Array.isArray(this.serieRespuesta.data)) {
+      this.serieRespuesta.data.sort((a: any, b: any) => cmpNatural(a.edificio || {}, b.edificio || {}, ['id_edificio']));
+      this.serieRespuesta.data.forEach((l: any) => {
+        if (l?.sala && l.sala.estanterias) sortFilas(l.sala.estanterias as any[]);
+      });
+    }
+
+    // Caso 2: estructura jerárquica en serieRespuesta.edificios
+    if (this.serieRespuesta?.edificios && Array.isArray(this.serieRespuesta.edificios)) {
+      this.serieRespuesta.edificios.sort((a: any, b: any) => cmpNatural(a, b, ['id_edificio']));
+      this.serieRespuesta.edificios.forEach((e: any) => {
+        if (Array.isArray(e.salas)) {
+          e.salas.sort((a: any, b: any) => cmpNatural(a, b, ['id_sala']));
+          e.salas.forEach((s: any) => {
+            if (Array.isArray(s.estanterias)) sortFilas(s.estanterias as any[]);
+          });
+        }
+      });
+    }
+  }
 
 
 // En tu componente (.ts)
@@ -575,31 +922,26 @@ get rutaCompleta(): string {
 
 obtenerDatosGenerales() {
   if (this.idSerie === null) {
-    console.error('No se pudo determinar el ID de la serie para continuar.');
+    console.error('No se pudo determinar el ID de la serie.');
     return;
   }
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const idUsuario = user.id || null;
-  const idEmpresa = user.id_empresa || this.id_empresa || null; 
-
-  this.isLoading = true;
-  this.error = null;
-
   const payload = { 
     idSerie: this.idSerie,
-    id_usuario: idUsuario,
-    id_empresa: idEmpresa
+    id_usuario: user.id || null,
+    id_empresa: user.id_empresa || this.id_empresa || null
   };
 
+  this.isLoading = true;
   this.seccionesService.obtenerDatosGenerales(payload).subscribe({
-    next: (resp: any) => {
-      console.log('RESPUESTA DATOS GENERALES:', resp);
-      this.serieRespuesta = resp; 
+   next: (resp: any) => {
+      // AQUÍ: Guardamos en su variable específica
+      this.serieRutaJerarquica = resp.data || resp; 
       this.cdr.detectChanges();
     },
     error: (err) => {
-      console.error('Error en obtenerDatosGenerales:', err);
+      console.error('Error al obtener datos generales:', err);
     },
     complete: () => {
       this.isLoading = false;
@@ -877,6 +1219,58 @@ renderizarPDFsDesdeBD() {
     if (this.pageNum <= 1) return;
     this.pageNum--;
     this.renderPage(this.pageNum);
+  }
+
+  onToggleDocSelected(doc: any) {
+    // Actualiza lista local de seleccionados
+    if (doc._checked) {
+      if (!this.documentosSeleccionados.find((d: any) => d.id === doc.id)) {
+        this.documentosSeleccionados.push(doc);
+      }
+    } else {
+      this.documentosSeleccionados = this.documentosSeleccionados.filter((d: any) => d.id !== doc.id);
+    }
+    console.log('Documentos seleccionados:', this.documentosSeleccionados.map((d: any) => d.id || d.id_documento));
+  }
+
+  toggleSelectAll() {
+    if (this.selectAllDocs) {
+      this.documentosSeleccionados = this.documentos.map(d => { d._checked = true; return d; });
+    } else {
+      this.documentosSeleccionados = [];
+      this.documentos.forEach(d => d._checked = false);
+    }
+    console.log('Select all toggled:', this.selectAllDocs, 'Selected count:', this.documentosSeleccionados.length);
+  }
+
+  trasladarDocumentos(event: Event) {
+    event.stopPropagation();
+    if (!this.documentosSeleccionados || this.documentosSeleccionados.length === 0) return;
+    // Abrir modal para trasladar documentos
+    const modalRef = this.modalService.open(MoverDocumentoComponent, { size: 'lg', centered: true, backdrop: 'static' });
+    // Pasamos documentos seleccionados al modal
+    modalRef.componentInstance.documentos = this.documentosSeleccionados;
+    // Pasamos la ruta jerárquica seleccionada al modal para que el modal sepa de dónde vienen
+    modalRef.componentInstance.serieRutaJerarquica = this.serieRutaJerarquica;
+    // Pasamos la ubicación topográfica actualmente seleccionada (edificio/sala/estanteria/fila/caja/carpeta)
+    modalRef.componentInstance.ubicacionTopografica = this.selectedRuta;
+    // Pasamos la estructura completa de la ruta (árbol) para que el modal la renderice directamente
+    modalRef.componentInstance.ubicacionTree = this.serieRespuesta?.data || null;
+    // Pasamos el idSerie y idLugarRuta para que el modal pueda consultar datos si necesita
+    modalRef.componentInstance.idSerie = this.idSerie;
+    modalRef.componentInstance.idLugarRuta = this.idLugarRuta ?? null;
+    modalRef.result.then((res) => {
+      // Al cerrar el modal, si devuelve true, limpiamos la selección
+      if (res === true) {
+        this.selectAllDocs = false;
+        this.documentosSeleccionados = [];
+        this.documentos.forEach(d => d._checked = false);
+        // Recargar la lista de documentos para reflejar los cambios de ubicación
+        try { this.listarDocumentosPorSerie(this.paginaActual); } catch (e) { console.error('Error recargando documentos tras traslado:', e); }
+        // Recargar el árbol de ubicación para reflejar los nuevos conteos por carpeta/caja/etc.
+        try { this.obtenerDatosRuta(); } catch (e) { console.error('Error recargando ubicación tras traslado:', e); }
+      }
+    }).catch(() => {});
   }
 
   nextPage() {
@@ -1501,6 +1895,8 @@ async subirVariosPDFs() {
   const formData = new FormData();
   formData.append('id_proyecto', this.idProyecto);
   formData.append('id_serie', String(this.idSerie)); // 👈 agregamos el idSerie
+  // Enviar id_lugar si el modal recibió la ubicación específica
+  if (this.idLugarRuta) formData.append('id_lugar', String(this.idLugarRuta));
   this.archivosSeleccionados.forEach(file => formData.append('archivos[]', file));
 
   this.seccionesService.archivos(formData).subscribe(
@@ -1533,6 +1929,7 @@ async subirVariosPDFs() {
             const form = new FormData();
             form.append('id_proyecto', this.idProyecto);
             form.append('id_serie', String(this.idSerie)); // 👈 también en cada PDF separado
+            if (this.idLugarRuta) form.append('id_lugar', String(this.idLugarRuta));
             form.append('archivos[]', blob, pdf.nombre);
             await this.seccionesService.archivos(form).toPromise();
             console.log('PDF separado subido:', pdf.nombre);
@@ -1545,6 +1942,7 @@ async subirVariosPDFs() {
             const form = new FormData();
             form.append('id_proyecto', this.idProyecto);
             form.append('id_serie', String(this.idSerie)); // 👈 también aquí
+            if (this.idLugarRuta) form.append('id_lugar', String(this.idLugarRuta));
             form.append('archivos[]', file);
             await this.seccionesService.archivos(form).toPromise();
             console.log('PDF subido tal cual:', archivo.nombre);
@@ -1569,7 +1967,10 @@ async subirVariosPDFs() {
     // Solicitar SIEMPRE el tipo de documento
     const tipoSel = await this.solicitarTipoDocumento();
     if (!tipoSel) { event.target.value = ''; return; }
-    this.tipoDocSeleccionado = tipoSel;
+    this.tipoDocSeleccionado = tipoSel.tipo;
+    this.encriptarRuta = tipoSel.encriptar;
+    this.renombrarPorContenido = tipoSel.renombrar;
+    this.modoRenombrado = tipoSel.modo;
   
   // 1. FILTRAR: Solo PDFs
   const pdfFiles = allFiles.filter(file => 
@@ -1593,6 +1994,8 @@ async subirVariosPDFs() {
   
   const totalArchivos = pdfFiles.length;
   const errores: string[] = [];
+  // Documentos rechazados por el backend (ya cargados en otra serie/ubicación)
+  const erroresAcumulados: any[] = [];
 
   Swal.fire({
     title: 'Procesando Carpeta',
@@ -1630,6 +2033,10 @@ async subirVariosPDFs() {
       
       if (idDestino) formData.append(campoId, String(idDestino));
       if (id_empresa) formData.append('id_empresa', String(id_empresa));
+      // Añadir id_lugar si está disponible (nuevo esquema usa id_lugar)
+      if (this.idLugarRuta) {
+        formData.append('id_lugar', String(this.idLugarRuta));
+      }
 
       // --- EL CAMBIO CRÍTICO ESTÁ AQUÍ ---
       // Cambiamos 'id_usuario' por 'usuario_id' para que Laravel no dé error
@@ -1639,6 +2046,11 @@ async subirVariosPDFs() {
       
       formData.append('tipo_subida', tipo);
       if (this.tipoDocSeleccionado) formData.append('tipo_documento', this.tipoDocSeleccionado);
+      // Guardar la ruta cifrada en la base de datos (opcional, se marca en el modal)
+      formData.append('encriptar_ruta', this.encriptarRuta ? '1' : '0');
+      // Renombrar el PDF con el nombre de la persona (hojas de vida)
+      formData.append('renombrar_por_contenido', this.renombrarPorContenido ? '1' : '0');
+      formData.append('modo_renombrado', this.modoRenombrado);
       // ➕ Añadir último nivel seleccionado (si existe) para esta iteración del bucle
       const ultimo2 = this.getUltimoSeleccion();
       if (ultimo2) {
@@ -1678,7 +2090,12 @@ async subirVariosPDFs() {
 
     try {
       // Usamos .toPromise() para mantener consistencia con tu otra función
-      await this.seccionesService.subirDocumentosSerie(formData).toPromise();
+      const resp: any = await this.seccionesService.subirDocumentosSerie(formData).toPromise();
+      // El servicio usa observe:'events'; el body viene en resp.body
+      const body: any = resp?.body ?? resp;
+      if (Array.isArray(body?.errores) && body.errores.length > 0) {
+        erroresAcumulados.push(...body.errores);
+      }
     } catch (error) {
       console.error(`Error en archivo ${file.name}:`, error);
       errores.push(file.name);
@@ -1686,10 +2103,41 @@ async subirVariosPDFs() {
   }
 
   // 3. FINALIZACIÓN
-  event.target.value = ''; 
-  this.listarDocumentosPorSerie();
-  this.mostrarResumenFinal(totalArchivos, errores);
+  event.target.value = '';
   this.tipoDocSeleccionado = null;
+  this.encriptarRuta = false;
+  this.renombrarPorContenido = false;
+  this.modoRenombrado = 'nombre';
+
+  if (erroresAcumulados.length > 0) {
+    // Aviso de documentos ya cargados (no se cierra hasta dar "Cerrar")
+    const listaHtml = erroresAcumulados
+      .map((e: any) => `<li><b>${e.archivo}</b>: ${e.error}</li>`)
+      .join('');
+    const subidos = totalArchivos - erroresAcumulados.length - errores.length;
+    await Swal.fire({
+      icon: 'warning',
+      title: 'Algunos documentos no se subieron',
+      html: `
+        <div style="text-align:left;">
+          <p>Se subieron <b>${subidos < 0 ? 0 : subidos}</b> de <b>${totalArchivos}</b> expedientes.</p>
+          <p class="mb-1">Motivo por cada documento:</p>
+          <ul style="max-height:200px; overflow:auto; padding-left:18px;">${listaHtml}</ul>
+        </div>`,
+      confirmButtonText: 'Cerrar',
+      confirmButtonColor: '#009ef7',
+      allowOutsideClick: false,
+      allowEscapeKey: false
+    });
+    // Refrescar DESPUÉS de cerrar el aviso (para que no lo cierre el Swal de la lista)
+    this.listarDocumentosPorSerie();
+    try { this.obtenerDatosRuta(); } catch {}
+  } else {
+    // Flujo normal (sin duplicados): refrescar y mostrar el resumen habitual
+    this.listarDocumentosPorSerie();
+    try { this.obtenerDatosRuta(); } catch {}
+    this.mostrarResumenFinal(totalArchivos, errores);
+  }
 }
 
 private mostrarResumenFinal(total: number, errores: string[]) {
@@ -2013,20 +2461,32 @@ private mostrarResumenFinal(total: number, errores: string[]) {
 
 
 
-  async subirPdfSimple(fileInput: HTMLInputElement) {
-
+async subirPdfSimple(fileInput: HTMLInputElement) {
   const files = fileInput.files;
+  
+  // 1. Validación inicial de archivos
   if (!files || files.length === 0) {
     console.error('❌ No hay archivos seleccionados');
     return;
   }
+if (!this.selectedRuta?.edificio?.id) {
+    fileInput.value = ''; // Limpiamos la selección
+    Swal.fire({
+      icon: 'warning',
+      title: 'Ubicación incompleta',
+      text: 'Por favor, selecciona al menos el Edificio antes de seleccionar archivos.',
+      confirmButtonColor: '#3085d6'
+    });
+    return; // AQUÍ SE DETIENE LA FUNCIÓN
+  }
 
-  // Solicitar SIEMPRE el tipo de documento
+  // 3. Solicitar tipo de documento
   const tipoSel = await this.solicitarTipoDocumento();
   if (!tipoSel) { fileInput.value = ''; return; }
-  this.tipoDocSeleccionado = tipoSel;
+  this.tipoDocSeleccionado = tipoSel.tipo;
+  this.encriptarRuta = tipoSel.encriptar;
 
-  // ✅ USUARIO LOGEADO
+  // 4. ✅ USUARIO LOGEADO
   const userRaw = localStorage.getItem('user');
   const user = userRaw ? JSON.parse(userRaw) : null;
 
@@ -2042,12 +2502,12 @@ private mostrarResumenFinal(total: number, errores: string[]) {
 
   const formData = new FormData();
 
-  // ✅ ARCHIVOS
+  // 5. ✅ ARCHIVOS
   for (let i = 0; i < files.length; i++) {
     formData.append('documentos[]', files[i]);
   }
 
-  // ✅ SUBSERIE / SERIE
+  // 6. ✅ SUBSERIE / SERIE
   if (this.idSubSerie) {
     formData.append('id_subserie', String(this.idSubSerie));
   } else if (this.idSerie) {
@@ -2056,59 +2516,104 @@ private mostrarResumenFinal(total: number, errores: string[]) {
     console.warn('⚠️ NO HAY ID SERIE NI SUBSERIE');
   }
 
-  // ✅ EMPRESA
+  // 7. ✅ EMPRESA
   if (this.id_empresa) {
     formData.append('id_empresa', String(this.id_empresa));
   } else {
     console.warn('⚠️ NO HAY ID EMPRESA');
   }
 
-  // ✅ USUARIO (ESTA ES LA CLAVE)
-  formData.append('id_usuario', usuario_id);
-  // ✅ Tipo de documento (si fue seleccionado en otro flujo)
+  // 8. ✅ USUARIO (CORRECTO: usuario_id para coincidir con el backend)
+  formData.append('usuario_id', usuario_id);
+  
+  // 9. ✅ Tipo de documento
   if (this.tipoDocSeleccionado) formData.append('tipo_documento', this.tipoDocSeleccionado);
+  // Guardar la ruta cifrada en la base de datos (opcional, se marca en el modal)
+  formData.append('encriptar_ruta', this.encriptarRuta ? '1' : '0');
+  // Renombrar el PDF con el nombre de la persona (hojas de vida)
+  formData.append('renombrar_por_contenido', this.renombrarPorContenido ? '1' : '0');
+  formData.append('modo_renombrado', this.modoRenombrado);
 
-  // ➕ Agregar id_edificio y último nivel seleccionado (si existen)
-  const ultimo1 = this.getUltimoSeleccion();
+  // 10. ➕ Agregar id_edificio y último nivel seleccionado
   if (this.selectedRuta?.edificio?.id) {
     formData.append('id_edificio', String(this.selectedRuta.edificio.id));
   }
-  if (ultimo1) {
-    switch (ultimo1.tipo) {
-      case 'sala':
-        formData.append('id_sala', String(ultimo1.id)); break;
-      case 'estanteria':
-        formData.append('id_estanteria', String(ultimo1.id)); break;
-      case 'fila':
-        formData.append('id_fila', String(ultimo1.id)); break;
-      case 'caja':
-        formData.append('id_caja', String(ultimo1.id)); break;
-      case 'carpeta':
-        formData.append('id_carpeta', String(ultimo1.id)); break;
-    }
+
+  // Añadir id_lugar si se pasó al modal
+  if (this.idLugarRuta) {
+    formData.append('id_lugar', String(this.idLugarRuta));
   }
 
-  // 👀 VER TODO LO QUE SE ENVÍA (IMPORTANTE)
+  const ultimo1 = this.getUltimoSeleccion();
+  console.log('🔍 ¿Qué tiene ultimo1?', ultimo1);
+  
+  if (ultimo1) {
+    switch (ultimo1.tipo) {
+      case 'sala': formData.append('id_sala', String(ultimo1.id)); break;
+      case 'estanteria': formData.append('id_estanteria', String(ultimo1.id)); break;
+      case 'fila': formData.append('id_fila', String(ultimo1.id)); break;
+      case 'caja': formData.append('id_caja', String(ultimo1.id)); break;
+      case 'carpeta': formData.append('id_carpeta', String(ultimo1.id)); break;
+    }
+  } else {
+    console.warn('⚠️ ultimo1 es null o undefined, por eso no se agregan los id_... al FormData');
+  }
+
+  // 11. 👀 VER TODO LO QUE SE ENVÍA
   console.log('📦 FORM DATA ENVIADO:');
   formData.forEach((value, key) => {
     console.log(key + ' => ', value);
   });
 
+  // 12. Envío al servicio
   this.seccionesService.subirDocumentosSerie(formData).subscribe({
-    next: (resp: any) => {
+    next: (event: any) => {
+      // observe:'events' => solo procesamos la respuesta final
+      if (event?.type !== HttpEventType.Response) { return; }
+      const resp: any = event.body ?? {};
       console.log('✅ RESPUESTA BACKEND:', resp);
-      Swal.fire('Éxito', 'Documentos subidos correctamente', 'success');
       fileInput.value = '';
       this.tipoDocSeleccionado = null;
+      this.encriptarRuta = false;
+      this.renombrarPorContenido = false;
+  this.modoRenombrado = 'nombre';
+
+      const errores: any[] = Array.isArray(resp?.errores) ? resp.errores : [];
+      // Refrescar la lista/árbol DESPUÉS de que el usuario cierre el aviso
+      // (listarDocumentosPorSerie abre su propio Swal y cerraría este)
+      const refrescar = () => {
+        this.listarDocumentosPorSerie();
+        try { this.obtenerDatosRuta(); } catch {}
+      };
+
+      if (errores.length > 0) {
+        // Documentos que no se subieron (ya cargados en otra serie/ubicación)
+        const listaHtml = errores
+          .map((e: any) => `<li><b>${e.archivo}</b>: ${e.error}</li>`)
+          .join('');
+        Swal.fire({
+          icon: 'warning',
+          title: 'Algunos documentos no se subieron',
+          html: `
+            <div style="text-align:left;">
+              <p class="mb-1">Motivo por cada documento:</p>
+              <ul style="max-height:200px; overflow:auto; padding-left:18px;">${listaHtml}</ul>
+            </div>`,
+          confirmButtonText: 'Cerrar',
+          confirmButtonColor: '#009ef7',
+          allowOutsideClick: false,
+          allowEscapeKey: false
+        }).then(() => refrescar());
+      } else {
+        Swal.fire('Éxito', 'Documentos subidos correctamente', 'success').then(() => refrescar());
+      }
     },
     error: (err) => {
       console.error('❌ ERROR BACKEND:', err);
       Swal.fire('Error', 'No se pudo subir el documento', 'error');
     }
   });
-
 }
-
 
 
 
@@ -2123,7 +2628,10 @@ private mostrarResumenFinal(total: number, errores: string[]) {
     // Solicitar SIEMPRE el tipo de documento
     const tipoSel = await this.solicitarTipoDocumento();
     if (!tipoSel) { event.target.value = ''; return; }
-    this.tipoDocSeleccionado = tipoSel;
+    this.tipoDocSeleccionado = tipoSel.tipo;
+    this.encriptarRuta = tipoSel.encriptar;
+    this.renombrarPorContenido = tipoSel.renombrar;
+    this.modoRenombrado = tipoSel.modo;
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const usuario_id = user.id || user.usuario_id || null;
@@ -2142,6 +2650,9 @@ private mostrarResumenFinal(total: number, errores: string[]) {
     }
   });
 
+    // Acumular documentos que ya existen en otra serie (para avisar al final)
+    const erroresAcumulados: any[] = [];
+
     for (let i = 0; i < totalArchivos; i++) {
       const file = files[i];
       const formData = new FormData();
@@ -2156,9 +2667,16 @@ private mostrarResumenFinal(total: number, errores: string[]) {
       
       if (id_empresa) formData.append('id_empresa', String(id_empresa));
       if (usuario_id) formData.append('usuario_id', String(usuario_id));
+      // Añadir id_lugar si está disponible
+      if (this.idLugarRuta) formData.append('id_lugar', String(this.idLugarRuta));
       formData.append('tipo_subida', tipo);
       // Nuevo: tipo de documento (Digital / Electrónico)
       if (this.tipoDocSeleccionado) formData.append('tipo_documento', this.tipoDocSeleccionado);
+      // Guardar la ruta cifrada en la base de datos (opcional, se marca en el modal)
+      formData.append('encriptar_ruta', this.encriptarRuta ? '1' : '0');
+      // Renombrar el PDF con el nombre de la persona (hojas de vida)
+      formData.append('renombrar_por_contenido', this.renombrarPorContenido ? '1' : '0');
+      formData.append('modo_renombrado', this.modoRenombrado);
       // Añadir el último nivel seleccionado para esta subida
       const ultimoSel = this.getUltimoSeleccion();
       if (ultimoSel) {
@@ -2194,65 +2712,223 @@ private mostrarResumenFinal(total: number, errores: string[]) {
 
     try {
       // Usamos lastValueFrom (si usas Angular 12+) o toPromise
-      await this.seccionesService.subirDocumentosSerie(formData).toPromise();
-      console.log(`✅ ${file.name} subido.`);
+      const resp: any = await this.seccionesService.subirDocumentosSerie(formData).toPromise();
+      // El servicio usa observe:'events', así que el body viene en resp.body
+      const body: any = resp?.body ?? resp;
+      // Acumular documentos que el backend rechazó (ej: ya cargados en otra serie/ubicación)
+      if (Array.isArray(body?.errores) && body.errores.length > 0) {
+        erroresAcumulados.push(...body.errores);
+      }
+      console.log(`✅ ${file.name} procesado.`);
     } catch (error) {
       console.error(`❌ Error en ${file.name}`, error);
-      // En lugar de un alert que rompe el flujo, podrías registrar el error 
+      // En lugar de un alert que rompe el flujo, podrías registrar el error
       // y mostrar un resumen al final, así el modal no desaparece.
     }
   }
 
-  // 3. Solo cuando el bucle TERMINA, cerramos el modal de carga y mostramos el de éxito
-  this.listarDocumentosPorSerie();
+  // 3. Cuando el bucle TERMINA, mostramos el resumen (esperando a que lo cierren)
   event.target.value = '';
   this.tipoDocSeleccionado = null;
+  this.encriptarRuta = false;
+  this.renombrarPorContenido = false;
+  this.modoRenombrado = 'nombre';
 
-  Swal.fire({
-    icon: 'success',
-    title: '¡Todo listo!',
-    text: `Se completó la subida de los ${totalArchivos} expedientes.`,
-    confirmButtonColor: '#28a745'
-  });
+  const subidos = totalArchivos - erroresAcumulados.length;
+
+  if (erroresAcumulados.length > 0) {
+    // Listado de documentos que no se subieron (con su motivo)
+    const listaHtml = erroresAcumulados
+      .map((e: any) => `<li><b>${e.archivo}</b>: ${e.error}</li>`)
+      .join('');
+    await Swal.fire({
+      icon: 'warning',
+      title: 'Algunos documentos no se subieron',
+      html: `
+        <div style="text-align:left;">
+          <p>Se subieron <b>${subidos}</b> de <b>${totalArchivos}</b> expedientes.</p>
+          <p class="mb-1">Motivo por cada documento:</p>
+          <ul style="max-height:200px; overflow:auto; padding-left:18px;">${listaHtml}</ul>
+        </div>`,
+      confirmButtonText: 'Cerrar',
+      confirmButtonColor: '#009ef7',
+      allowOutsideClick: false,
+      allowEscapeKey: false
+    });
+  } else {
+    await Swal.fire({
+      icon: 'success',
+      title: '¡Todo listo!',
+      text: `Se completó la subida de los ${totalArchivos} expedientes.`,
+      confirmButtonColor: '#28a745'
+    });
+  }
+
+  // Refrescar la lista y el árbol DESPUÉS de cerrar el aviso
+  // (listarDocumentosPorSerie abre su propio Swal, por eso va al final)
+  this.listarDocumentosPorSerie();
+  try { this.obtenerDatosRuta(); } catch {}
 }
 
 
-  verDocumento(doc: any) {
-    // Abrimos el visor basado en imágenes (como IndexarDocumentoComponent)
-    const modalRef = this.modalService.open(VerDocumentoComponent, {
-      size: 'xl',
-      centered: true
+  // Ver las versiones (V1, V2, V3...) de un documento
+  verVersiones(doc: any) {
+    const modalRef = this.modalService.open(DocumentoVersionComponent, {
+      size: 'lg',
+      centered: true,
+      backdrop: 'static'
     });
-
-    modalRef.componentInstance.idDocumento = doc.id;
+    modalRef.componentInstance.documento = doc;
+    modalRef.componentInstance.idSerie = this.idSerie;
+    modalRef.componentInstance.idSubSerie = this.idSubSerie;
     modalRef.componentInstance.idEmpresa = this.id_empresa;
-  modalRef.componentInstance.idSerieSubserie = this.idSubSerie;
-    // Al cerrar el modal, si el usuario guardó cambios, persistir en backend
+  }
+
+  verDocumento(doc: any) {
+    // Abrimos el visor con el servicio global (plantilla reutilizable)
+    const modalRef = this.documentoViewer.abrirVer({
+      idDocumento: doc.id,
+      idEmpresa: this.id_empresa,
+      idSerieSubserie: this.idSubSerie
+    });
+    // Si el visor guardó una nueva versión, refrescar la lista y el árbol
     modalRef.result.then((res) => {
-      if (res && res.accion === 'guardar_cambios' && res.imagenBase64) {
-        const payload = {
-          idDocumento: res.idDocumento,
-          idEmpresa: res.idEmpresa,
-          idSerieSubserie: res.idSerieSubserie ?? null,
-          page: res.paginaActual, // 0-based según el visor
-          imagenBase64: res.imagenBase64
-        };
-        this.seccionesService.actualizarPaginaDocumento(payload).subscribe({
-          next: (resp: any) => {
-            if (resp?.success) {
-              Swal.fire('Guardado', 'Los cambios fueron guardados en el documento.', 'success');
-              this.listarDocumentosPorSerie();
-            } else {
-              Swal.fire('Aviso', resp?.message || 'No se pudo confirmar el guardado.', 'info');
-            }
-          },
-          error: (err) => {
-            console.error('Error al actualizar página:', err);
-            Swal.fire('Error', 'No se pudo guardar la limpieza en el documento.', 'error');
-          }
-        });
+      if (res && res.accion === 'nueva_version') {
+        this.listarDocumentosPorSerie();
+        try { this.obtenerDatosRuta(); } catch {}
       }
     }).catch(() => {});
+  }
+
+  /**
+   * Descarga el PDF del expediente. Antes pide la contraseña del usuario
+   * logueado: hay 3 intentos y, si se agotan, se cierra la sesión.
+   * El backend valida la contraseña y descifra el archivo si hacía falta.
+   */
+  async descargarDocumento(doc: any) {
+    const MAX_INTENTOS = 3;
+
+    for (let intento = 1; intento <= MAX_INTENTOS; intento++) {
+      const { value: password } = await Swal.fire<string>({
+        title: 'Contraseña requerida',
+        html: `
+          <div class="text-start">
+            <p class="fs-7 text-gray-700 mb-3">
+              Para descargar <b>${doc?.nombre || 'el expediente'}</b> ingrese la contraseña de su usuario.
+            </p>
+            <div class="badge badge-light-${intento === 1 ? 'primary' : 'danger'} fs-8 fw-bold">
+              Intento ${intento} de ${MAX_INTENTOS}
+            </div>
+          </div>
+        `,
+        input: 'password',
+        inputPlaceholder: 'Contraseña',
+        inputAttributes: { autocapitalize: 'off', autocomplete: 'current-password' },
+        showCancelButton: true,
+        confirmButtonText: 'Descargar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#009ef7',
+        allowOutsideClick: false,
+        preConfirm: (valor: string) => {
+          if (!valor) {
+            Swal.showValidationMessage('Ingrese su contraseña');
+            return null as any;
+          }
+          return valor;
+        }
+      });
+
+      if (!password) { return; } // canceló
+
+      Swal.fire({
+        title: 'Preparando la descarga...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
+
+      try {
+        const respuesta: Blob = await firstValueFrom(
+          this.seccionesService.descargarDocumento({
+            id_documento: doc.id,
+            usuario_id: this.usuario_id,
+            password,
+            // Se envían para que la auditoría registre en qué intento va
+            intento,
+            max_intentos: MAX_INTENTOS
+          })
+        ) as Blob;
+
+        Swal.close();
+        this.guardarArchivoDescargado(respuesta, doc?.nombre);
+        return; // descarga correcta
+
+      } catch (err: any) {
+        Swal.close();
+
+        // Contraseña incorrecta: se consume un intento
+        if (err?.status === 403) {
+          const restantes = MAX_INTENTOS - intento;
+
+          if (restantes > 0) {
+            await Swal.fire({
+              icon: 'error',
+              title: 'Contraseña incorrecta',
+              text: `Le ${restantes === 1 ? 'queda' : 'quedan'} ${restantes} ${restantes === 1 ? 'intento' : 'intentos'}.`,
+              confirmButtonColor: '#009ef7'
+            });
+            continue; // vuelve a pedirla
+          }
+
+          await Swal.fire({
+            icon: 'warning',
+            title: 'Sesión cerrada',
+            text: 'Se agotaron los 3 intentos. Por seguridad se cerrará su sesión.',
+            confirmButtonColor: '#f1416c',
+            allowOutsideClick: false
+          });
+
+          // Cerrar los modales abiertos antes de salir: si no, la ventana del
+          // expediente queda flotando encima de la pantalla de login
+          try { this.modalService.dismissAll(); } catch {}
+          try { this.activeModal.dismiss(); } catch {}
+          Swal.close();
+
+          this.authService.logout();
+          return;
+        }
+
+        // Cualquier otro error (archivo inexistente, problema de servidor...)
+        let mensaje = 'No se pudo descargar el documento.';
+        try {
+          const texto = await err?.error?.text?.(); // el error viene como blob
+          if (texto) { mensaje = JSON.parse(texto)?.message || mensaje; }
+        } catch {}
+        console.error('Error descargando documento:', err);
+        await Swal.fire('Error', mensaje, 'error');
+        return;
+      }
+    }
+  }
+
+  /** Dispara la descarga del archivo recibido, sin abrir otra pestaña */
+  private guardarArchivoDescargado(respuesta: Blob, nombre?: string) {
+    // Se fuerza el tipo PDF: sin él, algunos navegadores abren el archivo
+    // en una pestaña en vez de guardarlo
+    const blob = new Blob([respuesta], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+
+    const enlace = document.createElement('a');
+    enlace.href = url;
+    enlace.download = nombre || 'documento.pdf';
+    enlace.target = '_self';
+    enlace.style.display = 'none';
+    document.body.appendChild(enlace);
+    enlace.click();
+    document.body.removeChild(enlace);
+
+    // Liberar el enlace después, no en el acto: si se revoca de inmediato
+    // hay navegadores que cancelan la descarga a medias
+    setTimeout(() => window.URL.revokeObjectURL(url), 10000);
   }
 
   compartirDocumento(doc: any) {
@@ -2281,7 +2957,8 @@ private mostrarResumenFinal(total: number, errores: string[]) {
     }).then((res) => {
       if (!res.isConfirmed) return;
       const minutos = Number(res.value || 10080);
-      const payload = { idDocumento: doc.id, minutos } as any;
+      // usuario_id e id_empresa se envían para la auditoría del enlace
+      const payload = { idDocumento: doc.id, minutos, usuario_id: this.usuario_id, id_empresa: this.id_empresa } as any;
       this.seccionesService.generarLinkCompartir(payload).subscribe({
         next: (resp: any) => {
           if (resp?.success && resp?.url) {
@@ -2329,11 +3006,7 @@ verDocumentoFirmado(doc: any) {
   this.seccionesService.obtenerDocumentoFirmadoPorId(payload).subscribe({
     next: (resp: any) => {
       if (resp.success && resp.data?.ruta) {
-        const modalRef = this.modalService.open(VerDocumentoComponent, {
-          size: 'xl',
-          centered: true
-        });
-        modalRef.componentInstance.rutaDocumento = resp.data.ruta;
+        this.documentoViewer.abrirVer({ rutaDocumento: resp.data.ruta });
       } else {
         this.toast.error('No se pudo obtener el documento.');
       }
@@ -2357,8 +3030,10 @@ indexarDocumento(doc: any) {
   // ✅ ENVIAMOS el ID del documento
   modalRef.componentInstance.idDocumento = doc.id;
 
-  // 🌟 AÑADIDO: Enviamos idSerieSubserie (asumiendo que es this.idSubSerie)
-  modalRef.componentInstance.idSerieSubserie = this.idSubSerie;
+  // 🌟 Serie del documento: this.idSubSerie queda en null cuando se entra
+  // directo por una serie, así que primero se usa la del propio documento
+  modalRef.componentInstance.idSerieSubserie =
+    doc?.id_serie_subserie ?? this.idSubSerie ?? this.idSerie ?? null;
 
   // 🌟 AÑADIDO: Enviamos ID_EMPRESA (asumiendo que es this.id_empresa)
   modalRef.componentInstance.ID_EMPRESA = this.id_empresa;
@@ -2470,12 +3145,46 @@ PermisosSubSerie(idUser: number, idActual: number) {
 
       this.permisosDocumentales = resp.permissions || [];
 
+      // Depuración: imprimir un resumen de los IDs y tipos que llegan
+      try {
+        console.log('%c[Permisos][Resumen] cantidad:', 'color:#198754', this.permisosDocumentales.length);
+        const resumen = this.permisosDocumentales.slice(0, 10).map((p: any) => ({
+          id_seccion: p?.id_seccion,
+          id_serie: p?.id_serie,
+          id_subserie: p?.id_subserie,
+          subir_documentos: p?.subir_documentos,
+          tipos: {
+            id_seccion: typeof p?.id_seccion,
+            id_serie: typeof p?.id_serie,
+            id_subserie: typeof p?.id_subserie,
+            subir_documentos: typeof p?.subir_documentos,
+          }
+        }));
+        console.table(resumen);
+      } catch {}
+
       // 🔹 Buscar el permiso que coincida con el ID actual
       const permisoActual = this.permisosDocumentales.find(p => p.id_serie === idActual || p.id_subserie === idActual);
 
       if (!permisoActual) {
-        console.warn('No se encontró permiso para el ID actual:', idActual);
+        console.warn('[Permisos] No se encontró permiso para el ID actual:', idActual, '| tipo:', typeof idActual);
+        // Diagnóstico extra: ¿hay coincidencias por string?
+        try {
+          const matchString = this.permisosDocumentales.find(p => String(p.id_serie) === String(idActual) || String(p.id_subserie) === String(idActual));
+          if (matchString) {
+            console.warn('[Permisos][Hint] Existe match si se castea a string. Tipos originales:', {
+              id_serie: typeof matchString.id_serie,
+              id_subserie: typeof matchString.id_subserie,
+              idActual: typeof idActual
+            });
+          }
+          const porSeccion = this.permisosDocumentales.filter(p => p.id_seccion != null);
+          if (porSeccion.length && !matchString) {
+            console.warn('[Permisos][Hint] Los permisos parecen venir a nivel de sección (id_seccion) y no por serie/subserie.');
+          }
+        } catch {}
         this.mostrarBotonSubirDocumentos = false;
+        console.log('[Permisos] mostrarBotonSubirDocumentos =', this.mostrarBotonSubirDocumentos);
         return;
       }
 
@@ -2494,12 +3203,15 @@ PermisosSubSerie(idUser: number, idActual: number) {
       this.puedeRegistrarDatosSubSerie = permisoActual.registrar_datos || false;
       this.puedeIndexarSubSerie = permisoActual.indexar || false;
       this.puedeIndexarMasivoSubSerie = permisoActual.indexar_masivo || false;
+      this.puedeSubirExcelSubSerie = permisoActual.subir_excel || false;
+      this.puedeControlCalidadSubSerie = permisoActual.controlo_calidad || false;
       this.puedeEliminarDocumentoSubSerie = permisoActual.eliminar_documento || false;
       this.puedeFirmarDocumentoSubSerie = permisoActual.firmar_documento || false;
       this.puedeLimpiarDocumentoSubSerie = permisoActual.limpiar_documento || false;
 
       // 🔹 Mostrar botón según permiso
       this.mostrarBotonSubirDocumentos = this.puedeSubirDocumentosSubSerie;
+      console.log('[Permisos] mostrarBotonSubirDocumentos =', this.mostrarBotonSubirDocumentos, '| puedeSubirDocumentosSubSerie =', this.puedeSubirDocumentosSubSerie);
 
       console.log('Permisos aplicados para el ID actual:', {
         tipo,
@@ -2534,6 +3246,8 @@ PermisosSubSerie(idUser: number, idActual: number) {
       this.puedeRegistrarDatosSubSerie = false;
       this.puedeIndexarSubSerie = false;
       this.puedeIndexarMasivoSubSerie = false;
+      this.puedeSubirExcelSubSerie = false;
+      this.puedeControlCalidadSubSerie = false;
       this.puedeEliminarDocumentoSubSerie = false;
       this.puedeFirmarDocumentoSubSerie = false;
       this.puedeLimpiarDocumentoSubSerie = false;
@@ -2548,17 +3262,39 @@ PermisosSubSerie(idUser: number, idActual: number) {
 
 
 abrirModalOCR(id?: any) {
+  // 1. VALIDACIÓN: ¿Hay edificio seleccionado? (El "Candado")
+  if (!this.selectedRuta?.edificio?.id) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Ubicación incompleta',
+      text: 'Para realizar el OCR, primero debes seleccionar una ubicación (al menos el Edificio).',
+      confirmButtonColor: '#3085d6'
+    });
+    return; // Detiene la ejecución, el modal no se abrirá
+  }
+
+  // 2. Preparar los datos de ubicación
+  const ultimo = this.getUltimoSeleccion();
+  
   const modalRef = this.modalService.open(HacerOcrComponent, {
     size: 'xl',
     centered: true,
     backdrop: 'static'
   });
 
-  // ENVIAR LOS IDS CORRECTAMENTE:
-  // Si 'id' viene por parámetro lo usamos, si no, usamos los del componente padre
+  // 3. ENVIAR DATOS AL MODAL
   modalRef.componentInstance.idSerie = this.idSeriePadre; 
   modalRef.componentInstance.idSubSerie = id ? id : this.idSubSerie;
   modalRef.componentInstance.ID_EMPRESA = this.id_empresa;
+  modalRef.componentInstance.rutaCompleta = this.selectedRuta;
+  // Enviamos la jerarquía completa
+  modalRef.componentInstance.id_edificio = this.selectedRuta.edificio.id;
+  
+  // Enviamos el último nivel dinámico (ej: id_sala, id_caja, etc.)
+  if (ultimo) {
+    modalRef.componentInstance.tipoNivel = ultimo.tipo; // ej: 'sala'
+    modalRef.componentInstance.idNivel = ultimo.id;     // ej: 123
+  }
 
   modalRef.result.then((res) => {
     if (res === true) {

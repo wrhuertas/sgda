@@ -1,0 +1,63 @@
+<div class="modal-header">
+  <h5 class="modal-title">Sumillar Anexo</h5>
+  <div class="btn btn-icon btn-sm btn-active-icon-primary" (click)="close()">
+  </div>
+</div>
+
+<div class="modal-body p-4">
+  <div *ngIf="!previewUrl" class="text-center text-muted">No hay vista previa disponible.</div>
+
+    <div *ngIf="paginaMostrada" class="sumillar-container mb-3">
+
+      <div class="doc-info mb-2 text-center w-100">
+        <ng-container *ngIf="doc?.id; else noDocInfo">
+          <small class="text-muted">ID: <strong>{{ doc.id }}</strong> &nbsp;|&nbsp; Nombre: <strong>{{ doc.nombre || '-' }}</strong> &nbsp;|&nbsp; Ruta: <strong>{{ doc.ruta || '-' }}</strong></small>
+        </ng-container>
+        <ng-template #noDocInfo>
+          <div class="alert alert-warning py-1 mb-0">ID de documento no disponible. La firma no funcionará hasta que el documento tenga ID.</div>
+        </ng-template>
+      </div>
+
+      <div class="sumillar-toolbar mb-3 d-flex justify-content-center">
+        <button class="btn btn-sm btn-success" (click)="firmaActiva = !firmaActiva">{{ firmaActiva ? 'Desactivar Firma' : 'Activar Firma' }}</button>
+        <button class="btn btn-sm btn-warning ms-2" (click)="firmarAnexo()">Firmar</button>
+        <button *ngIf="anexoFirmado" class="btn btn-sm btn-info ms-2" (click)="abrirDocFirmado()">Doc. firmado</button>
+        <!-- Span de estado -->
+        <span class="ms-3 fw-bold" [ngClass]="firmaActiva ? 'text-success' : 'text-danger'">
+          {{ firmaActiva ? 'Firma activada' : 'Firma no activada' }}
+        </span>
+      </div>
+
+      <div class="preview-card position-relative">
+        <ng-container *ngIf="isDataImage; else notDataImage">
+          <img #imageRef [src]="paginaMostrada" alt="Vista previa" class="preview-img" (load)="ajustarCanvas()" />
+
+          <canvas #canvasRef class="preview-canvas" [style.cursor]="firmaActiva ? 'move' : 'default'" (mousedown)="startDrag($event)"></canvas>
+
+          <div *ngIf="firmaActiva" class="firma-box position-absolute" [style.left.px]="firmaX" [style.top.px]="firmaY" [style.width.px]="firmaWidth" [style.height.px]="firmaHeight" (mousedown)="startDrag($event)" (touchstart)="startTouchDrag($event)">
+            <p class="text-center mt-2 fw-bold text-primary">Zona de firma</p>
+          </div>
+        </ng-container>
+        <ng-template #notDataImage>
+          <ng-container *ngIf="isPdf; else imgUrl">
+            <iframe [src]="paginaMostrada" class="preview-iframe"></iframe>
+          </ng-container>
+          <ng-template #imgUrl>
+            <img [src]="paginaMostrada" class="preview-img" alt="Anexo" />
+          </ng-template>
+        </ng-template>
+      </div>
+
+      <p class="mt-2 text-center">Página <strong>{{ paginaActual + 1 }}</strong> de <strong>{{ totalPaginas }}</strong></p>
+
+      <div class="d-flex justify-content-center gap-2">
+        <button class="btn btn-secondary btn-sm" (click)="cargarPagina(paginaActual - 1)" [disabled]="paginaActual === 0">Anterior</button>
+        <button class="btn btn-secondary btn-sm" (click)="cargarPagina(paginaActual + 1)" [disabled]="paginaActual >= totalPaginas - 1">Siguiente</button>
+      </div>
+
+    </div>
+</div>
+
+<div class="modal-footer">
+  <button class="btn btn-light" (click)="close()">Cerrar</button>
+</div>

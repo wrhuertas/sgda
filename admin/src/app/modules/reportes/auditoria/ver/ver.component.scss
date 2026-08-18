@@ -1,0 +1,21 @@
+/* Cómo quedó guardado el expediente en el servidor (columna "Detalle 2") */
+.almacenamiento {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.3px;
+}
+
+/* Encriptado: tomate */
+.almacenamiento-encriptado {
+  color: #ff6347;
+  background-color: rgba(255, 99, 71, 0.12);
+}
+
+/* Normal: azul */
+.almacenamiento-normal {
+  color: #009ef7;
+  background-color: rgba(0, 158, 247, 0.12);
+}

@@ -192,18 +192,23 @@
       </div>
     
       <div class="scroll-area">
-        <div class="card-resultado" *ngFor="let r of resultados">
+        <div class="card-resultado"
+             *ngFor="let r of resultados"
+             [class.seleccionado]="documentoGrafo?.id_documento === r.id_documento"
+             (click)="seleccionarDocumentoGrafo(r)"
+             title="Ver el grafo de este documento">
           <div class="card-header-row">
             <div class="titulo-wrapper">
               <img src="assets/icons/file-icon.png" class="file-icon">
-              <h4 class="document-title" 
-                  [ngbTooltip]="r.nombre_archivo" 
+              <h4 class="document-title"
+                  [ngbTooltip]="r.nombre_archivo"
                   [innerHTML]="r.nombre_archivo | highlight: texto">
               </h4>
             </div>
+            <!-- stopPropagation para que estos botones no disparen el grafo -->
             <div class="card-acciones">
-              <button class="btn-circle" (click)="verInfo(r)"><i class="fas fa-eye"></i></button>
-              <button class="btn-circle pdf" (click)="verDocumento(r)"><img src="assets/icons/pdf.png"></button>
+              <button class="btn-circle" (click)="verInfo(r); $event.stopPropagation()"><i class="fas fa-eye"></i></button>
+              <button class="btn-circle pdf" (click)="verDocumento(r); $event.stopPropagation()"><img src="assets/icons/pdf.png"></button>
             </div>
           </div>
           
@@ -249,17 +254,30 @@
         <span class="dot green"></span>
         <div class="header-titles">
           <h2>GRAFO DE CONOCIMIENTO</h2>
-          <span class="sub-text">RiC • nodos y relaciones</span>
+          <span class="sub-text" *ngIf="!documentoGrafo">
+            Elija un documento de la izquierda para ver sus relaciones
+          </span>
+          <span class="sub-text" *ngIf="documentoGrafo">
+            {{ documentoGrafo.nombre_archivo }}
+          </span>
         </div>
+
+        <button class="btn-volver-grafo"
+                *ngIf="documentoGrafo"
+                (click)="limpiarDocumentoGrafo()"
+                title="Volver al grafo de toda la búsqueda">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
-      
+
       <div [hidden]="viewActual !== 'grafo_sin'" #grafoContainer class="grafo-canvas"></div>
       <div [hidden]="viewActual !== 'grafo_con'" #grafoContextoContainer class="grafo-canvas"></div>
 
       <div class="grafo-leyenda">
         <span class="item"><span class="dot yellow"></span> RECORD</span>
-        <span class="item"><span class="dot teal"></span> AGENTE</span>
+        <span class="item"><span class="dot teal"></span> DATO INDEXADO</span>
         <span class="item"><span class="dot purple"></span> FUNCIÓN</span>
+        <span class="item"><span class="dot gray"></span> RELACIONADO</span>
       </div>
     </section>
   </div>

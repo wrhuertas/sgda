@@ -110,11 +110,24 @@
           </div>
 
           <div class="d-flex align-items-center est-row mb-2 px-1 py-1 rounded" *ngFor="let estanteria of estanteriasLista; let i = index" [class.bg-light]="selectedEstanteria?.id === estanteria.id">
-            <div class="flex-grow-1 me-1">
-              <button type="button" class="btn btn-link p-0 text-start w-100 est-nombre-link" (click)="seleccionarEstanteria(estanteria)" title="Seleccionar estantería">
-                {{ estanteria.nombre || ('Estantería ' + (i + 1)) }}
-              </button>
-            </div>
+              <div class="flex-grow-1 me-1">
+                <div *ngIf="estanteria.isEditingName; else viewEstName">
+                  <input
+                    type="text"
+                    class="form-control form-control-sm est-nombre"
+                    [(ngModel)]="estanteria.nombre"
+                    [attr.data-est-id]="estanteria.id"
+                    (keydown.enter)="guardarNombreEstanteria(estanteria)"
+                    (blur)="guardarNombreEstanteria(estanteria)"
+                    (click)="$event.stopPropagation()"
+                  />
+                </div>
+                <ng-template #viewEstName>
+                  <button type="button" class="btn btn-link p-0 text-start w-100 est-nombre-link" (click)="startEditNombreEstanteria(estanteria, $event)" title="Seleccionar / Editar estantería">
+                    {{ estanteria.nombre || ('Estantería ' + (i + 1)) }}
+                  </button>
+                </ng-template>
+              </div>
             <div class="qty-col me-1">
               <input 
                 type="number" 
@@ -126,12 +139,21 @@
                 title="Cantidad de filas">
             </div>
             <div class="btns-col d-flex align-items-center justify-content-center gap-1">
-              <button 
-                type="button" 
-                class="btn btn-primary btn-sm px-1 py-0 est-icon-btn"
+              <button
+                type="button"
+                class="btn btn-success btn-sm px-2 py-0 est-icon-btn"
                 [disabled]="selectedEstanteria?.id !== estanteria.id"
-                title="Ver">
-                <i class="bi bi-eye"></i>
+                (click)="guardarCantidadEstanteria(estanteria); $event.stopPropagation()"
+                title="Guardar cantidad de filas">
+                <i class="bi bi-save"></i>
+              </button>
+              <button
+                type="button"
+                class="btn btn-danger btn-sm px-2 py-0 est-icon-btn"
+                [disabled]="selectedEstanteria?.id !== estanteria.id"
+                (click)="eliminarEstanteria(estanteria); $event.stopPropagation()"
+                title="Eliminar estantería">
+                <i class="bi bi-trash"></i>
               </button>
             </div>
           </div>
@@ -160,18 +182,41 @@
             <table class="table table-sm table-striped align-middle mb-0">
               <thead>
                 <tr>
-                  <th class="fw-semibold" style="width: 50%">Nombre</th>
-                  <th class="fw-semibold text-center" style="width: 50%">Cajas</th>
+                  <th class="fw-semibold" style="width: 40%">Nombre</th>
+                  <th class="fw-semibold text-center" style="width: 30%">Cajas</th>
+                  <th class="fw-semibold text-center" style="width: 30%">Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 <tr *ngIf="(filasLista?.length || 0) === 0">
-                  <td class="text-muted" colspan="2">0 filas registradas.</td>
+                  <td class="text-muted" colspan="3">0 filas registradas.</td>
                 </tr>
                 <tr *ngFor="let f of filasLista; let idx = index" (click)="seleccionarFila(f)" [class.table-active]="selectedFila?.id === f.id" style="cursor: pointer;">
-                  <td>{{ f.nombre || ('Fila ' + (idx + 1)) }}</td>
+                  <td>
+                    <div *ngIf="f.isEditingName; else viewFilaName">
+                      <input
+                        type="text"
+                        class="form-control form-control-sm"
+                        [(ngModel)]="f.nombre"
+                        [attr.data-f-id]="f.id"
+                        (keydown.enter)="guardarNombreFila(f)"
+                        (blur)="guardarNombreFila(f)"
+                        (click)="$event.stopPropagation()"
+                      />
+                    </div>
+                    <ng-template #viewFilaName>
+                      <button type="button" class="btn btn-link p-0 text-start w-100" (click)="startEditNombreFila(f, $event)">
+                        {{ f.nombre || ('Fila ' + (idx + 1)) }}
+                      </button>
+                    </ng-template>
+                  </td>
                   <td class="text-center">
                     <input type="number" class="form-control form-control-sm text-center" min="0" [(ngModel)]="f.cantidad_cajas" (click)="$event.stopPropagation()" />
+                  </td>
+                  <td class="text-center">
+                    <button type="button" class="btn btn-success btn-sm px-2 py-0" (click)="guardarCantidadFila(f); $event.stopPropagation()" title="Guardar cantidad de cajas">
+                      <i class="bi bi-save"></i>
+                    </button>
                   </td>
                 </tr>
               </tbody>
@@ -195,18 +240,41 @@
             <table class="table table-sm table-striped align-middle mb-0">
               <thead>
                 <tr>
-                  <th class="fw-semibold" style="width: 50%">Caja</th>
-                  <th class="fw-semibold text-center" style="width: 50%">Carpetas</th>
+                  <th class="fw-semibold" style="width: 40%">Caja</th>
+                  <th class="fw-semibold text-center" style="width: 30%">Carpetas</th>
+                  <th class="fw-semibold text-center" style="width: 30%">Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 <tr *ngIf="(cajasLista?.length || 0) === 0">
-                  <td class="text-muted" colspan="2">0 cajas registradas.</td>
+                  <td class="text-muted" colspan="3">0 cajas registradas.</td>
                 </tr>
-                <tr *ngFor="let c of cajasLista; let idx = index" (click)="seleccionarCaja(c)" [class.table-active]="selectedCaja?.id === c.id" style="cursor: pointer;">
-                  <td>{{ c.nombre || ('Caja ' + (idx + 1)) }}</td>
+                 <tr *ngFor="let c of cajasLista; let idx = index" (click)="seleccionarCaja(c)" [class.table-active]="selectedCaja?.id === c.id" style="cursor: pointer;">
+                   <td>
+                     <div *ngIf="c.isEditingName; else viewCajaName">
+                       <input
+                         type="text"
+                         class="form-control form-control-sm"
+                         [(ngModel)]="c.nombre"
+                         [attr.data-c-id]="c.id"
+                         (keydown.enter)="guardarNombreCaja(c)"
+                         (blur)="guardarNombreCaja(c)"
+                         (click)="$event.stopPropagation()"
+                       />
+                     </div>
+                     <ng-template #viewCajaName>
+                       <button type="button" class="btn btn-link p-0 text-start w-100" (click)="startEditNombreCaja(c, $event)">
+                         {{ c.nombre || ('Caja ' + (idx + 1)) }}
+                       </button>
+                     </ng-template>
+                   </td>
                   <td class="text-center">
                     <input type="number" class="form-control form-control-sm text-center" min="0" [(ngModel)]="c.cantidad_carpetas" (click)="$event.stopPropagation()" />
+                  </td>
+                  <td class="text-center">
+                    <button type="button" class="btn btn-success btn-sm px-2 py-0" (click)="guardarCantidadCaja(c); $event.stopPropagation()" title="Guardar cantidad de carpetas">
+                      <i class="bi bi-save"></i>
+                    </button>
                   </td>
                 </tr>
               </tbody>
@@ -230,20 +298,43 @@
             <table class="table table-sm table-striped align-middle mb-0">
               <thead>
                 <tr>
-                  <th class="fw-semibold" style="width: 40%">Carpeta</th>
-                  <th class="fw-semibold text-center" style="width: 30%">N° Carpeta</th>
+                  <th class="fw-semibold" style="width: 30%">Carpeta</th>
+                  <th class="fw-semibold text-center" style="width: 20%">N° Carpeta</th>
                   <th class="fw-semibold text-center" style="width: 30%">Documentos</th>
+                  <th class="fw-semibold text-center" style="width: 20%">Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 <tr *ngIf="(carpetasLista?.length || 0) === 0">
-                  <td class="text-muted" colspan="3">0 carpetas registradas.</td>
+                  <td class="text-muted" colspan="4">0 carpetas registradas.</td>
                 </tr>
-                <tr *ngFor="let k of carpetasLista; let idx = index">
-                  <td>{{ k.nombre || ('Carpeta ' + (idx + 1)) }}</td>
+                 <tr *ngFor="let k of carpetasLista; let idx = index">
+                   <td>
+                     <div *ngIf="k.isEditingName; else viewCarpetaName">
+                       <input
+                         type="text"
+                         class="form-control form-control-sm"
+                         [(ngModel)]="k.nombre"
+                         [attr.data-ca-id]="k.id"
+                         (keydown.enter)="guardarNombreCarpeta(k)"
+                         (blur)="guardarNombreCarpeta(k)"
+                         (click)="$event.stopPropagation()"
+                       />
+                     </div>
+                     <ng-template #viewCarpetaName>
+                       <button type="button" class="btn btn-link p-0 text-start w-100" (click)="startEditNombreCarpeta(k, $event)">
+                         {{ k.nombre || ('Carpeta ' + (idx + 1)) }}
+                       </button>
+                     </ng-template>
+                   </td>
                   <td class="text-center">{{ idx + 1 }}</td>
                   <td class="text-center">
                     <input type="number" class="form-control form-control-sm text-center" min="0" [(ngModel)]="k.numero_documentos" style="max-width: 120px; margin: 0 auto;" />
+                  </td>
+                  <td class="text-center">
+                    <button type="button" class="btn btn-success btn-sm px-2 py-0" (click)="guardarCantidadCarpeta(k); $event.stopPropagation()" title="Guardar número de documentos">
+                      <i class="bi bi-save"></i>
+                    </button>
                   </td>
                 </tr>
               </tbody>

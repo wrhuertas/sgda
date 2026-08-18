@@ -26,6 +26,13 @@ export class RecepcionService {
       'Authorization': 'Bearer ' + token
     });
   }
+
+  // Trae un anexo (PDF) como base64 a través de la API (evita CORS de /storage)
+  verAnexoBase64(ruta: string): Observable<any> {
+    const headers = this.getHeaders();
+    const URL = URL_SERVICIOS + '/anexos/ver-base64';
+    return this.http.post(URL, { ruta }, { headers });
+  }
     
       
     
@@ -34,17 +41,19 @@ export class RecepcionService {
         listTramites(
         id_empresa: number,
         page: number = 1,
-        search: string = ''
+        search: string = '',
+        id_usuario: number | null = null
       ) {
         this.isLoadingSubject.next(true);
         const headers = this.getHeaders();
 
         const URL =
           URL_SERVICIOS +
-          "/tramites" +
-          "?id_empresa=" + id_empresa +
-          "&page=" + page +
-          "&search=" + search;
+          "/tramitesrecepcion" +
+          "?page=" + page +
+          "&search=" + encodeURIComponent(search || '') +
+          (id_empresa ? "&id_empresa=" + id_empresa : "") +
+          (id_usuario ? "&id_usuario=" + id_usuario : "");
 
         return this.http.get(URL, { headers }).pipe(
           finalize(() => this.isLoadingSubject.next(false))
@@ -367,14 +376,25 @@ export class RecepcionService {
           }
 
           // 🔹 Nueva función para obtener secuencial de Memorandum en Recepción
-          getSecuencialMemorandumRecepcion(id_empresa: number) {
+          // 🔹 Nueva función para obtener secuencial de Memorandum en Recepción
+          // 🔹 Nueva función para obtener secuencial de Memorandum en Recepción
+          getSecuencialMemorandumRecepcion(id_empresa: number, prefijo: string = '') {
             this.isLoadingSubject.next(true);
             const headers = this.getHeaders();
             const URL = URL_SERVICIOS + "/recepcion/get-secuencial-memorandum";
-            return this.http.post(URL, { id_empresa }, { headers }).pipe(
+            return this.http.post(URL, { id_empresa, prefijo }, { headers }).pipe(
+              finalize(() => this.isLoadingSubject.next(false))
+            );
+          }
+
+          // Reserva un bloque atómico de secuenciales para memorandums en Recepción
+          reservarSecuencialesMemorandum(id_empresa: number, cantidad: number) {
+            this.isLoadingSubject.next(true);
+            const headers = this.getHeaders();
+            const URL = URL_SERVICIOS + "/recepcion/reservar-secuenciales-memorandum";
+            return this.http.post(URL, { id_empresa, cantidad }, { headers }).pipe(
               finalize(() => this.isLoadingSubject.next(false))
             );
           }
 
 }
-

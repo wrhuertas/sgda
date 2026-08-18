@@ -13,7 +13,10 @@
           Información del Docu.
       </div>
       <div class="quipux-tab" [ngClass]="{'active': tab_active === 2}" (click)="changeTab(2)">
-          Anexos
+          Anexos ({{ (anexosGuardados?.length || 0) + (archivos?.length || 0) }})
+      </div>
+      <div class="quipux-tab" [ngClass]="{'active': tab_active === 3}" (click)="changeTab(3)">
+          Seguimiento
       </div>
       
   </div>
@@ -60,7 +63,7 @@
           <h3 class="text-gray-800 fw-bold d-flex align-items-center">
             <span>Creación de asignación de trámite</span>
             <span class="ms-3 fs-7 fw-semibold text-gray-700">Memorandum:
-              <span class="align-middle ms-1 fs-5 fw-bold text-primary">{{ numeroMemorandumCompleto }}</span>
+               <span class="align-middle ms-1 fs-5 fw-bold text-primary">{{ numeroMemorandum || 'S/N' }}</span>
             </span>
             <span 
               class="ms-3 fs-7 fw-semibold px-3 py-1 rounded text-white"
@@ -85,14 +88,23 @@
                       </i>
                       Buscar Usuario
                   </button>
-                  <button type="button" class="btn btn-sm btn-light-info me-3" (click)="abrirVistaPrevia()">
-                    <i class="ki-duotone ki-eye fs-2">
-                        <span class="path1"></span>
-                        <span class="path2"></span>
+                    <button type="button" class="btn btn-sm btn-light-info me-3" (click)="abrirVistaPrevia()">
+                      <i class="ki-duotone ki-eye fs-2">
+                          <span class="path1"></span>
+                          <span class="path2"></span>
+                      </i>
+                      Vista Previa
+                  </button>
+                  <!--
+                  <button type="button" class="btn btn-sm btn-light-success me-3" (click)="abrirSumillar()" title="Sumillar">
+                    <i class="ki-duotone ki-note-2 fs-2">
+                      <span class="path1"></span>
+                      <span class="path2"></span>
+                      <span class="path3"></span>
                     </i>
-                    Vista Previa
-                </button>
-                
+                    Sumillar
+                  </button>
+                -->
                     <!--
 
                   <button type="button" class="btn btn-sm btn-light-success me-3" (click)="verActas()">
@@ -116,11 +128,11 @@
                        Rechazar trámite
                      </label>
                    </div>
-
+<!--
                    <button type="button" class="btn btn-sm btn-light-dark" (click)="grabar()" [disabled]="guardando">
                       <i class="ki-duotone ki-dots-horizontal fs-2"><span class="path1"></span><span class="path2"></span></i>
                       {{ guardando ? 'Guardando...' : 'Grabar' }}
-                  </button>
+                  </button>-->
               </div>
           </div>
       
@@ -144,7 +156,7 @@
                             </td>
                             <td><span class="text-muted">(Serv.)</span> {{ p.nombre_completo }}<span *ngIf="p.sigla" class="text-muted ms-1">({{ p.sigla }})</span></td>
                             <td class="text-center">{{ p.titulo || '-' }}</td>
-                            <td>{{ p.area || p.subseccion || '-' }}</td>
+                            <td>{{ p.area || p.proyecto || p.subseccion || '-' }}</td>
                             <td>{{ p.institucion || p.empresa || '-' }}</td>
                         </tr>
                     </ng-container>
@@ -156,7 +168,7 @@
                             </td>
                             <td><span class="text-muted">(Serv.)</span> {{ p.nombre_completo }}<span *ngIf="p.sigla" class="text-muted ms-1">({{ p.sigla }})</span></td>
                             <td class="text-center">{{ p.titulo || '-' }}</td>
-                            <td>{{ p.area || p.subseccion || '-' }}</td>
+                            <td>{{ p.area || p.proyecto || p.subseccion || '-' }}</td>
                             <td>{{ p.institucion || p.empresa || '-' }}</td>
                         </tr>
                     </ng-container>
@@ -168,7 +180,7 @@
                             </td>
                             <td><span class="text-muted">(Serv.)</span> {{ p.nombre_completo }}<span *ngIf="p.sigla" class="text-muted ms-1">({{ p.sigla }})</span></td>
                             <td class="text-center">{{ p.titulo || '-' }}</td>
-                            <td>{{ p.area || p.subseccion || '-' }}</td>
+                            <td>{{ p.area || p.proyecto || p.subseccion || '-' }}</td>
                             <td>{{ p.institucion || p.empresa || '-' }}</td>
                         </tr>
                     </ng-container>
@@ -188,20 +200,21 @@
       
       
           <div class="row g-9 mb-8">
-              <div class="col-md-6 fv-row">
+              <!-- Los tres selects se muestran u ocultan juntos -->
+              <div class="col-md-6 fv-row" *ngIf="!selectsPrecargados">
                   <label class="fs-7 fw-bold mb-2 d-flex align-items-center justify-content-between">
                     <span>Tipo de Documento:</span>
-                    <span class="badge" [ngClass]="getPrioridadClass()">{{ getPrioridadLabel() }}</span>
+                  <!--  <span class="badge" [ngClass]="getPrioridadClass()">{{ getPrioridadLabel() }}</span>-->
                   </label>
                   <select class="form-select form-select-sm form-select-solid" [(ngModel)]="id_tipo_documento_sel" (ngModelChange)="onTipoDocumentoChange($event)" name="id_tipo_documento_sel">
                     <option [ngValue]="null">Seleccione Tipo de Documento</option>
                     <option *ngFor="let td of tipo_documentos" [ngValue]="td.id_tipodocumento">{{ td.nombre }}</option>
                   </select>
               </div>
-              <div class="col-md-6 fv-row">
+              <div class="col-md-6 fv-row" *ngIf="!selectsPrecargados">
                   <label class="fs-7 fw-bold mb-2 d-flex align-items-center justify-content-between">
                     <span>Tipo de Trámite:</span>
-                    <span class="badge badge-light-info">{{ getTiempoTramiteLabel() }}</span>
+                    <!--   <span class="badge badge-light-info">{{ getTiempoTramiteLabel() }}</span>-->
                   </label>
                   <select class="form-select form-select-sm form-select-solid" [(ngModel)]="id_tipo_tramite_sel" name="id_tipo_tramite_sel">
                     <option [ngValue]="null">Seleccione Tipo de Trámite</option>
@@ -210,7 +223,7 @@
               </div>
 
               <!-- Nueva: Categoría -->
-              <div class="col-md-6 fv-row">
+              <div class="col-md-6 fv-row" *ngIf="!selectsPrecargados">
                 <label class="fs-7 fw-bold mb-2">Categoría</label>
                 <select class="form-select form-select-sm form-select-solid" [(ngModel)]="categoria_sel" name="categoria_sel">
                   <option [ngValue]="''">Seleccione Categoría</option>
@@ -323,7 +336,21 @@
           </div>
       </div>
 
-      
+      <!-- Pestaña Seguimiento: mismo listado que la opción del listado de trámites -->
+      <div *ngIf="tab_active === 3">
+        <div class="mb-7 mt-5">
+          <h3 class="text-gray-800 fw-bold">Seguimiento del trámite</h3>
+          <span class="text-muted fs-7">Historial de movimientos del trámite</span>
+        </div>
+
+        <app-seguimiento
+          [embebido]="true"
+          [id_tramite]="id_tramite"
+          [tramiteDatos]="tramiteDatos"
+          [areas]="areas">
+        </app-seguimiento>
+      </div>
+
   </form>
 </div>
 
@@ -340,6 +367,10 @@
                     </i>
                     Vista Previa
                 </button>
+               <!-- <button type="button" class="btn btn-sm btn-light-warning me-3" (click)="abrirSumillar()" title="Sumillar">
+                    <i class="ki-duotone ki-edit fs-2"><span class="path1"></span><span class="path2"></span></i>
+                    Sumillar
+                </button>-->
   <button
     type="button"
     (click)="confirmarAsignacion()"

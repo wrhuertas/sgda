@@ -341,7 +341,29 @@ export const SIDEBAR:any = [
           name:'certificado',
           permiso: 'certificado_expediente',
         },
-        
+
+      ]
+    },
+
+    {
+      'name': 'Scan',
+      'permisos': [
+        {
+          name:'scan',
+          permiso: 'scanner',
+        },
+
+      ]
+    },
+
+    {
+      'name': 'Etiquetas',
+      'permisos': [
+        {
+          name:'etiquetas',
+          permiso: 'etiquetas',
+        },
+
       ]
     },
 ];

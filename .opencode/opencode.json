@@ -1,0 +1,13 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "codebase-memory": {
+      "type": "local",
+      "command": [
+        "REPLACE_ME_COMMAND"
+      ],
+      "enabled": false,
+      "env": {}
+    }
+  }
+}

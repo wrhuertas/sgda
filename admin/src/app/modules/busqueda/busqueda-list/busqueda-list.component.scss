@@ -485,8 +485,47 @@
       border-color: #4a5568;
       background-color: #232a37;
       transform: translateY(-2px);
+      cursor: pointer;
     }
-    
+
+    /* La tarjeta cuyo grafo se está mostrando */
+    .card-resultado.seleccionado {
+      border-color: #ffc107;
+      background-color: #232a37;
+      box-shadow: 0 0 0 1px rgba(255, 193, 7, 0.35);
+    }
+
+    /* Botón para volver al grafo de toda la búsqueda */
+    .btn-volver-grafo {
+      margin-left: auto;
+      background: transparent;
+      border: 1px solid #4a5568;
+      color: #a0aec0;
+      border-radius: 50%;
+      width: 26px;
+      height: 26px;
+      line-height: 1;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .btn-volver-grafo:hover {
+      border-color: #ffc107;
+      color: #ffc107;
+    }
+
+    /* El nombre del documento puede ser largo: se corta en vez de desarmar
+       la cabecera del panel */
+    .panel-derecho .header-titles { min-width: 0; }
+
+    .panel-derecho .sub-text {
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
     /* Fila Superior: Título e Iconos */
     .card-header-row {
       display: flex;
@@ -642,6 +681,7 @@
     .yellow { background: #ecc94b; }
     .teal { background: #38b2ac; }
     .purple { background: #9f7aea; }
+    .gray { background: #adb5bd; }
   
   
     .grafo-canvas {

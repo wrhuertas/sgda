@@ -1,11 +1,27 @@
 <div class="modal-content">
-  
+
+  <!-- Título global del modal: el usuario queda a la vista todo el tiempo,
+       para no cargarle permisos a quien no es -->
+  <div class="border-bottom px-6 py-4 d-flex align-items-center flex-wrap gap-4">
+    <h3 class="fw-bold text-gray-900 m-0 d-flex align-items-center">
+      <i class="ki-duotone ki-category text-primary fs-2 me-3"></i>
+      Permisos Documental
+    </h3>
+
+    <div class="d-flex flex-column" *ngIf="USER_SELECTED">
+      <span class="fs-5 fw-bold text-primary lh-1">
+        {{ USER_SELECTED.full_name
+           || (USER_SELECTED.name + ' ' + (USER_SELECTED.surname || '')) }}
+      </span>
+      <span class="text-muted fs-7" *ngIf="USER_SELECTED.email">
+        {{ USER_SELECTED.email }}
+      </span>
+    </div>
+  </div>
+
   <div class="modal-header" >
     <div class="row g-4">
     <div class="col-md-5 border-end pe-4" style="max-height: 80vh; overflow-y: auto;">
-      <h5 class="mb-4 text-gray-800 fw-bold">
-        <i class="ki-duotone ki-category text-primary me-2"></i>Permisos Documental
-      </h5>
       <div class="tree-container">
         <ng-container *ngTemplateOutlet="proyectoTemplate; context: { $implicit: secciones }"></ng-container>
       </div>
@@ -57,16 +73,19 @@
             <div class="col-6 ps-4">
               <div *ngIf="itemSeleccionado.isSerie">
                 <h6 class="text-gray-400 text-uppercase fs-8 fw-bold mb-4 tracking-wider">Permisos de Serie</h6>
-                <div class="d-flex flex-column gap-3">
-                  <label class="d-flex align-items-center text-gray-700 cursor-pointer"><input type="checkbox" class="form-check-input me-3" [(ngModel)]="itemSeleccionado.permisos.buscar"> Buscar</label>
-                  <label class="d-flex align-items-center text-gray-700 cursor-pointer"><input type="checkbox" class="form-check-input me-3" [(ngModel)]="itemSeleccionado.permisos.subir_documentos"> Subir documentos</label>
-                  <label class="d-flex align-items-center text-gray-700 cursor-pointer"><input type="checkbox" class="form-check-input me-3" [(ngModel)]="itemSeleccionado.permisos.ver_documento"> Ver documento</label>
-                  <label class="d-flex align-items-center text-gray-700 cursor-pointer"><input type="checkbox" class="form-check-input me-3" [(ngModel)]="itemSeleccionado.permisos.registrar_datos"> Registrar datos</label>
-                  <label class="d-flex align-items-center text-gray-700 cursor-pointer"><input type="checkbox" class="form-check-input me-3" [(ngModel)]="itemSeleccionado.permisos.indexar"> Indexar</label>
-                  <label class="d-flex align-items-center text-gray-700 cursor-pointer"><input type="checkbox" class="form-check-input me-3" [(ngModel)]="itemSeleccionado.permisos.indexar_masivo"> Indexar masivo</label>
-                  <label class="d-flex align-items-center text-gray-700 cursor-pointer"><input type="checkbox" class="form-check-input me-3" [(ngModel)]="itemSeleccionado.permisos.eliminar_documento"> Eliminar documento</label>
-                  <label class="d-flex align-items-center text-gray-700 cursor-pointer"><input type="checkbox" class="form-check-input me-3" [(ngModel)]="itemSeleccionado.permisos.firmar_documento"> Firmar documento</label>
-                  <label class="d-flex align-items-center text-gray-700 cursor-pointer"><input type="checkbox" class="form-check-input me-3" [(ngModel)]="itemSeleccionado.permisos.limpiar_documento"> Limpiar documento</label>
+                <div style="max-height: 45vh; overflow-y: auto;">
+                  <div *ngFor="let grupo of permisosSerieGrupos" class="mb-4">
+                    <div class="text-gray-500 fw-semibold fs-8 mb-2">{{ grupo.grupo }}</div>
+                    <div class="d-flex flex-column gap-3">
+                      <label *ngFor="let permiso of grupo.items"
+                             class="d-flex align-items-center text-gray-700 cursor-pointer">
+                        <input type="checkbox" class="form-check-input me-3"
+                               [checked]="itemSeleccionado.permisos[permiso.campo]"
+                               (change)="addPermission(itemSeleccionado, permiso.campo, $event)">
+                        {{ permiso.etiqueta }}
+                      </label>
+                    </div>
+                  </div>
                 </div>
               </div>
               
@@ -106,6 +125,8 @@
             [ngClass]="itemSeleccionado === item ? 'fw-bold text-dark' : 'fw-medium'">
         {{ item.nombre }}
       </span>
+      <i *ngIf="tienePermisos(item)" class="fa fa-circle-check text-success ms-2 fs-8"
+         title="Tiene permisos asignados"></i>
     </div>
     <div *ngIf="item.abierto" class="ms-3 border-start border-gray-200 ps-2">
       <ng-container *ngTemplateOutlet="proyectoTemplate; context: { $implicit: item.subsecciones }"></ng-container>
@@ -125,6 +146,8 @@
             [ngClass]="itemSeleccionado === serie ? 'fw-bold text-dark' : 'fw-medium'">
         {{ serie.nombre }}
       </span>
+      <i *ngIf="tienePermisos(serie)" class="fa fa-circle-check text-success ms-2 fs-8"
+         title="Tiene permisos asignados"></i>
     </div>
     <div *ngIf="serie.abierto" class="ms-3 border-start border-gray-200 ps-2">
       <ng-container *ngTemplateOutlet="serieTemplate; context: { $implicit: serie.subseries }"></ng-container>

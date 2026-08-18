@@ -68,6 +68,11 @@ const Routing: Routes = [
     loadChildren: () =>
       import('../modules/users/users.module').then((m) => m.UsersModule),
   },
+  {
+    path: 'super-usuarios',
+    loadChildren: () =>
+      import('../modules/super-usuarios/super-usuarios.module').then((m) => m.SuperUsuariosModule),
+  },
   // MIS MODULOS localhost:4200/configuraciones/sucursales/list
   {
     path: 'configuraciones',
@@ -393,6 +398,23 @@ const Routing: Routes = [
   loadChildren: () =>
     import('../modules/gestion-documental/certificado/certificado.module').then( // <--- DEBE SER .module, NO -routing.module
       (m) => m.CertificadoModule // <--- DEBE SER RespaldoModule
+    ),
+},
+
+{
+  path: 'scanner',
+  loadChildren: () =>
+    import('../modules/gestion-documental/scanner/scanner.module').then(
+      (m) => m.ScannerModule
+    ),
+},
+
+
+{
+  path: 'etiqueta',
+  loadChildren: () =>
+    import('../modules/gestion-documental/etiqueta/etiqueta.module').then(
+      (m) => m.EtiquetaModule
     ),
 },
 

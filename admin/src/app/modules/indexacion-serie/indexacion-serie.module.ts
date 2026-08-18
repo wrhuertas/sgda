@@ -10,7 +10,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbModule, NgbModalModule, NgbPaginationModule, NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { InlineSVGModule } from 'ng-inline-svg-2';
 import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
-import { VerDocumentoComponent } from './ver-documento/ver-documento.component';
+import { VerDocumentoModule } from './ver-documento/ver-documento.module';
 import { IndexarDocumentoComponent } from './indexar-documento/indexar-documento.component';
 import { IngresarInformacionComponent } from './ingresar-informacion/ingresar-informacion.component';
 import { SubirAnexosComponent } from './subir-anexos/subir-anexos.component';
@@ -19,6 +19,10 @@ import { HacerOcrIAComponent } from './hacer-ocr-ia/hacer-ocr-ia.component';
 import { ControlCalidadComponent } from './control-calidad/control-calidad.component';
 import { CrearLugarDocumentoComponent } from './crear-lugar-documento/crear-lugar-documento.component';
 import { EditarLugarDocumentoComponent } from './editar-lugar-documento/editar-lugar-documento.component';
+import { MoverDocumentoComponent } from './mover-documento/mover-documento.component';
+import { EtiquetaDocumentoModule } from './etiqueta-documento/etiqueta-documento.module';
+import { QRCodeModule } from 'angularx-qrcode';
+import { DocumentoVersionComponent } from './documento-version/documento-version.component';
 
 
 @NgModule({
@@ -26,7 +30,6 @@ import { EditarLugarDocumentoComponent } from './editar-lugar-documento/editar-l
     IndexacionSerieComponent,
     ListIndexacionSerieComponent,
     CreateIndexacionSerieComponent,
-    VerDocumentoComponent,
     IndexarDocumentoComponent,
     IngresarInformacionComponent,
     SubirAnexosComponent,
@@ -34,7 +37,9 @@ import { EditarLugarDocumentoComponent } from './editar-lugar-documento/editar-l
     HacerOcrIAComponent,
     ControlCalidadComponent,
     CrearLugarDocumentoComponent,
-    EditarLugarDocumentoComponent
+    EditarLugarDocumentoComponent,
+    MoverDocumentoComponent,
+    DocumentoVersionComponent
   ],
 
 
@@ -50,7 +55,10 @@ import { EditarLugarDocumentoComponent } from './editar-lugar-documento/editar-l
       NgbNavModule, 
       NgbPaginationModule,
       // BrowserModule,  <-- Quitar de aquí también
-      NgxExtendedPdfViewerModule
+      NgxExtendedPdfViewerModule,
+      QRCodeModule,
+      VerDocumentoModule,
+      EtiquetaDocumentoModule
     ]
 })
 export class IndexacionSerieModule { }

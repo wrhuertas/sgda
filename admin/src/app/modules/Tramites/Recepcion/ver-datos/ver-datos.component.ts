@@ -4,6 +4,8 @@ import { ToastrService } from 'ngx-toastr';
 import { AuthService } from 'src/app/modules/auth';
 import { RecepcionService } from '../service/recepcion.service';
 import { URL_BACKEND } from 'src/app/config/config';
+import { DocumentoViewerService } from 'src/app/modules/indexacion-serie/ver-documento/documento-viewer.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-ver-datos',
@@ -30,7 +32,31 @@ export class VerDatosComponent {
            private cdr: ChangeDetectorRef,
            public authService: AuthService,
             public modalService: NgbModal,
+            private documentoViewer: DocumentoViewerService,
     ) {}
+
+    // Ver un archivo (anexo o acta) en el visor-plantilla, trayéndolo por API como base64
+    verArchivo(ruta: string) {
+      const r = (ruta || '').toString().trim();
+      if (!r) { this.toast.warning('No se encontró la ruta del documento'); return; }
+
+      Swal.fire({ title: 'Cargando documento...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      this.recepcionService.verAnexoBase64(r).subscribe({
+        next: (resp: any) => {
+          try { Swal.close(); } catch {}
+          if (resp?.success && resp?.base64) {
+            this.documentoViewer.abrirVer({ pdfBase64: resp.base64 });
+          } else {
+            this.toast.error(resp?.message || 'No se pudo obtener el documento');
+          }
+        },
+        error: (err) => {
+          try { Swal.close(); } catch {}
+          console.error('Error trayendo documento:', err);
+          this.toast.error('No se pudo cargar el documento');
+        }
+      });
+    }
 
      ngOnInit() {
        console.log('ID TRÁMITE RECIBIDO para ver :', this.id_tramite);
